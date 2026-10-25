@@ -89,6 +89,14 @@ class App:
         (loc.last if last else loc.first).click()
         self.wait(1000)
 
+    def reload(self):
+        """Reload the page and switch the accessibility layer back on."""
+        self.pg.reload()
+        self.pg.wait_for_selector("flt-semantics-placeholder", state="attached", timeout=90000)
+        self.pg.wait_for_timeout(2000)
+        self.pg.evaluate("document.querySelector('flt-semantics-placeholder').click()")
+        self.wait(2500)
+
     def snack_action(self, name):
         """Press a SnackBar action. The snackbar slides in, and a click on a moving
         semantics node can miss, so let it settle first and retry if it is still there."""
@@ -109,8 +117,8 @@ class App:
     def month_next(self):
         self.button("Next month")
 
-    def fill(self, label, value):
-        f = self.pg.get_by_label(label, exact=False).first
+    def fill(self, label, value, exact=False):
+        f = self.pg.get_by_label(label, exact=exact).first
         f.click()
         self.wait(500)  # Flutter web drops keys typed right after focus
         self.pg.keyboard.press("Control+A")

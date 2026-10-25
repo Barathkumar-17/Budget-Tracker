@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'auth.dart';
+import 'auth_screen.dart';
 import 'budgets.dart';
 import 'common.dart';
 import 'dashboard.dart';
@@ -19,6 +21,64 @@ class BudgetApp extends StatefulWidget {
 }
 
 class _BudgetAppState extends State<BudgetApp> {
+  final _auth = AuthState();
+
+  @override
+  void initState() {
+    super.initState();
+    _auth.restore();
+  }
+
+  @override
+  void dispose() {
+    _auth.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthScope(
+      state: _auth,
+      child: MaterialApp(
+        title: 'Budget Tracker',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(Brightness.light),
+        darkTheme: buildTheme(Brightness.dark),
+        themeMode: ThemeMode.system,
+        home: const _Gate(),
+      ),
+    );
+  }
+}
+
+/// Shows the login screen until someone is logged in, then the app.
+class _Gate extends StatelessWidget {
+  const _Gate();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = AuthScope.of(context);
+    return switch (auth.status) {
+      AuthStatus.loading =>
+        const Scaffold(body: Center(child: CircularProgressIndicator())),
+      AuthStatus.unreachable =>
+        Scaffold(body: ErrorState(onRetry: auth.restore)),
+      AuthStatus.loggedOut => const AuthScreen(),
+      // A new key per user, so nothing from the previous account can linger.
+      AuthStatus.loggedIn => _Session(key: ValueKey(auth.username)),
+    };
+  }
+}
+
+/// One logged-in session: its own month and reload state.
+class _Session extends StatefulWidget {
+  const _Session({super.key});
+
+  @override
+  State<_Session> createState() => _SessionState();
+}
+
+class _SessionState extends State<_Session> {
   final _state = AppState();
 
   @override
@@ -28,19 +88,8 @@ class _BudgetAppState extends State<BudgetApp> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AppScope(
-      state: _state,
-      child: MaterialApp(
-        title: 'Budget Tracker',
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(Brightness.light),
-        darkTheme: buildTheme(Brightness.dark),
-        themeMode: ThemeMode.system,
-        home: const Shell(),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      AppScope(state: _state, child: const Shell());
 }
 
 class _Tab {
@@ -104,6 +153,7 @@ class _ShellState extends State<Shell> {
                 icon: const Icon(Icons.tune),
                 onPressed: () => editAccount(context),
               ),
+            const _AccountMenu(),
             const SizedBox(width: 4),
           ],
           bottom: tab.monthly ? const MonthBar() : null,
@@ -148,6 +198,29 @@ class _ShellState extends State<Shell> {
                 ],
               ),
       ),
+    );
+  }
+}
+
+class _AccountMenu extends StatelessWidget {
+  const _AccountMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = AuthScope.of(context);
+    return PopupMenuButton<String>(
+      tooltip: 'Account',
+      icon: const Icon(Icons.account_circle_outlined),
+      onSelected: (v) {
+        if (v == 'logout') auth.logout();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+            enabled: false,
+            value: 'who',
+            child: Text('Signed in as ${auth.username}')),
+        const PopupMenuItem(value: 'logout', child: Text('Log out')),
+      ],
     );
   }
 }

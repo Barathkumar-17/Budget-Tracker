@@ -1,15 +1,16 @@
 # Budget Tracker
 
-A personal budget and expense tracker: a **FastAPI + SQLite** backend and a **Flutter** app (Android and web).
+A personal budget and expense tracker with accounts: a **FastAPI + SQLite** backend and a **Flutter** app (Android and web).
 
-> Single-user prototype. There is no authentication and it is not built for scale.
+> A prototype for a small number of users: each person has their own account and sees only their own data. It is not built for scale.
 
 ## Features
 
 | Screen | What it does |
 | --- | --- |
+| **Login** | Register, log in and log out. Passwords are stored hashed (scrypt, per-user salt), the session survives a reload, and every feature below works on the logged-in user's own data only |
 | **Dashboard** | A one-line verdict ("₹4,226 left, ₹774 below your safety line"), spent vs budget per category as rail lines, daily spend columns, month navigation, balance settings (opening balance and safety line) |
-| **Expenses** | Grouped by day; add with amount, category chips, date picker and note; instant overspend and low-balance alerts; swipe or long-press to delete, with Undo |
+| **Expenses** | Grouped by day; add with amount, category chips, date picker and note; instant overspend and low-balance alerts; tap to edit, swipe or long-press to delete (with Undo) |
 | **Budgets** | Monthly cap per category, each shown as a line with its spend so far |
 | **Recurring** | Templates (e.g. rent on the 1st) applied to a month with one tap; applying twice never duplicates |
 | **Goals** | Savings goals with progress; contributions reduce the balance |
@@ -43,9 +44,10 @@ Try it with realistic data in about two minutes.
 <p>
   <img src="docs/img/goals.png" width="230" alt="Savings goals">
   <img src="docs/img/dashboard-dark.png" width="230" alt="Dashboard in the dark theme">
+  <img src="docs/img/login.png" width="230" alt="Login screen">
 </p>
 
-**1. Start the backend on a fresh database and load the demo data**
+**1. Start the backend and load the demo account**
 
 ```bash
 cd backend
@@ -54,7 +56,7 @@ uvicorn main:app --port 8000          # leave running
 python seed_demo.py                    # in a second terminal
 ```
 
-The seed script fills the current month through the public API: a ₹30,000 opening balance, three budgets, nine expenses, three recurring templates (rent, Netflix, gym, already applied) and two savings goals. It refuses to run on a database that already has data (`--force` overrides that). With Docker, run `docker compose exec api python seed_demo.py` instead.
+The seed script creates the account `demo` (password `demo-password`; change them with `--username` and `--password`) and fills the current month through the public API: a ₹30,000 opening balance, three budgets, nine expenses, three recurring templates (rent, Netflix, gym, already applied) and two savings goals. It refuses to add data to an account that already has some (`--force` overrides that). With Docker, run `docker compose exec app python seed_demo.py` instead.
 
 **2. Open the app** (see [App](#app) for setup)
 
@@ -66,6 +68,7 @@ cd app && flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000
 
 | Where | Try this | You should see |
 | --- | --- | --- |
+| **Login** | Log in as `demo` / `demo-password` (or tap **Create an account** to make your own) | The Dashboard for the current month. Use the account icon at the top right to see who is logged in or to log out |
 | **Dashboard** | Read the top panel and the lines | An amber panel: "₹4,226 left, ₹774 below your safety line", the balance line stopping short of the safety ring. *Fun* and *Food* run past their ring in red with "over budget"; *Transport* still has its ring ahead |
 | **Dashboard** | Tap the sliders icon (Balance settings), set *Opening balance* to `40000`, Save | The panel turns calm: "₹14,226 left, ₹9,226 above your safety line", with a check icon |
 | **Dashboard** | Use the arrows by the month | Other months are empty; the arrows return you to this month |
@@ -103,7 +106,7 @@ Flutter platform folders (`android/`, `web/`, ...) are generated, not committed.
 ```bash
 cd backend
 pip install -r requirements.txt
-pytest                                   # 11 tests
+pytest                                   # 39 tests
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -112,11 +115,15 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 ### API summary
 
+Every endpoint except `/auth/register` and `/auth/login` needs `Authorization: Bearer <token>` and only ever touches that user's data (another user's record is a 404). Sessions last 30 days.
+
 | Method | Path | Purpose |
 | --- | --- | --- |
+| POST | `/auth/register`, `/auth/login` | Create an account / log in: both return a session `token` |
+| POST / GET | `/auth/logout`, `/auth/me` | End the session / who am I |
 | GET / PUT | `/account` | Opening balance, low-balance threshold, current balance |
 | POST / GET | `/expenses` | Add (response includes `alert` and `low_balance`) / list (`month`, `category`) |
-| PUT / DELETE | `/expenses/{id}` | Update / delete |
+| PUT / DELETE | `/expenses/{id}` | Update (same response as add, so editing can alert too) / delete |
 | PUT / GET | `/budgets` | Set a cap / list caps for a `month` |
 | POST / GET | `/recurring` | Add / list templates |
 | DELETE | `/recurring/{id}` | Delete a template |
@@ -218,29 +225,29 @@ flutter test --dart-define=API_URL=http://127.0.0.1:8000
 | Test | Needs backend? | Covers |
 | --- | --- | --- |
 | `test/format_test.dart` | no | Money formatting (Indian grouping, paise), day and month labels, category colours |
-| `test/widget_test.dart` | no | App shell and tab navigation |
-| `test/ui_flow_test.dart` | no | Every screen against an in-memory stub of the API: alerts, inline validation, readable server errors, Undo, long-press delete, month navigation, empty states, system Back, the wide layout, and 2x system text size without overflow |
-| `test/api_test.dart` | **yes**, port 8000 | The Dart API client end to end against the real backend |
+| `test/widget_test.dart` | no | With nobody logged in the app opens on the login screen |
+| `test/ui_flow_test.dart` | no | Every screen against an in-memory stub of the API. Accounts: log in, register with validation, wrong password, taken username, unreachable server, log out, expired session, start-up retry. Plus alerts, inline validation, edit, Undo, long-press delete, month navigation, empty states, system Back, the wide layout, and 2x system text without overflow |
+| `test/api_test.dart` | **yes**, port 8000 | The Dart API client against the real backend: accounts, login required, users isolated from each other, and the full feature flow. Registers its own users, so it can be re-run on any database |
 
 ### Full UI walkthrough (real browser)
 
-`e2e/walkthrough.py` drives the compiled web app in a real browser through every page: empty states, month navigation, account settings, adding/editing/deleting budgets, expenses (including swipe-to-delete, overspend and low-balance alerts, validation errors), recurring templates (applied twice), goals, and the final balance arithmetic. It needs a **fresh** database.
+`e2e/walkthrough.py` drives the compiled web app in a real browser through everything: the login and registration screens (including their validation and a wrong password), every tab, budgets (add and edit), expenses (add, edit, swipe and long-press delete with Undo, overspend and low-balance alerts), recurring templates (applied twice), goals, log out and back in, staying logged in after a page reload, and a second user who sees none of the first user's data. Each run registers its own users, so the database does not need to be empty.
 
 ```bash
 pip install playwright && playwright install chromium
 
-# terminal 1: backend on a FRESH database
-cd backend && uvicorn main:app --port 8000
+# build the app for a single server and put it next to the backend
+cd app && flutter build web --dart-define=API_URL=same-origin
+cp -r build/web ../backend/web            # (Windows: xcopy /E /I build\web ..ackend\web)
 
-# terminal 2: build and serve the web app
-cd app && flutter build web --dart-define=API_URL=http://127.0.0.1:8000
-python -m http.server 8123 --directory build/web
+# start the backend, which now serves the app too
+cd ../backend && uvicorn main:app --port 8000
 
-# terminal 3: run the walkthrough from the repository root
-BASE_URL=http://127.0.0.1:8123/ python e2e/walkthrough.py
+# in another terminal, from the repository root
+BASE_URL=http://127.0.0.1:8000/ python e2e/walkthrough.py
 ```
 
-Set `BROWSER_CHANNEL=chrome` to use an installed Chrome instead of Playwright's Chromium, and `SLOW=2` on a slow machine. The last full run passed 45 of 45 steps.
+Set `BROWSER_CHANNEL=chrome` to use an installed Chrome instead of Playwright's Chromium, and `SLOW=2` on a slow machine. The last full run passed 60 of 60 steps.
 
 ## Releases
 

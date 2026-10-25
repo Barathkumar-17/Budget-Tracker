@@ -18,7 +18,8 @@ final String baseUrl = switch (_configured) {
 /// A failed API call; [toString] is the message shown to the user.
 class ApiException implements Exception {
   final String message;
-  ApiException(this.message);
+  final int? status;
+  ApiException(this.message, [this.status]);
   @override
   String toString() => message;
 }
@@ -38,10 +39,19 @@ String _errorMessage(http.Response r) {
 }
 
 class Api {
+  /// Login token sent with every request. Set by the auth state.
+  static String? token;
+
+  /// Called when the server rejects the token (expired or revoked session).
+  static void Function()? onUnauthorized;
+
   static Future<dynamic> _send(String method, String path,
-      {Map<String, String>? query, Object? body}) async {
+      {Map<String, String>? query, Object? body, bool auth = true}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
-    final headers = {'Content-Type': 'application/json'};
+    final headers = {
+      'Content-Type': 'application/json',
+      if (auth && token != null) 'Authorization': 'Bearer $token',
+    };
     final payload = body == null ? null : jsonEncode(body);
     final http.Response r;
     switch (method) {
@@ -52,17 +62,37 @@ class Api {
         r = await http.put(uri, headers: headers, body: payload);
         break;
       case 'DELETE':
-        r = await http.delete(uri);
+        r = await http.delete(uri, headers: headers);
         break;
       default:
-        r = await http.get(uri);
+        r = await http.get(uri, headers: headers);
     }
     if (r.statusCode >= 400) {
-      throw ApiException(_errorMessage(r));
+      // A 401 on a logged-in call means the session ended. (A 401 from the
+      // login call itself just means a wrong password, so it is not routed here.)
+      if (r.statusCode == 401 && auth) onUnauthorized?.call();
+      throw ApiException(_errorMessage(r), r.statusCode);
     }
     return r.body.isEmpty ? null : jsonDecode(r.body);
   }
 
+  // ---- accounts ----
+  static Future<Map<String, dynamic>> register(
+          String username, String password) async =>
+      Map<String, dynamic>.from(await _send('POST', '/auth/register',
+          body: {'username': username, 'password': password}, auth: false));
+
+  static Future<Map<String, dynamic>> login(
+          String username, String password) async =>
+      Map<String, dynamic>.from(await _send('POST', '/auth/login',
+          body: {'username': username, 'password': password}, auth: false));
+
+  static Future<void> logout() => _send('POST', '/auth/logout');
+
+  static Future<Map<String, dynamic>> me() async =>
+      Map<String, dynamic>.from(await _send('GET', '/auth/me'));
+
+  // ---- data ----
   static Future<Map<String, dynamic>> dashboard(String month) async =>
       Map<String, dynamic>.from(
           await _send('GET', '/dashboard', query: {'month': month}));
@@ -83,6 +113,16 @@ class Api {
   static Future<Map<String, dynamic>> addExpense(
           double amount, String date, String category, String note) async =>
       Map<String, dynamic>.from(await _send('POST', '/expenses', body: {
+        'amount': amount,
+        'date': date,
+        'category': category,
+        'note': note,
+      }));
+
+  /// Same response shape as [addExpense] (editing can also trigger an alert).
+  static Future<Map<String, dynamic>> updateExpense(int id, double amount,
+          String date, String category, String note) async =>
+      Map<String, dynamic>.from(await _send('PUT', '/expenses/$id', body: {
         'amount': amount,
         'date': date,
         'category': category,

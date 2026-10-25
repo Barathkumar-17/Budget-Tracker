@@ -1,6 +1,6 @@
 """Full UI walkthrough of every page against a running app + backend.
 
-Run against a FRESH database (the arithmetic below assumes zero starting data):
+Every run registers its own new users, so it works on any database:
 
     pip install playwright && playwright install chromium
     BASE_URL=http://localhost:3000/ python e2e/walkthrough.py
@@ -9,6 +9,7 @@ Exits non-zero if any step fails. Screenshots go to $SHOTS (default e2e-shots/).
 """
 import datetime
 import sys
+import time
 
 from playwright.sync_api import sync_playwright
 
@@ -26,6 +27,11 @@ def step(name, ok):
         print("     page text:", _app.text()[:300], flush=True)
 
 
+stamp = int(time.time())
+username = f"walk{stamp}"
+other_user = f"other{stamp}"
+password = "walkthrough pw 1"
+
 today = datetime.date.today()
 this_month = today.strftime("%B %Y")
 this_month_name = today.strftime("%B")
@@ -34,6 +40,30 @@ prev_month = (today.replace(day=1) - datetime.timedelta(days=1)).strftime("%B %Y
 with sync_playwright() as p:
     browser, app, errors = open_app(p)
     _app = app
+
+    # ---------------- Accounts: log in / register ----------------
+    step("accounts: the app opens on the login screen",
+         app.has("Know where your money goes.") and app.has("Log in") and app.has("Create an account"))
+    app.button("Log in")
+    step("accounts: empty login is rejected inline",
+         app.has("Enter your username") and app.has("Enter your password"))
+    app.fill("Username", "nobody_here")
+    app.fill("Password", "wrong password", exact=True)
+    app.button("Log in")
+    step("accounts: unknown user gets one clear message", app.has("Wrong username or password"))
+    app.button("Create an account")
+    step("accounts: registration form", app.has("Create your account") and app.has("Confirm password"))
+    app.fill("Username", "ab")
+    app.fill("Password", "short", exact=True)
+    app.fill("Confirm password", "other")
+    app.button("Create account")
+    step("accounts: registration rules are shown inline",
+         app.has("Use 3-30 letters, numbers, dots, dashes or underscores")
+         and app.has("Use at least 8 characters") and app.has("The passwords do not match"))
+    app.fill("Username", username)
+    app.fill("Password", password, exact=True)
+    app.fill("Confirm password", password)
+    app.button("Create account")
 
     # ---------------- Dashboard ----------------
     step("dashboard: loads with empty state",
@@ -85,6 +115,15 @@ with sync_playwright() as p:
     app.save()
     step("expenses: over budget shows the overspend alert", app.has("Over budget in food by ₹50"))
     step("expenses: row listed under Today with its note", app.has("Today") and app.has("lunch") and app.has("₹150"))
+    app.snack_gone()
+
+    app.tap_text("lunch")
+    step("expenses: tapping a row opens it for editing", app.has("Edit expense"))
+    app.fill("Note", "lunch edited")
+    app.save()
+    # Food is already over its budget, so saving the edit shows the overspend alert (not "Updated").
+    step("expenses: edit is saved and re-checks the budget",
+         app.has("Over budget in food by ₹50") and app.has("lunch edited"))
     app.snack_gone()
 
     app.fab("Add expense")
@@ -197,6 +236,38 @@ with sync_playwright() as p:
          app.has("₹190 left, ₹310 below your safety line"))
     app.tab("Expenses")
     step("expenses: final list has food, rent and netflix", app.has("Food") and app.has("Rent") and app.has("Netflix"))
+
+    # ---------------- Accounts: log out, log back in, privacy ----------------
+    app.button("Account")
+    step("accounts: the menu shows who is logged in", app.has(f"Signed in as {username}"))
+    app.pg.get_by_role("menuitem", name="Log out").click()
+    app.wait(1500)
+    step("accounts: log out returns to the login screen",
+         app.has("Know where your money goes.") and app.gone("Add expense"))
+    app.fill("Username", username)
+    app.fill("Password", "the wrong password", exact=True)
+    app.button("Log in")
+    step("accounts: a wrong password is refused", app.has("Wrong username or password"))
+    app.fill("Password", password, exact=True)
+    app.button("Log in")
+    step("accounts: logging back in restores the data", app.has("₹190 left, ₹310 below your safety line"))
+    app.reload()
+    step("accounts: a page reload stays logged in", app.has("₹190 left, ₹310 below your safety line"))
+
+    app.button("Account")
+    app.pg.get_by_role("menuitem", name="Log out").click()
+    app.wait(1500)
+    app.button("Create an account")
+    app.fill("Username", other_user)
+    app.fill("Password", password, exact=True)
+    app.fill("Confirm password", password)
+    app.button("Create account")
+    step("accounts: a second user starts with an empty account", app.has("₹0 left"))
+    app.tab("Expenses")
+    step("accounts: and cannot see the first user's expenses",
+         app.has(f"No expenses in {this_month}") and app.gone("Rent"))
+    app.tab("Goals")
+    step("accounts: or their goals", app.has("No savings goals yet") and app.gone("Laptop"))
 
     bad = [e for e in errors if "CORS" in e or "Failed to fetch" in e or "Uncaught" in e]
     step("browser console: no CORS / fetch / uncaught errors", not bad)

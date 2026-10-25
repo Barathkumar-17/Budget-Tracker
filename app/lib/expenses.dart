@@ -7,12 +7,15 @@ import 'common.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
-/// Opens the add-expense page and reports the outcome (overspend / low balance).
-Future<void> addExpense(BuildContext context) async {
+/// Opens the add-expense page (or the edit page when [existing] is given) and
+/// reports the outcome (overspend / low balance).
+Future<void> addExpense(BuildContext context,
+    {Map<String, dynamic>? existing}) async {
   final app = AppScope.read(context);
   final r = await Navigator.of(context).push<Map<String, dynamic>>(
     MaterialPageRoute(
-        fullscreenDialog: true, builder: (_) => const AddExpensePage()),
+        fullscreenDialog: true,
+        builder: (_) => AddExpensePage(existing: existing)),
   );
   if (r == null || !context.mounted) return;
   app.changed();
@@ -30,8 +33,9 @@ Future<void> addExpense(BuildContext context) async {
     final where = month == app.key
         ? ''
         : ' to ${monthLabel(DateTime.parse('$month-01'))}';
+    final verb = existing == null ? 'Added' : 'Updated';
     snack(context,
-        'Added ${titleCase(e['category'] as String)} ${money(e['amount'] as num)}$where');
+        '$verb ${titleCase(e['category'] as String)} ${money(e['amount'] as num)}$where');
   } else {
     snack(context, parts.join('\n'),
         tone: alert != null ? SnackTone.alert : SnackTone.warning, seconds: 6);
@@ -39,7 +43,9 @@ Future<void> addExpense(BuildContext context) async {
 }
 
 class AddExpensePage extends StatefulWidget {
-  const AddExpensePage({super.key});
+  /// An expense to edit; null means a new one.
+  final Map<String, dynamic>? existing;
+  const AddExpensePage({super.key, this.existing});
 
   @override
   State<AddExpensePage> createState() => _AddExpensePageState();
@@ -68,6 +74,16 @@ class _AddExpensePageState extends State<AddExpensePage> {
   @override
   void initState() {
     super.initState();
+    final e = widget.existing;
+    if (e != null) {
+      final amount = (e['amount'] as num).toDouble();
+      _amount.text = amount == amount.roundToDouble()
+          ? amount.toInt().toString()
+          : amount.toString();
+      _category.text = titleCase(e['category'] as String);
+      _note.text = e['note'] as String;
+      _date = DateTime.tryParse(e['date'] as String) ?? _date;
+    }
     _loadSuggestions();
   }
 
@@ -115,8 +131,12 @@ class _AddExpensePageState extends State<AddExpensePage> {
     if (_amountError != null || _categoryError != null) return;
     setState(() => _busy = true);
     try {
-      final r = await Api.addExpense(
-          amount!, dateKey(_date), category, _note.text.trim());
+      final existing = widget.existing;
+      final r = existing == null
+          ? await Api.addExpense(
+              amount!, dateKey(_date), category, _note.text.trim())
+          : await Api.updateExpense(existing['id'] as int, amount!,
+              dateKey(_date), category, _note.text.trim());
       if (mounted) Navigator.pop(context, r);
     } on ApiException catch (e) {
       if (mounted) setState(() => _formError = e.message);
@@ -133,7 +153,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
     final t = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Add expense'), leading: const CloseButton()),
+          title: Text(widget.existing == null ? 'Add expense' : 'Edit expense'),
+          leading: const CloseButton()),
       body: Column(children: [
         Expanded(
           child: ListView(
@@ -343,6 +364,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               items.add(_DayHeader(label: dayLabel(date), total: dayTotal));
             }
             items.add(_ExpenseRow(e,
+                onEdit: () => addExpense(context, existing: e),
                 onDelete: () => _delete(e),
                 onDeleteConfirmed: () => _confirmDelete(e)));
           }
@@ -402,10 +424,13 @@ class _DayHeader extends StatelessWidget {
 
 class _ExpenseRow extends StatelessWidget {
   final Map<String, dynamic> e;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onDeleteConfirmed;
   const _ExpenseRow(this.e,
-      {required this.onDelete, required this.onDeleteConfirmed});
+      {required this.onEdit,
+      required this.onDelete,
+      required this.onDeleteConfirmed});
 
   @override
   Widget build(BuildContext context) {
@@ -431,6 +456,7 @@ class _ExpenseRow extends StatelessWidget {
               onDeleteConfirmed
         },
         child: InkWell(
+          onTap: onEdit,
           onLongPress: onDeleteConfirmed,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 64),

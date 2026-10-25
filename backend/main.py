@@ -1,13 +1,17 @@
+import hashlib
+import hmac
 import os
+import secrets
 import sqlite3
 from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, NamedTuple
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, StringConstraints
 
@@ -15,6 +19,7 @@ DB_PATH = os.environ.get("BUDGET_DB", "budget.db")
 # Compiled Flutter web app. When present (as in the Docker image) it is served at "/".
 WEB_DIR = Path(os.environ.get("WEB_DIR", Path(__file__).parent / "web"))
 HAS_WEB = (WEB_DIR / "index.html").is_file()
+SESSION_DAYS = 30
 
 app = FastAPI(title="Budget Tracker")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -49,12 +54,32 @@ def db():
         conn.close()
 
 
+DATA_TABLES = ["expenses", "budgets", "recurring", "goals", "account"]
+
+
 def init_db():
     with db() as c:
+        # Tables from the old single-user schema have no owner: keep their data, out of the way.
+        for t in DATA_TABLES:
+            cols = [r["name"] for r in c.execute(f"PRAGMA table_info({t})")]
+            if cols and "user_id" not in cols:
+                c.execute(f"ALTER TABLE {t} RENAME TO legacy_{t}")
         c.executescript(
             """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                password_hash TEXT NOT NULL,
+                created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS sessions (
+                token_hash TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
             CREATE TABLE IF NOT EXISTS expenses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 amount INTEGER NOT NULL CHECK (amount > 0),
                 date TEXT NOT NULL,
                 category TEXT NOT NULL,
@@ -63,13 +88,15 @@ def init_db():
                 UNIQUE (recurring_id, date)
             );
             CREATE TABLE IF NOT EXISTS budgets (
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 category TEXT NOT NULL,
                 month TEXT NOT NULL,
                 cap INTEGER NOT NULL CHECK (cap >= 0),
-                PRIMARY KEY (category, month)
+                PRIMARY KEY (user_id, category, month)
             );
             CREATE TABLE IF NOT EXISTS recurring (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 amount INTEGER NOT NULL CHECK (amount > 0),
                 category TEXT NOT NULL,
                 note TEXT NOT NULL DEFAULT '',
@@ -77,17 +104,17 @@ def init_db():
             );
             CREATE TABLE IF NOT EXISTS goals (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 name TEXT NOT NULL,
                 target INTEGER NOT NULL CHECK (target > 0),
                 saved INTEGER NOT NULL DEFAULT 0,
                 deadline TEXT
             );
             CREATE TABLE IF NOT EXISTS account (
-                id INTEGER PRIMARY KEY CHECK (id = 1),
+                user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
                 opening INTEGER NOT NULL DEFAULT 0,
                 low_threshold INTEGER NOT NULL DEFAULT 0
             );
-            INSERT OR IGNORE INTO account (id) VALUES (1);
             """
         )
 
@@ -95,10 +122,85 @@ def init_db():
 init_db()
 
 
+# ---- passwords and sessions ----
+def hash_password(password: str, salt: bytes | None = None) -> str:
+    """scrypt with a per-user random salt; the plain password is never stored."""
+    salt = salt or secrets.token_bytes(16)
+    digest = hashlib.scrypt(password.encode(), salt=salt, n=2**14, r=8, p=1)
+    return f"scrypt${salt.hex()}${digest.hex()}"
+
+
+def check_password(password: str, stored: str) -> bool:
+    try:
+        _, salt_hex, digest_hex = stored.split("$")
+        expected = hash_password(password, bytes.fromhex(salt_hex)).split("$")[2]
+    except ValueError:
+        return False
+    return hmac.compare_digest(expected, digest_hex)
+
+
+# Checked when the username does not exist, so timing does not reveal which usernames are taken.
+_DUMMY_HASH = hash_password("not-a-real-password")
+
+
+def token_digest(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def new_session(c, user_id: int) -> str:
+    token = secrets.token_urlsafe(32)
+    c.execute("INSERT INTO sessions (token_hash, user_id) VALUES (?,?)", (token_digest(token), user_id))
+    return token
+
+
+class User(NamedTuple):
+    id: int
+    username: str
+    token_hash: str
+
+
+_bearer = HTTPBearer(auto_error=False)
+
+
+def current_user(creds: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)]) -> User:
+    """Every data endpoint requires a logged-in user."""
+    unauthorized = HTTPException(
+        401, "Please log in again", headers={"WWW-Authenticate": "Bearer"}
+    )
+    if creds is None:
+        raise unauthorized
+    digest = token_digest(creds.credentials)
+    with db() as c:
+        row = c.execute(
+            "SELECT u.id, u.username FROM sessions s JOIN users u ON u.id = s.user_id "
+            "WHERE s.token_hash=? AND s.created >= datetime('now', ?)",
+            (digest, f"-{SESSION_DAYS} days"),
+        ).fetchone()
+    if row is None:
+        raise unauthorized
+    return User(row["id"], row["username"], digest)
+
+
+CurrentUser = Annotated[User, Depends(current_user)]
+
+
 # ---- schemas ----
 MONTH_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"
 Month = Annotated[str, Query(pattern=MONTH_PATTERN)]
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+Username = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=3, max_length=30, pattern=r"^[A-Za-z0-9_.-]+$")
+]
+
+
+class RegisterIn(BaseModel):
+    username: Username
+    password: str = Field(min_length=8, max_length=128)
+
+
+class LoginIn(BaseModel):
+    username: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class ExpenseIn(BaseModel):
@@ -138,15 +240,54 @@ class AccountIn(BaseModel):
 
 def expense_out(r):
     d = dict(r)
+    d.pop("user_id", None)
     d["amount"] = rupees(d["amount"])
     return d
 
 
+# ---- accounts ----
+@app.post("/auth/register", status_code=201)
+def register(body: RegisterIn):
+    with db() as c:
+        try:
+            cur = c.execute(
+                "INSERT INTO users (username, password_hash) VALUES (?,?)",
+                (body.username, hash_password(body.password)),
+            )
+        except sqlite3.IntegrityError:
+            raise HTTPException(409, "That username is already taken") from None
+        c.execute("INSERT INTO account (user_id) VALUES (?)", (cur.lastrowid,))
+        return {"token": new_session(c, cur.lastrowid), "username": body.username}
+
+
+@app.post("/auth/login")
+def login(body: LoginIn):
+    with db() as c:
+        row = c.execute(
+            "SELECT id, username, password_hash FROM users WHERE username=?", (body.username.strip(),)
+        ).fetchone()
+        ok = check_password(body.password, row["password_hash"] if row else _DUMMY_HASH)
+        if row is None or not ok:
+            raise HTTPException(401, "Wrong username or password")
+        return {"token": new_session(c, row["id"]), "username": row["username"]}
+
+
+@app.post("/auth/logout", status_code=204)
+def logout(user: CurrentUser):
+    with db() as c:
+        c.execute("DELETE FROM sessions WHERE token_hash=?", (user.token_hash,))
+
+
+@app.get("/auth/me")
+def me(user: CurrentUser):
+    return {"username": user.username}
+
+
 # ---- balance ----
-def balance_state(c):
-    a = c.execute("SELECT * FROM account WHERE id=1").fetchone()
-    spent = c.execute("SELECT COALESCE(SUM(amount),0) s FROM expenses").fetchone()["s"]
-    saved = c.execute("SELECT COALESCE(SUM(saved),0) s FROM goals").fetchone()["s"]
+def balance_state(c, uid: int):
+    a = c.execute("SELECT * FROM account WHERE user_id=?", (uid,)).fetchone()
+    spent = c.execute("SELECT COALESCE(SUM(amount),0) s FROM expenses WHERE user_id=?", (uid,)).fetchone()["s"]
+    saved = c.execute("SELECT COALESCE(SUM(saved),0) s FROM goals WHERE user_id=?", (uid,)).fetchone()["s"]
     bal = a["opening"] - spent - saved
     return {
         "balance": rupees(bal),
@@ -156,32 +297,33 @@ def balance_state(c):
 
 
 @app.get("/account")
-def get_account():
+def get_account(user: CurrentUser):
     with db() as c:
-        a = c.execute("SELECT * FROM account WHERE id=1").fetchone()
-        return {"opening_balance": rupees(a["opening"]), **balance_state(c)}
+        a = c.execute("SELECT * FROM account WHERE user_id=?", (user.id,)).fetchone()
+        return {"opening_balance": rupees(a["opening"]), **balance_state(c, user.id)}
 
 
 @app.put("/account")
-def set_account(a: AccountIn):
+def set_account(a: AccountIn, user: CurrentUser):
     with db() as c:
         c.execute(
-            "UPDATE account SET opening=?, low_threshold=? WHERE id=1",
-            (to_paise(a.opening_balance), to_paise(a.low_balance_threshold)),
+            "UPDATE account SET opening=?, low_threshold=? WHERE user_id=?",
+            (to_paise(a.opening_balance), to_paise(a.low_balance_threshold), user.id),
         )
-        return {"opening_balance": float(a.opening_balance), **balance_state(c)}
+        return {"opening_balance": float(a.opening_balance), **balance_state(c, user.id)}
 
 
 # ---- expenses ----
-def _overspend(c, category: str, month: str):
+def _overspend(c, uid: int, category: str, month: str):
     b = c.execute(
-        "SELECT cap FROM budgets WHERE category=? AND month=?", (category, month)
+        "SELECT cap FROM budgets WHERE user_id=? AND category=? AND month=?", (uid, category, month)
     ).fetchone()
     if not b:
         return None
     spent = c.execute(
-        "SELECT COALESCE(SUM(amount),0) s FROM expenses WHERE category=? AND substr(date,1,7)=?",
-        (category, month),
+        "SELECT COALESCE(SUM(amount),0) s FROM expenses "
+        "WHERE user_id=? AND category=? AND substr(date,1,7)=?",
+        (uid, category, month),
     ).fetchone()["s"]
     if spent > b["cap"]:
         return {"category": category, "month": month, "cap": rupees(b["cap"]),
@@ -190,22 +332,22 @@ def _overspend(c, category: str, month: str):
 
 
 @app.post("/expenses", status_code=201)
-def add_expense(e: ExpenseIn):
+def add_expense(e: ExpenseIn, user: CurrentUser):
     cat = e.category.lower()
     with db() as c:
         cur = c.execute(
-            "INSERT INTO expenses (amount, date, category, note) VALUES (?,?,?,?)",
-            (to_paise(e.amount), e.date.isoformat(), cat, e.note),
+            "INSERT INTO expenses (user_id, amount, date, category, note) VALUES (?,?,?,?,?)",
+            (user.id, to_paise(e.amount), e.date.isoformat(), cat, e.note),
         )
         row = c.execute("SELECT * FROM expenses WHERE id=?", (cur.lastrowid,)).fetchone()
         return {"expense": expense_out(row),
-                "alert": _overspend(c, cat, e.date.isoformat()[:7]),
-                **balance_state(c)}
+                "alert": _overspend(c, user.id, cat, e.date.isoformat()[:7]),
+                **balance_state(c, user.id)}
 
 
 @app.get("/expenses")
-def list_expenses(month: Month | None = None, category: str | None = None):
-    q, args = "SELECT * FROM expenses WHERE 1=1", []
+def list_expenses(user: CurrentUser, month: Month | None = None, category: str | None = None):
+    q, args = "SELECT * FROM expenses WHERE user_id=?", [user.id]
     if month:
         q += " AND substr(date,1,7)=?"
         args.append(month)
@@ -217,86 +359,93 @@ def list_expenses(month: Month | None = None, category: str | None = None):
 
 
 @app.put("/expenses/{expense_id}")
-def update_expense(expense_id: int, e: ExpenseIn):
+def update_expense(expense_id: int, e: ExpenseIn, user: CurrentUser):
+    cat = e.category.lower()
     with db() as c:
         cur = c.execute(
-            "UPDATE expenses SET amount=?, date=?, category=?, note=? WHERE id=?",
-            (to_paise(e.amount), e.date.isoformat(), e.category.lower(), e.note, expense_id),
+            "UPDATE expenses SET amount=?, date=?, category=?, note=? WHERE id=? AND user_id=?",
+            (to_paise(e.amount), e.date.isoformat(), cat, e.note, expense_id, user.id),
         )
         if cur.rowcount == 0:
             raise HTTPException(404, "expense not found")
-        return expense_out(c.execute("SELECT * FROM expenses WHERE id=?", (expense_id,)).fetchone())
+        row = c.execute("SELECT * FROM expenses WHERE id=?", (expense_id,)).fetchone()
+        return {"expense": expense_out(row),
+                "alert": _overspend(c, user.id, cat, e.date.isoformat()[:7]),
+                **balance_state(c, user.id)}
 
 
 @app.delete("/expenses/{expense_id}", status_code=204)
-def delete_expense(expense_id: int):
+def delete_expense(expense_id: int, user: CurrentUser):
     with db() as c:
-        if c.execute("DELETE FROM expenses WHERE id=?", (expense_id,)).rowcount == 0:
+        if c.execute("DELETE FROM expenses WHERE id=? AND user_id=?", (expense_id, user.id)).rowcount == 0:
             raise HTTPException(404, "expense not found")
 
 
 # ---- budgets ----
 @app.put("/budgets")
-def set_budget(b: BudgetIn):
+def set_budget(b: BudgetIn, user: CurrentUser):
     with db() as c:
         c.execute(
-            "INSERT INTO budgets (category, month, cap) VALUES (?,?,?) "
-            "ON CONFLICT(category, month) DO UPDATE SET cap=excluded.cap",
-            (b.category.lower(), b.month, to_paise(b.cap)),
+            "INSERT INTO budgets (user_id, category, month, cap) VALUES (?,?,?,?) "
+            "ON CONFLICT(user_id, category, month) DO UPDATE SET cap=excluded.cap",
+            (user.id, b.category.lower(), b.month, to_paise(b.cap)),
         )
     return {"category": b.category.lower(), "month": b.month, "cap": float(b.cap)}
 
 
 @app.get("/budgets")
-def list_budgets(month: Month):
+def list_budgets(month: Month, user: CurrentUser):
     with db() as c:
         return [
             {"category": r["category"], "month": r["month"], "cap": rupees(r["cap"])}
-            for r in c.execute("SELECT * FROM budgets WHERE month=? ORDER BY category", (month,))
+            for r in c.execute(
+                "SELECT * FROM budgets WHERE user_id=? AND month=? ORDER BY category", (user.id, month))
         ]
 
 
 # ---- recurring templates ----
-@app.post("/recurring", status_code=201)
-def add_recurring(r: RecurringIn):
-    with db() as c:
-        cur = c.execute(
-            "INSERT INTO recurring (amount, category, note, day_of_month) VALUES (?,?,?,?)",
-            (to_paise(r.amount), r.category.lower(), r.note, r.day_of_month),
-        )
-        return _recurring_out(c.execute("SELECT * FROM recurring WHERE id=?", (cur.lastrowid,)).fetchone())
-
-
 def _recurring_out(r):
     d = dict(r)
+    d.pop("user_id", None)
     d["amount"] = rupees(d["amount"])
     return d
 
 
-@app.get("/recurring")
-def list_recurring():
+@app.post("/recurring", status_code=201)
+def add_recurring(r: RecurringIn, user: CurrentUser):
     with db() as c:
-        return [_recurring_out(r) for r in c.execute("SELECT * FROM recurring ORDER BY id")]
+        cur = c.execute(
+            "INSERT INTO recurring (user_id, amount, category, note, day_of_month) VALUES (?,?,?,?,?)",
+            (user.id, to_paise(r.amount), r.category.lower(), r.note, r.day_of_month),
+        )
+        return _recurring_out(c.execute("SELECT * FROM recurring WHERE id=?", (cur.lastrowid,)).fetchone())
+
+
+@app.get("/recurring")
+def list_recurring(user: CurrentUser):
+    with db() as c:
+        return [_recurring_out(r) for r in c.execute(
+            "SELECT * FROM recurring WHERE user_id=? ORDER BY id", (user.id,))]
 
 
 @app.delete("/recurring/{rid}", status_code=204)
-def delete_recurring(rid: int):
+def delete_recurring(rid: int, user: CurrentUser):
     with db() as c:
-        if c.execute("DELETE FROM recurring WHERE id=?", (rid,)).rowcount == 0:
+        if c.execute("DELETE FROM recurring WHERE id=? AND user_id=?", (rid, user.id)).rowcount == 0:
             raise HTTPException(404, "template not found")
 
 
 @app.post("/recurring/apply")
-def apply_recurring(month: Month):
+def apply_recurring(month: Month, user: CurrentUser):
     """Create this month's expenses from templates. Safe to call repeatedly."""
     created = 0
     with db() as c:
-        for t in c.execute("SELECT * FROM recurring").fetchall():
+        for t in c.execute("SELECT * FROM recurring WHERE user_id=?", (user.id,)).fetchall():
             d = f"{month}-{t['day_of_month']:02d}"
             cur = c.execute(
-                "INSERT OR IGNORE INTO expenses (amount, date, category, note, recurring_id) "
-                "VALUES (?,?,?,?,?)",
-                (t["amount"], d, t["category"], t["note"], t["id"]),
+                "INSERT OR IGNORE INTO expenses (user_id, amount, date, category, note, recurring_id) "
+                "VALUES (?,?,?,?,?,?)",
+                (user.id, t["amount"], d, t["category"], t["note"], t["id"]),
             )
             created += cur.rowcount
     return {"month": month, "created": created}
@@ -305,66 +454,71 @@ def apply_recurring(month: Month):
 # ---- savings goals ----
 def _goal_out(r):
     d = dict(r)
+    d.pop("user_id", None)
     d["target"], d["saved"] = rupees(d["target"]), rupees(d["saved"])
     d["progress"] = round(min(d["saved"] / d["target"], 1.0), 4)
     return d
 
 
 @app.post("/goals", status_code=201)
-def add_goal(g: GoalIn):
+def add_goal(g: GoalIn, user: CurrentUser):
     with db() as c:
         cur = c.execute(
-            "INSERT INTO goals (name, target, deadline) VALUES (?,?,?)",
-            (g.name, to_paise(g.target), g.deadline.isoformat() if g.deadline else None),
+            "INSERT INTO goals (user_id, name, target, deadline) VALUES (?,?,?,?)",
+            (user.id, g.name, to_paise(g.target), g.deadline.isoformat() if g.deadline else None),
         )
         return _goal_out(c.execute("SELECT * FROM goals WHERE id=?", (cur.lastrowid,)).fetchone())
 
 
 @app.get("/goals")
-def list_goals():
+def list_goals(user: CurrentUser):
     with db() as c:
-        return [_goal_out(r) for r in c.execute("SELECT * FROM goals ORDER BY id")]
+        return [_goal_out(r) for r in c.execute("SELECT * FROM goals WHERE user_id=? ORDER BY id", (user.id,))]
 
 
 @app.post("/goals/{gid}/contribute")
-def contribute(gid: int, body: ContributeIn):
+def contribute(gid: int, body: ContributeIn, user: CurrentUser):
     with db() as c:
-        if not c.execute("SELECT 1 FROM goals WHERE id=?", (gid,)).fetchone():
+        cur = c.execute(
+            "UPDATE goals SET saved = saved + ? WHERE id=? AND user_id=?",
+            (to_paise(body.amount), gid, user.id),
+        )
+        if cur.rowcount == 0:
             raise HTTPException(404, "goal not found")
-        c.execute("UPDATE goals SET saved = saved + ? WHERE id=?", (to_paise(body.amount), gid))
         return {"goal": _goal_out(c.execute("SELECT * FROM goals WHERE id=?", (gid,)).fetchone()),
-                **balance_state(c)}
+                **balance_state(c, user.id)}
 
 
 @app.delete("/goals/{gid}", status_code=204)
-def delete_goal(gid: int):
+def delete_goal(gid: int, user: CurrentUser):
     with db() as c:
-        if c.execute("DELETE FROM goals WHERE id=?", (gid,)).rowcount == 0:
+        if c.execute("DELETE FROM goals WHERE id=? AND user_id=?", (gid, user.id)).rowcount == 0:
             raise HTTPException(404, "goal not found")
 
 
 # ---- dashboard ----
 @app.get("/dashboard")
-def dashboard(month: Month):
+def dashboard(month: Month, user: CurrentUser):
     """Spent vs budget per category for a month, daily trend, balance state."""
+    uid = user.id
     with db() as c:
         spent = {
             r["category"]: r["s"]
             for r in c.execute(
                 "SELECT category, SUM(amount) s FROM expenses "
-                "WHERE substr(date,1,7)=? GROUP BY category", (month,))
+                "WHERE user_id=? AND substr(date,1,7)=? GROUP BY category", (uid, month))
         }
         caps = {
             r["category"]: r["cap"]
-            for r in c.execute("SELECT category, cap FROM budgets WHERE month=?", (month,))
+            for r in c.execute("SELECT category, cap FROM budgets WHERE user_id=? AND month=?", (uid, month))
         }
         trend = [
             {"date": r["date"], "total": rupees(r["s"])}
             for r in c.execute(
                 "SELECT date, SUM(amount) s FROM expenses "
-                "WHERE substr(date,1,7)=? GROUP BY date ORDER BY date", (month,))
+                "WHERE user_id=? AND substr(date,1,7)=? GROUP BY date ORDER BY date", (uid, month))
         ]
-        bal = balance_state(c)
+        bal = balance_state(c, uid)
     cats = []
     for name in sorted(set(spent) | set(caps)):
         s, cap = spent.get(name, 0), caps.get(name)

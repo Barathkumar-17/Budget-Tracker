@@ -2,12 +2,14 @@
 // (package:http MockClient), so no backend is needed.
 import 'dart:convert';
 
+import 'package:budget_tracker/api.dart';
 import 'package:budget_tracker/common.dart';
 import 'package:budget_tracker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_fonts.dart';
 
@@ -37,10 +39,16 @@ void uiTest(
   Map<String, Handler> routes,
   Future<void> Function(WidgetTester t, List<http.Request> calls) body, {
   Size size = const Size(500, 1000),
+  bool loggedIn = true,
 }) {
   testWidgets(name, (t) async {
     final calls = <http.Request>[];
+    // The app starts logged in unless the test says otherwise (a saved session token).
+    SharedPreferences.setMockInitialValues(
+        loggedIn ? {'session_token': 'saved-token'} : {});
+    Api.token = null;
     final all = <String, Handler>{
+      'GET /auth/me': (_) => json({'username': 'tester'}),
       'GET /dashboard': (_) => json(emptyDashboard),
       'GET /expenses': (_) => json([]),
       'GET /recurring': (_) => json([]),
@@ -316,6 +324,56 @@ void main() {
       expect(
           node.getSemanticsData().customSemanticsActionIds!.isNotEmpty, isTrue);
       handle.dispose();
+    });
+
+    uiTest('tapping an expense opens it for editing', {
+      'GET /expenses': (_) => json([
+            {
+              'id': 3,
+              'amount': 150.0,
+              'date': today,
+              'category': 'food',
+              'note': 'lunch',
+              'recurring_id': null
+            },
+          ]),
+      'PUT /expenses/3': (_) => json({
+            'expense': {
+              'id': 3,
+              'amount': 200.0,
+              'category': 'food',
+              'date': today,
+              'note': 'lunch'
+            },
+            'alert': null,
+            'balance': 800.0,
+            'low_balance_threshold': 0.0,
+            'low_balance': false,
+          }),
+    }, (t, calls) async {
+      await tab(t, 'Expenses');
+      await t.tap(find.text('Food'));
+      await settle(t);
+      expect(find.text('Edit expense'), findsOneWidget);
+      String text(String label) => t
+          .widget<TextField>(find.widgetWithText(TextField, label))
+          .controller!
+          .text;
+      // prefilled with the saved values
+      expect(text('Amount'), '150');
+      expect(text('Category'), 'Food');
+      expect(text('Note (optional)'), 'lunch');
+
+      await fillAndSubmit(t, {'Amount': '200'});
+      expect(bodyOf(last(calls, 'PUT', '/expenses/3')), {
+        'amount': 200.0,
+        'date': today,
+        'category': 'Food',
+        'note': 'lunch'
+      });
+      expect(called(calls, 'POST', '/expenses'),
+          isFalse); // an edit is not a new expense
+      expect(find.text('Updated Food ₹200'), findsOneWidget);
     });
 
     uiTest('rows are grouped by day; swipe deletes and Undo re-adds', {
@@ -673,6 +731,189 @@ void main() {
       expect(find.text('Enter an amount above 0'), findsOneWidget);
       expect(called(calls, 'POST', '/goals/7/contribute'), isFalse);
     });
+  });
+
+  group('Accounts', () {
+    Future<void> logIn(WidgetTester t, String name, String password) async {
+      await t.enterText(find.widgetWithText(TextField, 'Username'), name);
+      await t.enterText(find.widgetWithText(TextField, 'Password'), password);
+      await t.tap(find.widgetWithText(FilledButton, 'Log in'));
+      await settle(t);
+    }
+
+    Future<void> openRegister(WidgetTester t) async {
+      await t.ensureVisible(find.text('Create an account'));
+      await t.tap(find.text('Create an account'));
+      await settle(t);
+    }
+
+    uiTest('without a saved session the login screen comes first', {},
+        (t, calls) async {
+      expect(find.text('Budget Tracker'), findsOneWidget);
+      expect(find.text('Log in'), findsNWidgets(2)); // heading + button
+      expect(find.widgetWithText(TextField, 'Username'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Password'), findsOneWidget);
+      expect(find.text('Create an account'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing); // no app behind it
+      expect(calls.where((c) => c.url.path == '/dashboard'), isEmpty);
+    }, loggedIn: false);
+
+    uiTest('logging in shows the app and sends the token with every request', {
+      'POST /auth/login': (_) => json({'token': 'tok-123', 'username': 'sam'}),
+    }, (t, calls) async {
+      await logIn(t, 'sam', 'a long password');
+      expect(bodyOf(last(calls, 'POST', '/auth/login')),
+          {'username': 'sam', 'password': 'a long password'});
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.text('₹1,000 left'), findsOneWidget);
+      expect(last(calls, 'GET', '/dashboard').headers['Authorization'],
+          'Bearer tok-123');
+    }, loggedIn: false);
+
+    uiTest('a wrong password is explained and the login screen stays', {
+      'POST /auth/login': (_) =>
+          json({'detail': 'Wrong username or password'}, 401),
+    }, (t, calls) async {
+      await logIn(t, 'sam', 'not my password');
+      expect(find.text('Wrong username or password'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+      // a wrong password must not look like an expired session
+      expect(
+          find.text('Your session ended. Please log in again.'), findsNothing);
+    }, loggedIn: false);
+
+    uiTest('empty fields are caught before the server is called', {},
+        (t, calls) async {
+      await t.tap(find.widgetWithText(FilledButton, 'Log in'));
+      await settle(t);
+      expect(find.text('Enter your username'), findsOneWidget);
+      expect(find.text('Enter your password'), findsOneWidget);
+      expect(called(calls, 'POST', '/auth/login'), isFalse);
+    }, loggedIn: false);
+
+    uiTest('an unreachable server gives a clear message on login', {
+      'POST /auth/login': (_) => throw http.ClientException('offline'),
+    }, (t, calls) async {
+      await logIn(t, 'sam', 'a long password');
+      expect(find.textContaining('Could not reach the server'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+    }, loggedIn: false);
+
+    uiTest('creating an account validates every field first', {
+      'POST /auth/register': (_) =>
+          json({'token': 'new-tok', 'username': 'newbie'}, 201),
+    }, (t, calls) async {
+      await openRegister(t);
+      expect(find.text('Create your account'), findsOneWidget);
+      expect(
+          find.widgetWithText(TextField, 'Confirm password'), findsOneWidget);
+
+      await t.enterText(find.widgetWithText(TextField, 'Username'), 'ab');
+      await t.enterText(find.widgetWithText(TextField, 'Password'), 'short');
+      await t.enterText(
+          find.widgetWithText(TextField, 'Confirm password'), 'other');
+      await t.tap(find.widgetWithText(FilledButton, 'Create account'));
+      await settle(t);
+      expect(
+          find.text('Use 3-30 letters, numbers, dots, dashes or underscores'),
+          findsOneWidget);
+      expect(find.text('Use at least 8 characters'), findsOneWidget);
+      expect(find.text('The passwords do not match'), findsOneWidget);
+      expect(called(calls, 'POST', '/auth/register'), isFalse);
+
+      await t.enterText(find.widgetWithText(TextField, 'Username'), 'newbie');
+      await t.enterText(
+          find.widgetWithText(TextField, 'Password'), 'long enough pw');
+      await t.enterText(
+          find.widgetWithText(TextField, 'Confirm password'), 'long enough pw');
+      await t.tap(find.widgetWithText(FilledButton, 'Create account'));
+      await settle(t);
+      expect(bodyOf(last(calls, 'POST', '/auth/register')),
+          {'username': 'newbie', 'password': 'long enough pw'});
+      expect(find.byType(NavigationBar), findsOneWidget);
+    }, loggedIn: false);
+
+    uiTest('a taken username is reported on the username field', {
+      'POST /auth/register': (_) =>
+          json({'detail': 'That username is already taken'}, 409),
+    }, (t, calls) async {
+      await openRegister(t);
+      await t.enterText(find.widgetWithText(TextField, 'Username'), 'sam');
+      await t.enterText(
+          find.widgetWithText(TextField, 'Password'), 'long enough pw');
+      await t.enterText(
+          find.widgetWithText(TextField, 'Confirm password'), 'long enough pw');
+      await t.tap(find.widgetWithText(FilledButton, 'Create account'));
+      await settle(t);
+      expect(find.text('That username is already taken'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+    }, loggedIn: false);
+
+    uiTest('the show-password toggle reveals the password', {},
+        (t, calls) async {
+      TextField field() =>
+          t.widget<TextField>(find.widgetWithText(TextField, 'Password'));
+      expect(field().obscureText, isTrue);
+      await t.tap(find.byTooltip('Show password'));
+      await settle(t);
+      expect(field().obscureText, isFalse);
+    }, loggedIn: false);
+
+    uiTest('the account menu names the user and logs out', {
+      'POST /auth/logout': (_) => http.Response('', 204),
+    }, (t, calls) async {
+      await t.tap(find.byTooltip('Account'));
+      await settle(t);
+      expect(find.text('Signed in as tester'), findsOneWidget);
+      await t.tap(find.text('Log out'));
+      await settle(t);
+      expect(called(calls, 'POST', '/auth/logout'), isTrue);
+      expect(last(calls, 'POST', '/auth/logout').headers['Authorization'],
+          'Bearer saved-token');
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Log in'), findsOneWidget);
+      // and the saved session is gone, so a reload would not log back in
+      expect((await SharedPreferences.getInstance()).getString('session_token'),
+          isNull);
+    });
+
+    uiTest('a rejected session sends the user back to the login screen', {
+      'GET /dashboard': (_) => json({'detail': 'Please log in again'}, 401),
+    }, (t, calls) async {
+      expect(find.text('Your session ended. Please log in again.'),
+          findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+    });
+
+    uiTest('a saved session the server no longer accepts starts at login', {
+      'GET /auth/me': (_) => json({'detail': 'Please log in again'}, 401),
+    }, (t, calls) async {
+      expect(find.widgetWithText(FilledButton, 'Log in'), findsOneWidget);
+      expect(find.text('Your session ended. Please log in again.'),
+          findsOneWidget);
+    });
+
+    uiTest('if the server is down at start-up there is a retry', {
+      'GET /auth/me': (() {
+        var n = 0;
+        return (http.Request _) => n++ == 0
+            ? throw http.ClientException('offline')
+            : json({'username': 'tester'});
+      })(),
+    }, (t, calls) async {
+      expect(find.text('Could not reach the server'), findsOneWidget);
+      await t.tap(find.text('Retry'));
+      await settle(t);
+      expect(find.byType(NavigationBar), findsOneWidget);
+    });
+
+    uiTest('the login screen survives 2x system text', {}, (t, calls) async {
+      t.platformDispatcher.textScaleFactorTestValue = 2.0;
+      addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+      await settle(t);
+      await openRegister(t); // the longest form
+      expect(find.text('Create your account'), findsOneWidget);
+    }, size: const Size(360, 740), loggedIn: false);
   });
 
   group('Shell', () {
