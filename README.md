@@ -19,8 +19,9 @@ Categories are case-insensitive (`Food` and `food` are the same category). Amoun
 ## Repository layout
 
 ```
-backend/   FastAPI app (main.py) and pytest suite (test_main.py)
-app/       Flutter source: lib/ (screens, API client) and test/
+backend/            FastAPI app (main.py), pytest suite, Dockerfile
+app/                Flutter source: lib/ (screens, API client), test/, Dockerfile
+docker-compose.yml  Runs both together
 ```
 
 Flutter platform folders (`android/`, `web/`, ...) are generated, not committed.
@@ -86,6 +87,22 @@ Build for the web:
 ```bash
 flutter build web --dart-define=API_URL=http://127.0.0.1:8000
 ```
+
+## Docker
+
+Run the backend and the web app together:
+
+```bash
+docker compose up --build
+```
+
+- App: http://localhost:3000
+- API and docs: http://localhost:8000 and http://localhost:8000/docs
+- Data is kept in the `budget-data` volume. `docker compose down -v` deletes it.
+
+The web image bakes the API address in at build time (`API_URL` in `docker-compose.yml`, default `http://localhost:8000`). It must be an address the *browser* can reach. To serve it from another host, change that value and rebuild.
+
+> The Docker files have not been run through Docker on the author's machine (Docker wasn't installed). Their build steps were replayed natively and the base images verified to exist, but treat the first `docker compose up --build` as the real test.
 
 ## Testing
 
