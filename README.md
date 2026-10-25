@@ -72,6 +72,7 @@ app/                Flutter source: lib/ (screens, API client), test/, Dockerfil
 e2e/                Real-browser walkthrough of every page, README screenshot script
 docs/img/           Screenshots used in this README
 docker-compose.yml  Runs backend and web app together
+render.yaml         Render blueprint (two Docker services)
 ```
 
 Flutter platform folders (`android/`, `web/`, ...) are generated, not committed.
@@ -153,6 +154,18 @@ docker compose up --build
 The web image bakes the API address in at build time (`API_URL` in `docker-compose.yml`, default `http://localhost:8000`). It must be an address the *browser* can reach. To serve it from another host, change that value and rebuild.
 
 > The Docker files have not been run through Docker (it wasn't available where this was developed). Their build steps were replayed natively and the base images verified to exist, but treat the first `docker compose up --build` as the real test.
+
+## Deploy on Render (free tier)
+
+`render.yaml` describes two Docker web services, the API and the web app.
+
+1. On https://render.com choose **New > Blueprint** and select this repository. Do **not** create a plain "Web Service" at the repo root: the Dockerfiles live in `backend/` and `app/`, so Render would fail with "open Dockerfile: no such file".
+2. After the first deploy, open the API service and copy its URL. If it is not `https://budget-tracker-api.onrender.com` (names must be unique across Render), set the web service's `API_URL` environment variable to the real URL and redeploy the web service. The URL is baked into the web build.
+3. Optional demo data: `python backend/seed_demo.py --api https://<your-api>.onrender.com`
+
+If you create the services by hand instead, set **Root Directory** to `backend` (API) or `app` (web), runtime **Docker**, and give the web service an `API_URL` environment variable.
+
+Free-tier limits: services sleep after about 15 minutes idle (the first request then takes up to a minute), the filesystem is wiped on every restart or deploy so the SQLite data resets, and the URLs are public with no login. Use it as a demo, not for real finances. The Flutter build is memory-hungry and may not fit on a free instance.
 
 ## Testing
 

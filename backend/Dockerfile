@@ -10,5 +10,6 @@ ENV BUDGET_DB=/data/budget.db
 RUN mkdir /data
 VOLUME /data
 
+# Hosts like Render pass the port in $PORT; default to 8000 locally.
 EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

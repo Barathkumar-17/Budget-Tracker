@@ -1,0 +1,22 @@
+# Render Blueprint: New > Blueprint > pick this repo.
+# After the first deploy, check the API's real URL in the Render dashboard.
+# If it is not https://budget-tracker-api.onrender.com (names must be unique),
+# set API_URL on the web service to it and redeploy the web service.
+services:
+  - type: web
+    name: budget-tracker-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /account
+
+  - type: web
+    name: budget-tracker-web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./app/Dockerfile
+    dockerContext: ./app
+    envVars:
+      - key: API_URL
+        value: https://budget-tracker-api.onrender.com

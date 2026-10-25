@@ -15,4 +15,7 @@ RUN flutter create . --project-name budget_tracker --platforms=web \
 # Stage 2: serve the static files.
 FROM nginx:alpine
 COPY --from=build /app/build/web /usr/share/nginx/html
+# nginx substitutes ${PORT} into this template at start-up (Render sets PORT).
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+ENV PORT=80
 EXPOSE 80
