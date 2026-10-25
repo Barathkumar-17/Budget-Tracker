@@ -15,6 +15,12 @@ app = FastAPI(title="Budget Tracker")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+def root():
+    """Friendly landing response; also satisfies host health probes."""
+    return {"name": "Budget Tracker API", "docs": "/docs"}
+
+
 # ---- money: stored as integer paise, exposed as rupees ----
 def to_paise(x: Decimal | float) -> int:
     return int((Decimal(str(x)) * 100).to_integral_value())

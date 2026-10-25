@@ -116,3 +116,8 @@ def test_account_validation_and_low_balance_threshold_zero_disables_warning():
     assert client.put("/account", json={"opening_balance": -1, "low_balance_threshold": 0}).status_code == 422
     r = client.put("/account", json={"opening_balance": 0, "low_balance_threshold": 0}).json()
     assert r["low_balance"] is False
+
+
+def test_root_and_head_for_health_probes():
+    assert client.get("/").json() == {"name": "Budget Tracker API", "docs": "/docs"}
+    assert client.head("/").status_code == 200

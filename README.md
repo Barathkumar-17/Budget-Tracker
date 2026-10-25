@@ -88,7 +88,7 @@ Flutter platform folders (`android/`, `web/`, ...) are generated, not committed.
 ```bash
 cd backend
 pip install -r requirements.txt
-pytest                                   # 10 tests
+pytest                                   # 11 tests
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
