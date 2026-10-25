@@ -91,7 +91,7 @@ class GoalsScreen extends StatelessWidget {
         onRefresh: reload,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 48),
+          padding: EdgeInsets.only(bottom: isWide(context) ? 48 : 112),
           children: _content(context, all.cast<Map<String, dynamic>>()),
         ),
       ),
@@ -100,6 +100,7 @@ class GoalsScreen extends StatelessWidget {
 
   List<Widget> _content(BuildContext context, List<Map<String, dynamic>> rows) {
     final head = PageHead(
+      eyebrow: 'Savings',
       title: 'Goals',
       subtitle:
           'Money you are setting aside. Contributions come out of your balance.',
@@ -174,7 +175,7 @@ class _GoalPanel extends StatelessWidget {
           Ring(
             percent: saved / target * 100,
             size: 84,
-            color: reached ? k.match : k.cobalt,
+            color: reached ? k.match : k.link,
             center: '$percent%',
           ),
           const SizedBox(width: 18),

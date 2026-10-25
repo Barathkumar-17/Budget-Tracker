@@ -74,11 +74,6 @@ void main() {
       expect(colors.length, names.length);
     });
 
-    test('dark palette differs from light', () {
-      expect(categoryColor('food', Brightness.dark),
-          isNot(categoryColor('food', Brightness.light)));
-    });
-
     test('unknown names still get a palette colour', () {
       expect(categoryColor('zzz-unknown', Brightness.light), isA<Color>());
     });

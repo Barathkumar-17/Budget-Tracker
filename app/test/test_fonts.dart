@@ -5,20 +5,17 @@ import 'package:flutter/services.dart';
 /// Call from `setUpAll` in any test that renders real screens.
 Future<void> loadAppFonts() async {
   const families = {
-    'Bricolage': [
-      'assets/fonts/Bricolage-Regular.ttf',
-      'assets/fonts/Bricolage-Medium.ttf',
-      'assets/fonts/Bricolage-SemiBold.ttf',
-      'assets/fonts/Bricolage-Bold.ttf',
+    'UntitledSans': [
+      'assets/fonts/Inter-Regular.ttf',
+      'assets/fonts/Inter-Medium.ttf',
+      'assets/fonts/Inter-SemiBold.ttf',
+      'assets/fonts/Inter-Bold.ttf',
     ],
-    'BricolageDisplay': [
-      'assets/fonts/BricolageDisplay-Bold.ttf',
-      'assets/fonts/BricolageDisplay-ExtraBold.ttf',
+    'Aeonik': [
+      'assets/fonts/SpaceGrotesk-Regular.ttf',
+      'assets/fonts/SpaceGrotesk-Medium.ttf',
     ],
-    'SourceSerif': [
-      'assets/fonts/SourceSerif4-Regular.ttf',
-      'assets/fonts/SourceSerif4-SemiBold.ttf',
-    ],
+    'DotDigital': ['assets/fonts/JetBrainsMono-Regular.ttf'],
   };
   for (final entry in families.entries) {
     final loader = FontLoader(entry.key);

@@ -6,6 +6,8 @@ services:
     name: budget-tracker
     runtime: docker
     plan: free
+    branch: main
+    autoDeploy: true   # rebuild on every push to main
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /

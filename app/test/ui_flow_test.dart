@@ -90,7 +90,7 @@ Future<void> settle(WidgetTester t) async {
   }
 }
 
-/// The navigation entry (sidebar on wide windows, scrolling tabs on phones).
+/// The navigation entry (a pill at the top on wide windows, a bottom pill on phones).
 Finder navItem(String name) => find.descendant(
     of: find.byWidgetPredicate(
         (w) => w is Semantics && w.properties.label == 'Main navigation'),
@@ -174,9 +174,8 @@ void main() {
       expect(find.text('Know where your money goes.'), findsOneWidget);
       expect(find.text('How it works'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Create account'),
-          findsNWidgets(2));
+          findsNWidgets(3));
       expect(find.widgetWithText(OutlinedButton, 'Log in'), findsNWidgets(2));
-      expect(find.byTooltip('Switch to dark theme'), findsOneWidget);
       expect(find.text('Use demo account'),
           findsNothing); // only when built with SHOW_DEMO
       expect(calls.where((c) => c.url.path == '/dashboard'), isEmpty);
@@ -197,21 +196,6 @@ void main() {
       await t.tap(find.widgetWithText(FilledButton, 'Create account').first);
       await settle(t);
       expect(find.text('Create your account'), findsOneWidget);
-    }, loggedIn: false);
-
-    uiTest('the theme toggle switches to dark and is remembered', {},
-        (t, calls) async {
-      Brightness b() =>
-          Theme.of(t.element(find.byType(Scaffold).first)).brightness;
-      expect(b(), Brightness.light);
-      await t.tap(find.byTooltip('Switch to dark theme'));
-      await settle(t);
-      expect(b(), Brightness.dark);
-      expect(
-          (await SharedPreferences.getInstance()).getString('theme'), 'dark');
-      await t.tap(find.byTooltip('Switch to light theme'));
-      await settle(t);
-      expect(b(), Brightness.light);
     }, loggedIn: false);
   });
 
@@ -928,7 +912,7 @@ void main() {
       expect(called(calls, 'DELETE', '/goals/7'), isFalse);
 
       await press(t, 'Remove', type: OutlinedButton);
-      await press(t, 'Delete goal');
+      await press(t, 'Delete goal', type: OutlinedButton);
       expect(called(calls, 'DELETE', '/goals/7'), isTrue);
     });
 
@@ -974,19 +958,19 @@ void main() {
       expect(find.text('Hi, Tester'), findsOneWidget);
     });
 
-    uiTest('a wide window has a sidebar with the navigation and the user', {},
+    uiTest('a wide window has a top navigation pill and the signed-in user', {},
         (t, calls) async {
-      expect(find.text('Dashboard'), findsOneWidget); // only in the sidebar
+      expect(find.text('Dashboard'), findsOneWidget);
       expect(find.text('tester'), findsOneWidget);
-      expect(find.text('Signed in'), findsOneWidget);
-      final sidebarWidth = t
-          .getSize(find.byWidgetPredicate(
-              (w) => w is Container && w.constraints?.maxWidth == 240))
-          .width;
-      expect(sidebarWidth, 240);
+      expect(find.byTooltip('Log out'), findsOneWidget);
+      // the nav sits in one row across the top, centred
+      final nav = t.getCenter(find.byWidgetPredicate(
+          (w) => w is Semantics && w.properties.label == 'Main navigation'));
+      expect(nav.dx, closeTo(600, 40));
+      expect(nav.dy, lessThan(80));
     });
 
-    uiTest('a phone gets a top bar and scrolling tabs instead of a sidebar', {},
+    uiTest('a phone gets a top bar and a floating bottom navigation pill', {},
         (t, calls) async {
       expect(find.byTooltip('Log out'), findsOneWidget);
       expect(find.text('Dashboard'), findsOneWidget);

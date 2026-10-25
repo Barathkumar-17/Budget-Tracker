@@ -248,13 +248,6 @@ with sync_playwright() as p:
     step("expenses: final list has food, rent and netflix",
          app.count(r"^Edit Food") == 1 and app.count(r"^Edit Rent") == 1 and app.count(r"^Edit Netflix") == 1)
 
-    # ---------------- Theme ----------------
-    app.button("Switch to dark theme")
-    step("theme: switches to dark", app.has("Switch to light theme"))
-    app.reload()
-    step("theme: the choice survives a reload", app.has("Switch to light theme"))
-    app.button("Switch to light theme")
-
     # ---------------- Accounts: log out, log back in, privacy ----------------
     app.log_out()
     step("accounts: log out returns to the landing page",

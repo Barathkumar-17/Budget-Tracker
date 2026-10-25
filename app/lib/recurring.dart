@@ -102,7 +102,7 @@ class RecurringScreen extends StatelessWidget {
         onRefresh: reload,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 48),
+          padding: EdgeInsets.only(bottom: isWide(context) ? 48 : 112),
           children: _content(context, all.cast<Map<String, dynamic>>()),
         ),
       ),
@@ -115,6 +115,7 @@ class RecurringScreen extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     final wide = isWide(context);
     final head = PageHead(
+      eyebrow: 'Every month',
       title: 'Recurring',
       subtitle:
           'Bills and subscriptions that repeat every month. Add them to any month with one click.',

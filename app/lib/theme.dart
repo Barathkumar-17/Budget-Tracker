@@ -1,30 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// Design tokens. The values are the ones in the ResumeMatch stylesheet
-/// (ink navy, cobalt, highlighter yellow, green / amber / red states), in
-/// light and dark.
+/// Design tokens: a midnight canvas with frosted-glass surfaces, cool blue-white
+/// text that steps from headline to helper copy, hairline glass edges instead of
+/// borders, one violet for the main action, and ember / teal for status only.
 @immutable
 class Tk extends ThemeExtension<Tk> {
-  final Color bg, paper, ink, ink2, ink3, line, line2;
-  final Color cobalt, cobaltDark, cobaltSoft, btn, btnHover, link;
+  /// Page background, the deepest layer.
+  final Color bg;
+
+  /// A card: a barely visible frost tint above the canvas.
+  final Color paper;
+
+  /// Dialogs and the sign-in card: almost opaque midnight.
+  final Color deep;
+
+  /// Headline, body, muted, helper text.
+  final Color ink, ink2, ink3, ink4;
+
+  /// Hairline edge, and the stronger edge of a focused field.
+  final Color line, line2;
+
+  /// The accent (violet) and what sits on it.
+  final Color cobalt, btn, btnHover, link;
+
+  /// A bright frost for avatars and small highlights, and the text on it.
   final Color hl, onHl;
+
+  /// Status: within budget (teal) and over budget / low balance (ember).
   final Color match, matchSoft, miss, missSoft, amber, amberSoft;
-  final Color purple, purpleSoft;
+
+  /// Tags and soft fills.
+  final Color purple, purpleSoft, cobaltSoft;
+
+  /// Pill and field fill, empty bar track, selected tab.
   final Color surface2, track, strong, onStrong;
 
   const Tk({
     required this.bg,
     required this.paper,
+    required this.deep,
     required this.ink,
     required this.ink2,
     required this.ink3,
+    required this.ink4,
     required this.line,
     required this.line2,
     required this.cobalt,
-    required this.cobaltDark,
-    required this.cobaltSoft,
     required this.btn,
     required this.btnHover,
     required this.link,
@@ -38,70 +60,58 @@ class Tk extends ThemeExtension<Tk> {
     required this.amberSoft,
     required this.purple,
     required this.purpleSoft,
+    required this.cobaltSoft,
     required this.surface2,
     required this.track,
     required this.strong,
     required this.onStrong,
   });
 
-  static const light = Tk(
-    bg: Color(0xFFEDF0F4),
-    paper: Color(0xFFFFFFFF),
-    ink: Color(0xFF18223D),
-    ink2: Color(0xFF4A5470),
-    ink3: Color(0xFF5F6985),
-    line: Color(0xFFD9DEE7),
-    line2: Color(0xFF858EA6),
-    cobalt: Color(0xFF2F4FD8),
-    cobaltDark: Color(0xFF2340B8),
-    cobaltSoft: Color(0xFFE6EBFD),
-    btn: Color(0xFF2F4FD8),
-    btnHover: Color(0xFF2340B8),
-    link: Color(0xFF2F4FD8),
-    hl: Color(0xFFFFE45C),
-    onHl: Color(0xFF18223D),
-    match: Color(0xFF0F7A4F),
-    matchSoft: Color(0xFFDDF3E9),
-    miss: Color(0xFFB5332D),
-    missSoft: Color(0xFFFBE6E4),
-    amber: Color(0xFF8F5F00),
-    amberSoft: Color(0xFFFCF1D6),
-    purple: Color(0xFF5B3CC4),
-    purpleSoft: Color(0xFFEEE8FB),
-    surface2: Color(0xFFF4F6FA),
-    track: Color(0xFFE3E7EF),
-    strong: Color(0xFF18223D),
-    onStrong: Color(0xFFFFFFFF),
-  );
+  static const midnight = Color(0xFF05060F);
+  static const steel = Color(0xFF2F343E);
+  static const fog = Color(0xFF9DA7BA);
+  static const mist = Color(0xFFC7D3EA);
+  static const frost = Color(0xFFD1E4FA);
+  static const ice = Color(0xFFD8ECF8);
+  static const iceDeep = Color(0xFF98C0EF);
+  static const violet = Color(0xFF663AF3);
+  static const blueprint = Color(0xFFB6D9FC);
+  static const ember = Color(0xFFE46D4C);
+  static const signal = Color(0xFF027DEA);
+  static const teal = Color(0xFF269684);
 
-  static const dark = Tk(
-    bg: Color(0xFF0D1322),
-    paper: Color(0xFF141B2F),
-    ink: Color(0xFFE7EBF7),
-    ink2: Color(0xFFAEB7D1),
-    ink3: Color(0xFF8993B0),
-    line: Color(0xFF2A3453),
-    line2: Color(0xFF6A759A),
-    cobalt: Color(0xFF4F6FF0),
-    cobaltDark: Color(0xFFA9BBFF),
-    cobaltSoft: Color(0xFF1E2A56),
-    btn: Color(0xFF3B58D6),
-    btnHover: Color(0xFF3250CC),
-    link: Color(0xFF8FA5FF),
-    hl: Color(0xFFFFE45C),
-    onHl: Color(0xFF18223D),
-    match: Color(0xFF4CCB93),
-    matchSoft: Color(0xFF12382B),
-    miss: Color(0xFFFF7B73),
-    missSoft: Color(0xFF3F1F1E),
-    amber: Color(0xFFE8AE45),
-    amberSoft: Color(0xFF3A2D10),
-    purple: Color(0xFFB7A5FF),
-    purpleSoft: Color(0xFF2A2352),
-    surface2: Color(0xFF1B2440),
-    track: Color(0xFF27304D),
-    strong: Color(0xFF2B3A72),
-    onStrong: Color(0xFFFFFFFF),
+  /// rgba(186, 215, 247, a): the frosted blue-white used for every hairline.
+  static Color frostA(double a) => Color.fromRGBO(186, 215, 247, a);
+
+  static final dark = Tk(
+    bg: midnight,
+    paper: frostA(0.03),
+    deep: const Color(0xF705060F),
+    ink: ice,
+    ink2: frost,
+    ink3: mist,
+    ink4: fog,
+    line: frostA(0.12),
+    line2: frostA(0.24),
+    cobalt: violet,
+    btn: violet,
+    btnHover: const Color(0xFF7A55F5),
+    link: blueprint,
+    hl: frost,
+    onHl: midnight,
+    match: const Color(0xFF3FBFA8),
+    matchSoft: teal.withValues(alpha: 0.16),
+    miss: const Color(0xFFF08A6D),
+    missSoft: ember.withValues(alpha: 0.14),
+    amber: const Color(0xFFF08A6D),
+    amberSoft: ember.withValues(alpha: 0.14),
+    purple: blueprint,
+    purpleSoft: const Color(0x1FC7D3EA),
+    cobaltSoft: const Color(0x1FC7D3EA),
+    surface2: Color.fromRGBO(186, 214, 247, 0.06),
+    track: Color.fromRGBO(199, 211, 234, 0.12),
+    strong: Color.fromRGBO(186, 214, 247, 0.14),
+    onStrong: Colors.white,
   );
 
   @override
@@ -116,14 +126,18 @@ extension TkContext on BuildContext {
   Tk get tk => Theme.of(this).extension<Tk>()!;
 }
 
-const sans = 'Bricolage';
-const display = 'BricolageDisplay';
-const serif = 'SourceSerif';
+/// Body and interface (Inter stands in for Untitled Sans), display headings
+/// (Space Grotesk for Aeonik) and the tracked all-caps labels (JetBrains Mono
+/// for dotDigital).
+const sans = 'UntitledSans';
+const display = 'Aeonik';
+const mono = 'DotDigital';
 
 TextStyle _t(double size, FontWeight w, Color color,
         {String family = sans, double? height, double? ls}) =>
     TextStyle(
       fontFamily: family,
+      fontFamilyFallback: const [sans],
       fontSize: size,
       fontWeight: w,
       color: color,
@@ -133,61 +147,63 @@ TextStyle _t(double size, FontWeight w, Color color,
     );
 
 TextTheme _textTheme(Tk k) => TextTheme(
-      // hero headline
-      displayLarge: _t(64, FontWeight.w800, k.ink,
-          family: display, height: 1.02, ls: -2.2),
-      displayMedium: _t(44, FontWeight.w800, k.ink,
-          family: display, height: 1.04, ls: -1.5),
+      // the hero wordmark
+      displayLarge: _t(48, FontWeight.w500, k.ink,
+          family: display, height: 1.17, ls: -0.5),
+      displayMedium:
+          _t(44, FontWeight.w500, k.ink, family: display, height: 1.16),
       // page title
-      headlineMedium: _t(33, FontWeight.w800, k.ink,
-          family: display, height: 1.15, ls: -0.4),
-      headlineSmall: _t(27, FontWeight.w800, k.ink,
-          family: display, height: 1.15, ls: -0.3),
-      titleLarge: _t(22, FontWeight.w800, k.ink,
-          family: display, height: 1.2, ls: -0.3),
+      headlineMedium:
+          _t(28, FontWeight.w500, k.ink, family: display, height: 1.14),
+      headlineSmall: _t(24, FontWeight.w500, k.ink,
+          family: display, height: 1.17, ls: -0.24),
+      titleLarge: _t(24, FontWeight.w500, k.ink,
+          family: display, height: 1.17, ls: -0.24),
       // panel heading
       titleMedium:
-          _t(17.6, FontWeight.w700, k.ink, family: display, height: 1.2),
-      titleSmall: _t(15, FontWeight.w700, k.ink, height: 1.25),
-      bodyLarge: _t(16, FontWeight.w400, k.ink, height: 1.5),
-      bodyMedium: _t(15, FontWeight.w400, k.ink, height: 1.5),
-      bodySmall: _t(14, FontWeight.w400, k.ink2, height: 1.45),
-      labelLarge: _t(15.2, FontWeight.w600, k.ink, height: 1.2),
-      labelMedium: _t(13.6, FontWeight.w600, k.ink2, height: 1.2),
-      labelSmall: _t(12.5, FontWeight.w600, k.ink3, height: 1.2),
+          _t(18, FontWeight.w500, k.ink, family: display, height: 1.33),
+      titleSmall: _t(14, FontWeight.w500, k.ink, height: 1.43),
+      bodyLarge: _t(16, FontWeight.w400, k.ink2, height: 1.5, ls: -0.16),
+      bodyMedium: _t(14, FontWeight.w400, k.ink2, height: 1.43),
+      bodySmall: _t(14, FontWeight.w400, k.ink3, height: 1.43),
+      labelLarge: _t(14, FontWeight.w500, k.ink, height: 1.43),
+      labelMedium: _t(12, FontWeight.w500, k.ink3, height: 1.33),
+      labelSmall: _t(12, FontWeight.w400, k.ink4, height: 1.33),
     );
 
-ThemeData buildTheme(Brightness brightness) {
-  final k = brightness == Brightness.dark ? Tk.dark : Tk.light;
+/// The app is dark only: the design has no light palette.
+ThemeData buildTheme() {
+  final k = Tk.dark;
   final text = _textTheme(k);
-  final radius10 = BorderRadius.circular(10);
-  OutlineInputBorder border(Color c, [double w = 1.5]) => OutlineInputBorder(
-      borderRadius: radius10, borderSide: BorderSide(color: c, width: w));
+  final radius6 = BorderRadius.circular(6);
+  OutlineInputBorder border(Color c) => OutlineInputBorder(
+      borderRadius: radius6, borderSide: BorderSide(color: c, width: 1));
   return ThemeData(
     useMaterial3: true,
-    brightness: brightness,
+    brightness: Brightness.dark,
     extensions: [k],
-    scaffoldBackgroundColor: k.bg,
+    scaffoldBackgroundColor: Colors.transparent,
+    canvasColor: k.bg,
     colorScheme: ColorScheme(
-      brightness: brightness,
+      brightness: Brightness.dark,
       primary: k.btn,
       onPrimary: Colors.white,
       secondary: k.cobalt,
       onSecondary: Colors.white,
       error: k.miss,
       onError: Colors.white,
-      surface: k.paper,
+      surface: k.bg,
       onSurface: k.ink,
-      onSurfaceVariant: k.ink2,
+      onSurfaceVariant: k.ink3,
       outline: k.line2,
       outlineVariant: k.line,
       surfaceContainerHighest: k.surface2,
       primaryContainer: k.cobaltSoft,
-      onPrimaryContainer: k.cobaltDark,
+      onPrimaryContainer: k.ink2,
       errorContainer: k.missSoft,
       onErrorContainer: k.miss,
       secondaryContainer: k.cobaltSoft,
-      onSecondaryContainer: k.cobaltDark,
+      onSecondaryContainer: k.ink2,
       tertiaryContainer: k.amberSoft,
       onTertiaryContainer: k.amber,
       tertiary: k.amber,
@@ -200,45 +216,50 @@ ThemeData buildTheme(Brightness brightness) {
     primaryTextTheme: text,
     fontFamily: sans,
     splashFactory: InkRipple.splashFactory,
+    splashColor: k.surface2,
+    highlightColor: Colors.transparent,
+    hoverColor: Tk.frostA(0.04),
     dividerTheme: DividerThemeData(color: k.line, space: 1, thickness: 1),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: k.paper,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      border: border(k.line2),
-      enabledBorder: border(k.line2),
-      focusedBorder: border(k.cobalt),
+      fillColor: const Color.fromRGBO(199, 211, 234, 0.06),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+      border: border(k.line),
+      enabledBorder: border(k.line),
+      focusedBorder: border(k.line2),
       errorBorder: border(k.miss),
       focusedErrorBorder: border(k.miss),
       disabledBorder: border(k.line),
-      hintStyle: text.bodyLarge!.copyWith(color: k.ink3),
+      hintStyle: text.bodyLarge!
+          .copyWith(color: const Color.fromRGBO(199, 211, 234, 0.6)),
       errorStyle:
           text.labelSmall!.copyWith(color: k.miss, fontWeight: FontWeight.w500),
-      helperStyle:
-          text.labelSmall!.copyWith(color: k.ink3, fontWeight: FontWeight.w400),
+      helperStyle: text.labelSmall!.copyWith(color: k.ink4),
     ),
     textSelectionTheme: TextSelectionThemeData(
-      cursorColor: k.link,
-      selectionColor: k.hl.withValues(alpha: 0.6),
-      selectionHandleColor: k.cobalt,
+      cursorColor: k.ink,
+      selectionColor: k.cobalt.withValues(alpha: 0.5),
+      selectionHandleColor: k.link,
     ),
     snackBarTheme: SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: k.strong,
-      contentTextStyle: text.bodyMedium!.copyWith(color: k.onStrong),
-      actionTextColor: k.hl,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      backgroundColor: const Color(0xFF0B0D1A),
+      contentTextStyle: text.bodyMedium!.copyWith(color: k.ink),
+      actionTextColor: k.link,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: k.line2)),
       width: 560,
     ),
     dialogTheme: DialogThemeData(
-      backgroundColor: k.paper,
+      backgroundColor: k.deep,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: k.line)),
     ),
     popupMenuTheme: PopupMenuThemeData(
-      color: k.paper,
+      color: k.deep,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -246,109 +267,62 @@ ThemeData buildTheme(Brightness brightness) {
       textStyle: text.bodyMedium,
     ),
     datePickerTheme: DatePickerThemeData(
-      backgroundColor: k.paper,
+      backgroundColor: const Color(0xFF0B0D1A),
       surfaceTintColor: Colors.transparent,
-      headerBackgroundColor: k.strong,
-      headerForegroundColor: k.onStrong,
+      headerBackgroundColor: const Color(0xFF111426),
+      headerForegroundColor: k.ink,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-          color: k.strong, borderRadius: BorderRadius.circular(8)),
-      textStyle: text.labelMedium!.copyWith(color: k.onStrong),
+          color: const Color(0xFF111426),
+          border: Border.all(color: k.line2),
+          borderRadius: BorderRadius.circular(6)),
+      textStyle: text.labelMedium!.copyWith(color: k.ink),
     ),
     progressIndicatorTheme:
-        ProgressIndicatorThemeData(color: k.cobalt, linearTrackColor: k.track),
-    appBarTheme: AppBarTheme(
-      systemOverlayStyle: brightness == Brightness.dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
-    ),
+        ProgressIndicatorThemeData(color: k.link, linearTrackColor: k.track),
+    appBarTheme:
+        const AppBarTheme(systemOverlayStyle: SystemUiOverlayStyle.light),
   );
 }
 
-/// Light / dark / follow the system. The choice is remembered (see auth.dart).
-class ThemeController extends ChangeNotifier {
-  static const _key = 'theme';
-  ThemeMode mode = ThemeMode.system;
-
-  Future<void> restore() async {
-    try {
-      final v = (await SharedPreferences.getInstance()).getString(_key);
-      mode = switch (v) {
-        'dark' => ThemeMode.dark,
-        'light' => ThemeMode.light,
-        _ => ThemeMode.system,
-      };
-      notifyListeners();
-    } catch (_) {}
-  }
-
-  Future<void> set(ThemeMode m) async {
-    mode = m;
-    notifyListeners();
-    try {
-      await (await SharedPreferences.getInstance()).setString(_key, m.name);
-    } catch (_) {}
-  }
-}
-
-class ThemeScope extends InheritedNotifier<ThemeController> {
-  const ThemeScope(
-      {super.key, required ThemeController controller, required super.child})
-      : super(notifier: controller);
-
-  static ThemeController of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<ThemeScope>()!.notifier!;
-}
-
-/// Category colours for the dot and tag next to a category name.
-const _catLight = <Color>[
-  Color(0xFF2F4FD8), // cobalt
-  Color(0xFF0F7A4F), // green
-  Color(0xFF8F5F00), // amber
-  Color(0xFF5B3CC4), // purple
-  Color(0xFF0E7C8C), // teal
-  Color(0xFFB1306F), // magenta
-  Color(0xFF7A4B20), // brown
-  Color(0xFF4A5470), // slate
-  Color(0xFF5E7A12), // olive
-];
-const _catDark = <Color>[
-  Color(0xFF8FA5FF),
-  Color(0xFF4CCB93),
-  Color(0xFFE8AE45),
-  Color(0xFFB7A5FF),
-  Color(0xFF4FC6DA),
-  Color(0xFFF07DB8),
-  Color(0xFFD4A06A),
-  Color(0xFFAEB7D1),
-  Color(0xFFB4C95A),
+/// Category colours for the dot and tag next to a category name. The palette
+/// has no extra hues, so categories are told apart by steps of cool blue-white.
+const _cats = <Color>[
+  Color(0xFFB6D9FC), // blueprint
+  Color(0xFF3FBFA8), // teal
+  Color(0xFF6FA8F2), // signal, lightened
+  Color(0xFFD8ECF8), // ice
+  Color(0xFF8E9BF5), // violet, lightened
+  Color(0xFF9DA7BA), // fog
+  Color(0xFF98C0EF), // ice deep
+  Color(0xFF5FD0E0), // cyan
+  Color(0xFFC7D3EA), // mist
 ];
 
 const _knownCats = <String, int>{
-  'food': 2,
-  'snacks': 2,
-  'tea': 2,
-  'transport': 0,
-  'rent': 3,
-  'fun': 5,
-  'shopping': 4,
-  'bills': 7,
+  'food': 0,
+  'snacks': 0,
+  'tea': 0,
+  'transport': 2,
+  'rent': 4,
+  'fun': 3,
+  'shopping': 7,
+  'bills': 5,
   'health': 1,
   'subscriptions': 6,
   'netflix': 6,
   'gym': 8,
 };
 
-Color categoryColor(String name, Brightness b) {
+Color categoryColor(String name, [Brightness? _]) {
   final key = name.trim().toLowerCase();
-  final palette = b == Brightness.dark ? _catDark : _catLight;
   final known = _knownCats[key];
-  if (known != null) return palette[known];
+  if (known != null) return _cats[known];
   var h = 5381;
   for (final c in key.codeUnits) {
     h = ((h * 33) ^ c) & 0x7fffffff;
   }
-  return palette[h % palette.length];
+  return _cats[h % _cats.length];
 }

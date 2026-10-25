@@ -253,20 +253,20 @@ class _Pill extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? k.strong : k.surface2,
             borderRadius: BorderRadius.circular(99),
+            border: Border.all(color: selected ? k.line2 : k.line),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Container(
                 width: 9,
                 height: 9,
-                decoration: BoxDecoration(
-                    color: selected ? k.hl : c, shape: BoxShape.circle)),
+                decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
             const SizedBox(width: 7),
             Text(label,
                 style: TextStyle(
                     fontFamily: sans,
                     fontSize: 13.6,
-                    fontWeight: FontWeight.w600,
-                    color: selected ? k.onStrong : k.ink)),
+                    fontWeight: FontWeight.w500,
+                    color: selected ? Colors.white : k.ink2)),
           ]),
         ),
       ),
@@ -338,7 +338,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           onRefresh: reload,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(bottom: 48),
+            padding: EdgeInsets.only(bottom: isWide(context) ? 48 : 112),
             children: _content(context, rows),
           ),
         );
@@ -351,6 +351,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final k = context.tk;
     final wide = isWide(context);
     final head = PageHead(
+      eyebrow: 'Ledger',
       title: 'Expenses',
       subtitle: rows.isEmpty
           ? 'Everything you spend in ${monthLabel(app.month)} will be listed here.'

@@ -71,7 +71,7 @@ class BudgetsScreen extends StatelessWidget {
           onRefresh: reload,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(bottom: 48),
+            padding: EdgeInsets.only(bottom: isWide(context) ? 48 : 112),
             children: _content(context, rows),
           ),
         );
@@ -83,6 +83,7 @@ class BudgetsScreen extends StatelessWidget {
     final app = AppScope.of(context);
     final k = context.tk;
     final head = PageHead(
+      eyebrow: 'Monthly caps',
       title: 'Budgets',
       subtitle:
           'A monthly cap per category. The bar shows how much of each you have used.',
@@ -173,7 +174,7 @@ class _BudgetRow extends StatelessWidget {
           label: '${money(spent)} spent',
           trailing: 'of ${money(cap)}',
           fraction: ratio,
-          color: ratio > 1 ? k.miss : (ratio >= 0.85 ? k.amber : k.cobalt),
+          color: ratio > 1 ? k.miss : (ratio >= 0.85 ? k.amber : k.link),
           why: over
               ? '${money(spent - cap)} over budget'
               : '${money(cap - spent)} left',

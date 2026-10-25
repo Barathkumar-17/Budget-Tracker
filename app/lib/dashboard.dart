@@ -96,7 +96,7 @@ class DashboardScreen extends StatelessWidget {
 
 Color _barColor(BuildContext c, double ratio) {
   final k = c.tk;
-  return ratio > 1 ? k.miss : (ratio >= 0.85 ? k.amber : k.cobalt);
+  return ratio > 1 ? k.miss : (ratio >= 0.85 ? k.amber : k.link);
 }
 
 class _DashboardBody extends StatelessWidget {
@@ -294,9 +294,10 @@ class _DashboardBody extends StatelessWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 48),
+      padding: EdgeInsets.only(bottom: isWide(context) ? 48 : 112),
       children: [
         PageHead(
+          eyebrow: 'Overview',
           title: 'Hi, ${titleCase(auth.username ?? '')}',
           subtitle: subtitle,
           actions: [
@@ -363,7 +364,7 @@ class _DashboardBody extends StatelessWidget {
       label: g['name'] as String,
       trailing: '${money(saved)} of ${money(target)}',
       fraction: target == 0 ? 0 : saved / target,
-      color: saved >= target ? k.match : k.cobalt,
+      color: saved >= target ? k.match : k.link,
     );
   }
 }

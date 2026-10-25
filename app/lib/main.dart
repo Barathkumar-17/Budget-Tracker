@@ -22,39 +22,30 @@ class BudgetApp extends StatefulWidget {
 
 class _BudgetAppState extends State<BudgetApp> {
   final _auth = AuthState();
-  final _theme = ThemeController();
 
   @override
   void initState() {
     super.initState();
-    _theme.restore();
     _auth.restore();
   }
 
   @override
   void dispose() {
     _auth.dispose();
-    _theme.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ThemeScope(
-      controller: _theme,
-      child: AuthScope(
-        state: _auth,
-        child: ListenableBuilder(
-          listenable: _theme,
-          builder: (context, _) => MaterialApp(
-            title: 'Budget Tracker',
-            debugShowCheckedModeBanner: false,
-            theme: buildTheme(Brightness.light),
-            darkTheme: buildTheme(Brightness.dark),
-            themeMode: _theme.mode,
-            home: const _Gate(),
-          ),
-        ),
+    return AuthScope(
+      state: _auth,
+      child: MaterialApp(
+        title: 'Budget Tracker',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(),
+        // The midnight canvas, grid and spotlight sit behind every page.
+        builder: (context, child) => Atmosphere(child: child!),
+        home: const _Gate(),
       ),
     );
   }
@@ -131,7 +122,6 @@ class Shell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final k = context.tk;
     final wide = isWide(context);
     final still = MediaQuery.of(context).disableAnimations;
     final content = AnimatedSwitcher(
@@ -139,12 +129,12 @@ class Shell extends StatelessWidget {
       child: KeyedSubtree(key: ValueKey(app.tab), child: _page(app.tab)),
     );
     final padded = Align(
-      alignment: Alignment.topLeft,
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1240),
+        constraints: const BoxConstraints(maxWidth: 1200),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-              wide ? 40 : 18, wide ? 36 : 22, wide ? 40 : 18, 0),
+              wide ? 32 : 16, wide ? 28 : 12, wide ? 32 : 16, 0),
           child: content,
         ),
       ),
@@ -156,107 +146,114 @@ class Shell extends StatelessWidget {
         if (!didPop) app.goTo(0);
       },
       child: Scaffold(
-        backgroundColor: k.bg,
-        body: wide
-            ? Row(children: [
-                _Sidebar(selected: app.tab, onSelect: app.goTo),
-                Expanded(child: padded),
-              ])
-            : SafeArea(
-                child: Column(children: [
-                  const _TopBar(),
-                  _TabRow(selected: app.tab, onSelect: app.goTo),
+        body: SafeArea(
+          child: wide
+              ? Column(children: [
+                  _TopNav(selected: app.tab, onSelect: app.goTo),
                   Expanded(child: padded),
+                ])
+              : Stack(children: [
+                  Column(children: [
+                    const _PhoneBar(),
+                    Expanded(child: padded),
+                  ]),
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 10,
+                    child: _BottomNav(selected: app.tab, onSelect: app.goTo),
+                  ),
                 ]),
-              ),
+        ),
       ),
     );
   }
 }
 
-// ----------------------------------------------------------------- sidebar
+// --------------------------------------------------------------- desktop nav
 
-class _Sidebar extends StatelessWidget {
+/// Logo on the left, a floating glass pill of sections in the middle, the
+/// signed-in user on the right.
+class _TopNav extends StatelessWidget {
   final int selected;
   final ValueChanged<int> onSelect;
-  const _Sidebar({required this.selected, required this.onSelect});
+  const _TopNav({required this.selected, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
     final k = context.tk;
+    final width = MediaQuery.sizeOf(context).width;
     return Container(
-      width: 240,
-      decoration: BoxDecoration(
-        color: k.paper,
-        border: Border(right: BorderSide(color: k.line)),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 24),
-          child: Align(alignment: Alignment.centerLeft, child: Logo()),
-        ),
+      decoration:
+          BoxDecoration(border: Border(bottom: BorderSide(color: k.line))),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      child: Row(children: [
+        const Expanded(
+            child: Align(alignment: Alignment.centerLeft, child: Logo())),
         Semantics(
           container: true,
           label: 'Main navigation',
-          child: Column(children: [
-            for (var i = 0; i < _sections.length; i++)
-              _NavItem(
-                  section: _sections[i],
-                  active: i == selected,
-                  onTap: () => onSelect(i)),
-          ]),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Tk.frostA(0.05),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: k.line),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              for (var i = 0; i < _sections.length; i++)
+                _NavPill(
+                    section: _sections[i],
+                    active: i == selected,
+                    onTap: () => onSelect(i)),
+            ]),
+          ),
         ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.only(top: 16),
-          decoration:
-              BoxDecoration(border: Border(top: BorderSide(color: k.line))),
-          child: const _UserBlock(),
+        Expanded(
+          child: Align(
+              alignment: Alignment.centerRight,
+              child: _UserBlock(showName: width >= 1060)),
         ),
       ]),
     );
   }
 }
 
-class _NavItem extends StatelessWidget {
+class _NavPill extends StatelessWidget {
   final _Section section;
   final bool active;
   final VoidCallback onTap;
-  const _NavItem(
+  const _NavPill(
       {required this.section, required this.active, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final k = context.tk;
     final t = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Semantics(
-        button: true,
-        selected: active,
-        label: section.title,
-        excludeSemantics: true,
+    return Semantics(
+      button: true,
+      selected: active,
+      label: section.title,
+      excludeSemantics: true,
+      onTap: onTap,
+      child: InkWell(
         onTap: onTap,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(9),
-          hoverColor: k.bg,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: active ? k.strong : Colors.transparent,
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Row(children: [
-              Icon(section.icon, size: 18, color: active ? k.onStrong : k.ink2),
-              const SizedBox(width: 11),
-              Text(section.title,
-                  style: t.bodyMedium!.copyWith(
-                      fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                      color: active ? k.onStrong : k.ink2)),
-            ]),
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: active ? k.strong : Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: active ? k.line2 : Colors.transparent),
           ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(section.icon, size: 16, color: active ? k.ink : k.ink4),
+            const SizedBox(width: 8),
+            Text(section.title,
+                style: t.bodyMedium!.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: active ? Colors.white : k.ink3)),
+          ]),
         ),
       ),
     );
@@ -264,58 +261,48 @@ class _NavItem extends StatelessWidget {
 }
 
 class _UserBlock extends StatelessWidget {
-  const _UserBlock();
+  final bool showName;
+  const _UserBlock({required this.showName});
 
   @override
   Widget build(BuildContext context) {
     final auth = AuthScope.of(context);
-    final theme = ThemeScope.of(context);
     final k = context.tk;
     final t = Theme.of(context).textTheme;
     final name = auth.username ?? '';
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return Row(children: [
-      Avatar(name),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(name,
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Avatar(name, size: 34),
+      if (showName) ...[
+        const SizedBox(width: 10),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 140),
+          child: Text(name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: t.bodyMedium!.copyWith(fontWeight: FontWeight.w700)),
-          Text('Signed in',
-              style: t.labelSmall!
-                  .copyWith(fontWeight: FontWeight.w400, color: k.ink3)),
-        ]),
-      ),
-      IconBtn(
-        icon: dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-        tooltip: dark ? 'Switch to light theme' : 'Switch to dark theme',
-        outlined: true,
-        size: 32,
-        onPressed: () => theme.set(dark ? ThemeMode.light : ThemeMode.dark),
-      ),
-      const SizedBox(width: 4),
+              style: t.bodyMedium!
+                  .copyWith(fontWeight: FontWeight.w500, color: k.ink2)),
+        ),
+      ],
+      const SizedBox(width: 8),
       IconBtn(
         icon: Icons.logout_rounded,
         tooltip: 'Log out',
-        size: 32,
+        outlined: true,
+        size: 36,
         onPressed: auth.logout,
       ),
     ]);
   }
 }
 
-// ------------------------------------------------------ phone top bar + tabs
+// -------------------------------------------------------------------- phone
 
-class _TopBar extends StatelessWidget {
-  const _TopBar();
+class _PhoneBar extends StatelessWidget {
+  const _PhoneBar();
 
   @override
   Widget build(BuildContext context) {
     final auth = AuthScope.of(context);
-    final theme = ThemeScope.of(context);
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(children: [
@@ -324,16 +311,9 @@ class _TopBar extends StatelessWidget {
         Avatar(auth.username ?? '', size: 34),
         const SizedBox(width: 8),
         IconBtn(
-          icon: dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-          tooltip: dark ? 'Switch to light theme' : 'Switch to dark theme',
-          outlined: true,
-          size: 40,
-          onPressed: () => theme.set(dark ? ThemeMode.light : ThemeMode.dark),
-        ),
-        const SizedBox(width: 4),
-        IconBtn(
             icon: Icons.logout_rounded,
             tooltip: 'Log out',
+            outlined: true,
             size: 40,
             onPressed: auth.logout),
       ]),
@@ -341,54 +321,67 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _TabRow extends StatelessWidget {
+/// A floating glass pill with every section, icon over label.
+class _BottomNav extends StatelessWidget {
   final int selected;
   final ValueChanged<int> onSelect;
-  const _TabRow({required this.selected, required this.onSelect});
+  const _BottomNav({required this.selected, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
     final k = context.tk;
-    final t = Theme.of(context).textTheme;
-    return Container(
-      decoration:
-          BoxDecoration(border: Border(bottom: BorderSide(color: k.line))),
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Semantics(
-          container: true,
-          label: 'Main navigation',
-          child: Row(children: [
-            for (var i = 0; i < _sections.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Semantics(
-                  button: true,
-                  selected: i == selected,
-                  label: _sections[i].title,
-                  excludeSemantics: true,
+    return Semantics(
+      container: true,
+      label: 'Main navigation',
+      child: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: k.deep,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: k.line2),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0xB3000000), blurRadius: 32, offset: Offset(0, 12))
+          ],
+        ),
+        child: Row(children: [
+          for (var i = 0; i < _sections.length; i++)
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: i == selected,
+                label: _sections[i].title,
+                excludeSemantics: true,
+                onTap: () => onSelect(i),
+                child: InkWell(
                   onTap: () => onSelect(i),
-                  child: InkWell(
-                    onTap: () => onSelect(i),
-                    borderRadius: BorderRadius.circular(9),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: i == selected ? k.strong : Colors.transparent,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Text(_sections[i].title,
-                          style: t.bodyMedium!.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: i == selected ? k.onStrong : k.ink2)),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    decoration: BoxDecoration(
+                      color: i == selected ? k.strong : Colors.transparent,
+                      borderRadius: BorderRadius.circular(999),
                     ),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(_sections[i].icon,
+                          size: 20, color: i == selected ? k.ink : k.ink4),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(_sections[i].title,
+                            maxLines: 1,
+                            style: TextStyle(
+                                fontFamily: sans,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: i == selected ? Colors.white : k.ink4)),
+                      ),
+                    ]),
                   ),
                 ),
               ),
-          ]),
-        ),
+            ),
+        ]),
       ),
     );
   }

@@ -151,15 +151,30 @@ void snack(BuildContext c, String msg,
     VoidCallback? onAction,
     int seconds = 4}) {
   final k = c.tk;
+  const base = Color(0xFF0B0D1A);
   final (bg, fg, icon) = switch (tone) {
-    SnackTone.alert => (k.missSoft, k.miss, Icons.error_outline),
-    SnackTone.warning => (k.amberSoft, k.amber, Icons.warning_amber_rounded),
-    SnackTone.neutral => (k.strong, k.onStrong, null),
+    SnackTone.alert => (
+        Color.alphaBlend(k.missSoft, base),
+        k.miss,
+        Icons.error_outline
+      ),
+    SnackTone.warning => (
+        Color.alphaBlend(k.amberSoft, base),
+        k.amber,
+        Icons.warning_amber_rounded
+      ),
+    SnackTone.neutral => (base, k.ink, null),
   };
   final m = ScaffoldMessenger.of(c);
   m.clearSnackBars();
   m.showSnackBar(SnackBar(
     backgroundColor: bg,
+    shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+            color: tone == SnackTone.neutral
+                ? k.line2
+                : fg.withValues(alpha: 0.4))),
     duration: Duration(seconds: seconds),
     content: Row(children: [
       if (icon != null) ...[Icon(icon, color: fg), const SizedBox(width: 12)],
@@ -168,9 +183,7 @@ void snack(BuildContext c, String msg,
     action: action == null
         ? null
         : SnackBarAction(
-            label: action,
-            textColor: tone == SnackTone.neutral ? k.hl : k.cobaltDark,
-            onPressed: onAction ?? () {}),
+            label: action, textColor: k.link, onPressed: onAction ?? () {}),
   ));
 }
 

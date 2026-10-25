@@ -22,7 +22,7 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Create account'), findsWidgets);
     expect(find.widgetWithText(OutlinedButton, 'Log in'), findsWidgets);
     // the app itself is behind the login
-    expect(find.text('Expenses'), findsNothing);
+    expect(find.text('Dashboard'), findsNothing);
     expect(find.byType(TextField), findsNothing);
   });
 

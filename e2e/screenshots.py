@@ -4,8 +4,8 @@ Run `python backend/seed_demo.py` first (it creates the account `demo`), then:
 
     BASE_URL=http://localhost:8000/ SHOTS=docs/img python e2e/screenshots.py
 
-Desktop (1280x800) for the product pages and every section, a dark dashboard,
-and phone-sized (390x844) shots of the landing page, dashboard and expenses.
+Desktop (1280x800) for the product pages and every section, and phone-sized
+(390x844) shots of the landing page, dashboard and expenses.
 """
 import os
 
@@ -32,8 +32,8 @@ def scroll_top(app):
 
 
 with sync_playwright() as p:
-    # ---- desktop, light ----
-    browser, app, _ = open_app(p, scheme="light", width=1280, height=800, scale=1)
+    # ---- desktop ----
+    browser, app, _ = open_app(p, scheme="dark", width=1280, height=800, scale=1)
     app.has("Know where your money goes.")
     app.wait(1200)
     app.shot("landing.png")
@@ -61,15 +61,8 @@ with sync_playwright() as p:
     app.shot("overspend-alert.png")
     browser.close()
 
-    # ---- desktop, dark ----
-    browser, app, _ = open_app(p, scheme="dark", width=1280, height=800, scale=1)
-    app.has("Know where your money goes.")
-    log_in(app)
-    app.shot("dashboard-dark.png")
-    browser.close()
-
     # ---- phone ----
-    browser, app, _ = open_app(p, scheme="light", width=390, height=844, scale=2)
+    browser, app, _ = open_app(p, scheme="dark", width=390, height=844, scale=2)
     app.has("Know where your money goes.")
     app.wait(1200)
     app.shot("phone-landing.png")

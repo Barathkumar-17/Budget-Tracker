@@ -16,7 +16,7 @@ CHANNEL = os.environ.get("BROWSER_CHANNEL") or None  # e.g. "chrome" locally
 SLOW = float(os.environ.get("SLOW", "1"))  # multiply waits on slow machines
 WIDTH = int(os.environ.get("VIEWPORT_W", "390"))
 HEIGHT = int(os.environ.get("VIEWPORT_H", "844"))
-SCHEME = os.environ.get("COLOR_SCHEME", "light")  # light | dark
+SCHEME = os.environ.get("COLOR_SCHEME", "dark")  # the browser preference; the app is dark only
 
 TABS = ["Dashboard", "Expenses", "Budgets", "Recurring", "Goals"]
 
