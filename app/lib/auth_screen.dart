@@ -3,12 +3,25 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'auth.dart';
 import 'theme.dart';
+import 'ui.dart';
 
 final _usernamePattern = RegExp(r'^[A-Za-z0-9_.-]{3,30}$');
 
-/// Log in or create an account.
+/// Offer the shared demo account on the login screen (set at build time).
+const showDemo = bool.fromEnvironment('SHOW_DEMO');
+const demoUser = 'demo';
+const demoPassword = 'demo-password';
+
+/// Log in or create an account: a dark side panel and a form, as in the reference.
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final bool registering;
+  final ValueChanged<bool> onMode;
+  final VoidCallback onBack;
+  const AuthScreen(
+      {super.key,
+      required this.registering,
+      required this.onMode,
+      required this.onBack});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -18,13 +31,22 @@ class _AuthScreenState extends State<AuthScreen> {
   final _username = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
-  bool _registering = false;
   bool _showPassword = false;
   bool _busy = false;
   String? _usernameError;
   String? _passwordError;
   String? _confirmError;
   String? _formError;
+
+  bool get _registering => widget.registering;
+
+  @override
+  void didUpdateWidget(covariant AuthScreen old) {
+    super.didUpdateWidget(old);
+    if (old.registering != widget.registering) {
+      _usernameError = _passwordError = _confirmError = _formError = null;
+    }
+  }
 
   @override
   void dispose() {
@@ -33,11 +55,6 @@ class _AuthScreenState extends State<AuthScreen> {
     _confirm.dispose();
     super.dispose();
   }
-
-  void _switchMode() => setState(() {
-        _registering = !_registering;
-        _usernameError = _passwordError = _confirmError = _formError = null;
-      });
 
   bool _validate() {
     final name = _username.text.trim();
@@ -92,251 +109,244 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  void _useDemo() {
+    widget.onMode(false);
+    setState(() {
+      _username.text = demoUser;
+      _password.text = demoPassword;
+      _usernameError = _passwordError = _formError = null;
+    });
+    _submit();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
-    final notice = AuthScope.of(context).notice;
+    final k = context.tk;
+    final wide = isWide(context);
+    final form = _form(context);
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(children: [
-          _Header(),
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
+      backgroundColor: k.paper,
+      body: wide
+          ? Row(children: [
+              Expanded(child: _SidePanel(onDemo: showDemo ? _useDemo : null)),
+              Expanded(
+                child: Container(
+                  color: k.paper,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(32),
+                  child: SingleChildScrollView(child: form),
+                ),
+              ),
+            ])
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Semantics(
-                        header: true,
-                        child: Text(
-                            _registering ? 'Create your account' : 'Log in',
-                            style: t.headlineSmall),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _registering
-                            ? 'Your expenses, budgets and goals are private to your account.'
-                            : 'Welcome back. Pick up where you left off.',
-                        style:
-                            t.bodyMedium!.copyWith(color: s.onSurfaceVariant),
-                      ),
-                      if (notice != null) ...[
-                        const SizedBox(height: 16),
-                        _Banner(
-                            icon: Icons.info_outline,
-                            text: notice,
-                            bg: s.secondaryContainer,
-                            fg: s.onSecondaryContainer),
+                      const Logo(),
+                      const SizedBox(height: 22),
+                      Center(child: form),
+                      if (showDemo) ...[
+                        const SizedBox(height: 22),
+                        Center(child: _DemoBox(onUse: _useDemo, dark: false)),
                       ],
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _username,
-                        autofocus: true,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.username],
-                        decoration: InputDecoration(
-                          labelText: 'Username',
-                          errorText: _usernameError,
-                          helperText: _registering
-                              ? 'Letters, numbers, dots, dashes, underscores'
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _password,
-                        obscureText: !_showPassword,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        textInputAction: _registering
-                            ? TextInputAction.next
-                            : TextInputAction.done,
-                        onSubmitted: _registering ? null : (_) => _submit(),
-                        autofillHints: [
-                          _registering
-                              ? AutofillHints.newPassword
-                              : AutofillHints.password
-                        ],
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          errorText: _passwordError,
-                          helperText:
-                              _registering ? 'At least 8 characters' : null,
-                          suffixIcon: IconButton(
-                            tooltip: _showPassword
-                                ? 'Hide password'
-                                : 'Show password',
-                            icon: Icon(_showPassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined),
-                            onPressed: () =>
-                                setState(() => _showPassword = !_showPassword),
-                          ),
-                        ),
-                      ),
-                      if (_registering) ...[
-                        const SizedBox(height: 14),
-                        TextField(
-                          controller: _confirm,
-                          obscureText: !_showPassword,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _submit(),
-                          decoration: InputDecoration(
-                              labelText: 'Confirm password',
-                              errorText: _confirmError),
-                        ),
-                      ],
-                      if (_formError != null) ...[
-                        const SizedBox(height: 16),
-                        _Banner(
-                            icon: Icons.error_outline,
-                            text: _formError!,
-                            bg: s.errorContainer,
-                            fg: s.onErrorContainer),
-                      ],
-                      const SizedBox(height: 24),
-                      FilledButton(
-                        onPressed: _busy ? null : _submit,
-                        child: _busy
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2.5))
-                            : Text(_registering ? 'Create account' : 'Log in'),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: _busy ? null : _switchMode,
-                        child: Text(_registering
-                            ? 'I already have an account'
-                            : 'Create an account'),
-                      ),
                     ]),
               ),
             ),
-          ),
-        ]),
-      ),
     );
   }
-}
 
-/// The navy band with the app's name; a short rail line sets the idea.
-class _Header extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
+  Widget _form(BuildContext context) {
+    final k = context.tk;
     final t = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-          24, MediaQuery.paddingOf(context).top + 44, 24, 36),
-      decoration: BoxDecoration(
-        color: headerColor(brightness),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Semantics(
-              header: true,
-              child: Text('Budget Tracker',
-                  style: t.headlineMedium!.copyWith(color: Colors.white)),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 400),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _busy ? null : widget.onBack,
+            icon: const Icon(Icons.arrow_back, size: 16),
+            label: const Text('Back to home'),
+            style: TextButton.styleFrom(
+              foregroundColor: k.ink2,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              textStyle: t.bodyMedium!
+                  .copyWith(fontWeight: FontWeight.w600, fontSize: 14.4),
             ),
-            const SizedBox(height: 6),
-            Text('Know where your money goes.',
-                style: t.bodyLarge!.copyWith(color: const Color(0xFFC9D4E8))),
-            const SizedBox(height: 22),
-            const ExcludeSemantics(child: _HeaderLine()),
-          ]),
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        SegTabs(
+          boxed: false,
+          labels: const ['Log in', 'Create account'],
+          selected: _registering ? 1 : 0,
+          onChanged: (i) => widget.onMode(i == 1),
+        ),
+        const SizedBox(height: 28),
+        Semantics(
+          header: true,
+          container: true,
+          child: Text(_registering ? 'Create your account' : 'Welcome back',
+              style: t.headlineSmall),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _registering
+              ? 'Your expenses, budgets and goals are private to your account.'
+              : 'Log in to pick up where you left off.',
+          style: t.bodyMedium!.copyWith(color: k.ink2),
+        ),
+        if (AuthScope.of(context).notice != null) ...[
+          const SizedBox(height: 16),
+          Alert(AuthScope.of(context).notice!,
+              kind: TagKind.cobalt, icon: Icons.info_outline),
+        ],
+        const SizedBox(height: 8),
+        const SizedBox(height: 8),
+        LabeledField(
+          'Username',
+          _username,
+          autofocus: true,
+          error: _usernameError,
+          helper: _registering
+              ? 'Letters, numbers, dots, dashes, underscores'
+              : null,
+          action: TextInputAction.next,
+          autofillHints: const [AutofillHints.username],
+        ),
+        const SizedBox(height: 14),
+        LabeledField(
+          'Password',
+          _password,
+          obscure: !_showPassword,
+          error: _passwordError,
+          helper: _registering ? 'At least 8 characters' : null,
+          action: _registering ? TextInputAction.next : TextInputAction.done,
+          onSubmitted: _registering ? null : (_) => _submit(),
+          autofillHints: [
+            _registering ? AutofillHints.newPassword : AutofillHints.password
+          ],
+          suffix: IconBtn(
+            icon: _showPassword
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            tooltip: _showPassword ? 'Hide password' : 'Show password',
+            size: 40,
+            onPressed: () => setState(() => _showPassword = !_showPassword),
+          ),
+        ),
+        if (_registering) ...[
+          const SizedBox(height: 14),
+          LabeledField(
+            'Confirm password',
+            _confirm,
+            obscure: !_showPassword,
+            error: _confirmError,
+            action: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+          ),
+        ],
+        if (_formError != null) ...[
+          const SizedBox(height: 16),
+          Alert(_formError!, icon: Icons.error_outline),
+        ],
+        const SizedBox(height: 24),
+        Btn(_registering ? 'Create account' : 'Log in',
+            busy: _busy, expand: true, onPressed: _submit),
+        const SizedBox(height: 14),
+        Center(
+          child: TextButton(
+            onPressed: _busy ? null : () => widget.onMode(!_registering),
+            style: TextButton.styleFrom(foregroundColor: k.link),
+            child: Text(
+                _registering
+                    ? 'I already have an account'
+                    : 'Create an account',
+                style: t.bodyMedium!
+                    .copyWith(fontWeight: FontWeight.w600, color: k.link)),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-/// A small rail line on the navy band: a line that has travelled most of the way to its station.
-class _HeaderLine extends StatelessWidget {
-  const _HeaderLine();
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 24,
-        child: CustomPaint(size: Size.infinite, painter: _HeaderLinePainter()),
-      );
-}
-
-class _HeaderLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const ring = 8.0, left = 5.0;
-    final right = size.width - ring - 2;
-    final cy = size.height / 2;
-    Paint line(Color c) => Paint()
-      ..color = c
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-        Offset(left, cy), Offset(right, cy), line(const Color(0xFF2B3F63)));
-    canvas.drawLine(Offset(left, cy), Offset(left + (right - left) * 0.64, cy),
-        line(const Color(0xFF7FA2FF)));
-    canvas.drawCircle(
-        Offset(left, cy), 4, Paint()..color = const Color(0xFF7FA2FF));
-    canvas.drawCircle(
-        Offset(right, cy), ring, Paint()..color = const Color(0xFF12233F));
-    canvas.drawCircle(
-        Offset(right, cy),
-        ring - 1.5,
-        Paint()
-          ..color = const Color(0xFFC9D4E8)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
-}
-
-class _Banner extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color bg;
-  final Color fg;
-  const _Banner(
-      {required this.icon,
-      required this.text,
-      required this.bg,
-      required this.fg});
+/// Dark left panel: logo, a line of the product's promise, the demo account.
+class _SidePanel extends StatelessWidget {
+  final VoidCallback? onDemo;
+  const _SidePanel({required this.onDemo});
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration:
-            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(icon, color: fg),
-          const SizedBox(width: 12),
-          Expanded(
-              child: Text(text,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium!
-                      .copyWith(color: fg))),
-        ]),
+    final k = context.tk;
+    final t = Theme.of(context).textTheme;
+    final quote = t.headlineMedium!.copyWith(
+        fontSize: 34,
+        color: k.onStrong,
+        height: 1.2,
+        letterSpacing: -0.7,
+        fontWeight: FontWeight.w700);
+    return Container(
+      color: k.strong,
+      padding: const EdgeInsets.all(56),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Logo(inverted: true),
+        const Spacer(),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 448),
+          child: Text.rich(TextSpan(style: quote, children: [
+            const TextSpan(text: 'Every rupee,\n'),
+            TextSpan(
+                text: ' accounted for. ',
+                style: quote.copyWith(color: k.onHl, backgroundColor: k.hl)),
+          ])),
+        ),
+        const Spacer(),
+        if (onDemo != null) _DemoBox(onUse: onDemo!, dark: true),
+      ]),
+    );
+  }
+}
+
+class _DemoBox extends StatelessWidget {
+  final VoidCallback onUse;
+  final bool dark;
+  const _DemoBox({required this.onUse, required this.dark});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.tk;
+    final t = Theme.of(context).textTheme;
+    final muted = dark ? const Color(0xFFB8C0D9) : k.ink2;
+    final strong = dark ? k.onStrong : k.ink;
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 400),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            color: dark ? const Color(0xFF4A5470) : k.line2, width: 1.2),
       ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text.rich(TextSpan(
+            style: t.bodyMedium!.copyWith(color: muted, fontSize: 14.4),
+            children: [
+              const TextSpan(text: 'Try the demo account: username '),
+              TextSpan(
+                  text: demoUser,
+                  style: TextStyle(color: strong, fontWeight: FontWeight.w700)),
+              const TextSpan(text: ', password '),
+              TextSpan(
+                  text: demoPassword,
+                  style: TextStyle(color: strong, fontWeight: FontWeight.w700)),
+              const TextSpan(text: '. It comes with a month of sample data.'),
+            ])),
+        const SizedBox(height: 12),
+        Btn('Use demo account',
+            kind: BtnKind.hl, small: true, onPressed: onUse),
+      ]),
     );
   }
 }

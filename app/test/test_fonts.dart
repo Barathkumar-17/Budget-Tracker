@@ -5,15 +5,19 @@ import 'package:flutter/services.dart';
 /// Call from `setUpAll` in any test that renders real screens.
 Future<void> loadAppFonts() async {
   const families = {
-    'Barlow': [
-      'assets/fonts/Barlow-Regular.ttf',
-      'assets/fonts/Barlow-Medium.ttf',
-      'assets/fonts/Barlow-SemiBold.ttf',
-      'assets/fonts/Barlow-Bold.ttf',
+    'Bricolage': [
+      'assets/fonts/Bricolage-Regular.ttf',
+      'assets/fonts/Bricolage-Medium.ttf',
+      'assets/fonts/Bricolage-SemiBold.ttf',
+      'assets/fonts/Bricolage-Bold.ttf',
     ],
-    'BarlowSemiCondensed': [
-      'assets/fonts/BarlowSemiCondensed-SemiBold.ttf',
-      'assets/fonts/BarlowSemiCondensed-Bold.ttf',
+    'BricolageDisplay': [
+      'assets/fonts/BricolageDisplay-Bold.ttf',
+      'assets/fonts/BricolageDisplay-ExtraBold.ttf',
+    ],
+    'SourceSerif': [
+      'assets/fonts/SourceSerif4-Regular.ttf',
+      'assets/fonts/SourceSerif4-SemiBold.ttf',
     ],
   };
   for (final entry in families.entries) {

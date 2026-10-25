@@ -1,11 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import 'api.dart';
 import 'common.dart';
 import 'theme.dart';
-import 'widgets.dart';
+import 'ui.dart';
 
 String _plain(num v) =>
     v == v.roundToDouble() ? v.toInt().toString() : v.toString();
@@ -17,7 +15,7 @@ class BudgetsScreen extends StatelessWidget {
       {String category = '', num? cap}) async {
     final app = AppScope.read(context);
     final editing = category.isNotEmpty;
-    final saved = await showFormSheet(
+    final saved = await showFormDialog(
       context,
       title: editing ? 'Change budget' : 'New budget',
       subtitle: 'For ${monthLabel(app.month)}',
@@ -52,124 +50,136 @@ class BudgetsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final key = app.key;
-    return Scaffold(
-      body: Loader<Map<String, dynamic>>(
-        resetKey: key,
-        loadKey: app.tick,
-        load: () => Api.dashboard(key),
-        builder: (ctx, d, reload) {
-          final rows = (d['categories'] as List)
-              .cast<Map<String, dynamic>>()
-              .where((c) => c['cap'] != null)
-              .toList()
-            ..sort((a, b) {
-              final r = ((a['over'] == true) ? 0 : 1)
-                  .compareTo((b['over'] == true) ? 0 : 1);
-              return r != 0
-                  ? r
-                  : (a['category'] as String)
-                      .compareTo(b['category'] as String);
-            });
-          if (rows.isEmpty) {
-            return EmptyState(
-              icon: Icons.pie_chart_outline,
-              title: 'No budgets for ${monthLabel(app.month)}',
-              message:
-                  'Tap Add budget to set a monthly cap per category and get warned the moment you pass it.',
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: reload,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 96),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('Tap a budget to change its cap.',
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant)),
-                ),
-                const SizedBox(height: 8),
-                for (final c in rows)
-                  _BudgetRow(
-                    c,
-                    onTap: () => _edit(context,
-                        category: c['category'] as String,
-                        cap: c['cap'] as num),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _edit(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Add budget'),
-      ),
+    return Loader<Map<String, dynamic>>(
+      resetKey: key,
+      loadKey: app.tick,
+      load: () => Api.dashboard(key),
+      builder: (ctx, d, reload) {
+        final rows = (d['categories'] as List)
+            .cast<Map<String, dynamic>>()
+            .where((c) => c['cap'] != null)
+            .toList()
+          ..sort((a, b) {
+            double ratio(Map<String, dynamic> c) {
+              final cap = (c['cap'] as num).toDouble();
+              return cap == 0 ? 99 : (c['spent'] as num).toDouble() / cap;
+            }
+
+            return ratio(b).compareTo(ratio(a));
+          });
+        return RefreshIndicator(
+          onRefresh: reload,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 48),
+            children: _content(context, rows),
+          ),
+        );
+      },
     );
+  }
+
+  List<Widget> _content(BuildContext context, List<Map<String, dynamic>> rows) {
+    final app = AppScope.of(context);
+    final k = context.tk;
+    final head = PageHead(
+      title: 'Budgets',
+      subtitle:
+          'A monthly cap per category. The bar shows how much of each you have used.',
+      actions: [
+        const MonthSwitcher(),
+        Btn('Add budget', icon: Icons.add, onPressed: () => _edit(context)),
+      ],
+    );
+    if (rows.isEmpty) {
+      return [
+        head,
+        EmptyPanel(
+          title: 'No budgets for ${monthLabel(app.month)}',
+          message:
+              'Set a monthly cap per category and get warned the moment you pass it.',
+          actionLabel: 'Set your first budget',
+          onAction: () => _edit(context),
+        ),
+      ];
+    }
+    final totalCap =
+        rows.fold<double>(0, (a, c) => a + (c['cap'] as num).toDouble());
+    final totalSpent =
+        rows.fold<double>(0, (a, c) => a + (c['spent'] as num).toDouble());
+    final over = rows.where((c) => c['over'] == true).length;
+    return [
+      head,
+      StatStrip([
+        Stat(money(totalCap), 'Budgeted'),
+        Stat(money(totalSpent), 'Spent in these categories'),
+        Stat(money(totalCap - totalSpent), 'Left to spend',
+            color: totalCap - totalSpent < 0 ? k.miss : null),
+        Stat('$over', 'Over budget', color: over > 0 ? k.miss : null),
+      ]),
+      const SizedBox(height: 20),
+      Panel(
+        child: Column(children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) Divider(color: k.line, height: 36),
+            _BudgetRow(
+              rows[i],
+              onEdit: () => _edit(context,
+                  category: rows[i]['category'] as String,
+                  cap: rows[i]['cap'] as num),
+            ),
+          ],
+        ]),
+      ),
+    ];
   }
 }
 
 class _BudgetRow extends StatelessWidget {
   final Map<String, dynamic> c;
-  final VoidCallback onTap;
-  const _BudgetRow(this.c, {required this.onTap});
+  final VoidCallback onEdit;
+  const _BudgetRow(this.c, {required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
+    final k = context.tk;
     final name = c['category'] as String;
     final spent = (c['spent'] as num).toDouble();
     final cap = (c['cap'] as num).toDouble();
+    final ratio = cap == 0 ? 2.0 : spent / cap;
     final over = c['over'] == true;
-    final left = cap - spent;
+    final (kind, label) = ratio > 1
+        ? (TagKind.no, 'Over budget')
+        : (ratio >= 0.85
+            ? (TagKind.warn, 'Close to limit')
+            : (TagKind.ok, 'Within budget'));
     return InkWell(
-      onTap: onTap,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 72),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              CategoryDot(name),
-              const SizedBox(width: 12),
-              Expanded(child: Text(titleCase(name), style: t.titleSmall)),
-              const SizedBox(width: 8),
-              Amount(money(cap), style: amountStyle(context, size: 18)),
-            ]),
-            const SizedBox(height: 6),
-            RouteLine(
-              fill: spent,
-              total: math.max(spent, cap),
-              station: cap,
-              color: categoryColor(name, Theme.of(context).brightness),
-              overrun: over,
-            ),
-            const SizedBox(height: 2),
-            Row(children: [
-              if (over) ...[
-                Icon(Icons.error_outline, size: 16, color: s.error),
-                const SizedBox(width: 6),
-              ],
-              Flexible(
-                child: Text(
-                  over
-                      ? '${money(spent)} spent, ${money(-left)} over'
-                      : '${money(spent)} spent, ${money(left)} left',
-                  style: t.bodySmall!.copyWith(
-                      color: over ? s.error : s.onSurfaceVariant,
-                      fontWeight: over ? FontWeight.w600 : null),
-                ),
-              ),
-            ]),
-          ]),
+      onTap: onEdit,
+      borderRadius: BorderRadius.circular(10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          CategoryTag(name),
+          const SizedBox(width: 8),
+          Tag(label, kind: kind),
+          const Spacer(),
+          Btn('Change',
+              kind: BtnKind.ghost,
+              small: true,
+              semanticLabel: 'Change ${titleCase(name)} budget',
+              onPressed: onEdit),
+        ]),
+        const SizedBox(height: 12),
+        BarRow(
+          label: '${money(spent)} spent',
+          trailing: 'of ${money(cap)}',
+          fraction: ratio,
+          color: ratio > 1 ? k.miss : (ratio >= 0.85 ? k.amber : k.cobalt),
+          why: over
+              ? '${money(spent - cap)} over budget'
+              : '${money(cap - spent)} left',
+          whyColor: over ? k.miss : null,
         ),
-      ),
+      ]),
     );
   }
 }

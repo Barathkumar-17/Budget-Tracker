@@ -8,43 +8,53 @@ A personal budget and expense tracker with accounts: a **FastAPI + SQLite** back
 
 | Screen | What it does |
 | --- | --- |
-| **Login** | Register, log in and log out. Passwords are stored hashed (scrypt, per-user salt), the session survives a reload, and every feature below works on the logged-in user's own data only |
-| **Dashboard** | A one-line verdict ("₹4,226 left, ₹774 below your safety line"), spent vs budget per category as rail lines, daily spend columns, month navigation, balance settings (opening balance and safety line) |
-| **Expenses** | Grouped by day; add with amount, category chips, date picker and note; instant overspend and low-balance alerts; tap to edit, swipe or long-press to delete (with Undo) |
-| **Budgets** | Monthly cap per category, each shown as a line with its spend so far |
-| **Recurring** | Templates (e.g. rent on the 1st) applied to a month with one tap; applying twice never duplicates |
-| **Goals** | Savings goals with progress; contributions reduce the balance |
+| **Landing and login** | A short product page, then register, log in and log out. Passwords are stored hashed (scrypt, per-user salt), the session survives a reload, and every feature below works on the logged-in user's own data only |
+| **Dashboard** | A one-line verdict ("You have ₹4,226 left, ₹774 below your safety line."), a warning banner when the balance is low, a stat strip, spent vs budget per category as bars, a budget-used ring, recent expenses and goals, month navigation, balance settings (opening balance and safety line) |
+| **Expenses** | A table of the month with stats and category tabs; add with amount, category pills, date picker and note; instant overspend and low-balance alerts; click a row or **Edit** to change it; **Remove** deletes at once with an **Undo** |
+| **Budgets** | Monthly cap per category as a bar with spent, left and an Over / Within budget tag |
+| **Recurring** | Templates (e.g. rent on the 1st) applied to a month with one click; applying twice never duplicates |
+| **Goals** | Savings goals with a progress ring; contributions reduce the balance |
 
 Categories are case-insensitive (`Food` and `food` are the same category). Amounts are stored as integer paise and exposed as rupees, so there is no floating-point drift.
 
 ## Design
 
-The app treats a budget as a journey with a destination. Every budget category, savings goal and your balance is drawn as a **rail line**: the filled part is how far you have gone, the ring is the station you are heading for (a cap, a target, your safety line), and overspending runs the line past its ring in red. Red is used for nothing else.
+A calm, document-like interface: paper panels with thin borders on a pale blue-grey page, one cobalt accent for actions, and a highlighter yellow used sparingly for what matters (the logo mark, the avatar, the low-balance banner).
 
-- Navy header carrying the month; light and dark themes follow the system.
-- Barlow typeface with tabular figures so amounts line up (bundled in `app/assets/fonts`, SIL Open Font License).
-- Android-first Material 3: bottom navigation bar on phones, navigation rail and a centred column on wide windows, 48dp touch targets, system Back returns to the Dashboard.
-- Status is never colour alone: over-budget and low-balance also use words and icons. Text scales with the system font size (tested at 2x). Expenses can be deleted without swiping (long-press, or the screen reader's actions menu).
+- **Layout:** a 240px sidebar on wide windows; on phones a top bar with scrolling section tabs. Pages open with a title, one sentence of explanation and their actions, then a strip of key figures.
+- **Type:** Bricolage Grotesque for headings and interface, Source Serif 4 for the statement on the landing page (both bundled in `app/assets/fonts`, SIL Open Font License). Amounts use tabular figures so they line up.
+- **Colour:** light and dark themes (a toggle on every screen, remembered between visits). Red is reserved for overspending and errors; amber for the low-balance warning.
+- **Status is never colour alone:** over-budget and low-balance also use words and icons. Text scales with the system font size (tested at 2x). Every control is reachable by name for screen readers.
+- **Honest loading:** free hosting puts the server to sleep, so the app keeps retrying and says "Waking up the server…" instead of failing.
 - Amounts use Indian digit grouping (₹1,50,000) and drop the decimals when there are no paise.
 
 ## Demo
 
-Try it with realistic data in about two minutes.
+Try it with realistic data in about two minutes. The hosted build and the Docker image offer a **Use demo account** button on the login screen.
 
 <p>
-  <img src="docs/img/dashboard.png" width="230" alt="Dashboard: verdict, balance line and budget lines">
-  <img src="docs/img/expenses.png" width="230" alt="Expenses grouped by day">
-  <img src="docs/img/add-expense.png" width="230" alt="Add expense page">
+  <img src="docs/img/landing.png" width="420" alt="Landing page">
+  <img src="docs/img/login.png" width="420" alt="Login screen">
 </p>
 <p>
-  <img src="docs/img/overspend-alert.png" width="230" alt="Alert after an over-budget expense">
-  <img src="docs/img/budgets.png" width="230" alt="Budgets as rail lines">
-  <img src="docs/img/recurring.png" width="230" alt="Recurring templates">
+  <img src="docs/img/dashboard.png" width="420" alt="Dashboard: verdict, stat strip, budgets and recent expenses">
+  <img src="docs/img/dashboard-dark.png" width="420" alt="Dashboard in the dark theme">
 </p>
 <p>
-  <img src="docs/img/goals.png" width="230" alt="Savings goals">
-  <img src="docs/img/dashboard-dark.png" width="230" alt="Dashboard in the dark theme">
-  <img src="docs/img/login.png" width="230" alt="Login screen">
+  <img src="docs/img/expenses.png" width="420" alt="Expenses table with an overspend alert">
+  <img src="docs/img/add-expense.png" width="420" alt="Add expense dialog">
+</p>
+<p>
+  <img src="docs/img/budgets.png" width="420" alt="Budgets as bars">
+  <img src="docs/img/recurring.png" width="420" alt="Recurring templates">
+</p>
+<p>
+  <img src="docs/img/goals.png" width="420" alt="Savings goals">
+</p>
+<p>
+  <img src="docs/img/phone-landing.png" width="200" alt="Landing page on a phone">
+  <img src="docs/img/phone-dashboard.png" width="200" alt="Dashboard on a phone">
+  <img src="docs/img/phone-expenses.png" width="200" alt="Expenses on a phone">
 </p>
 
 **1. Start the backend and load the demo account**
@@ -56,28 +66,30 @@ uvicorn main:app --port 8000          # leave running
 python seed_demo.py                    # in a second terminal
 ```
 
-The seed script creates the account `demo` (password `demo-password`; change them with `--username` and `--password`) and fills the current month through the public API: a ₹30,000 opening balance, three budgets, nine expenses, three recurring templates (rent, Netflix, gym, already applied) and two savings goals. It refuses to add data to an account that already has some (`--force` overrides that). With Docker, run `docker compose exec app python seed_demo.py` instead.
+The seed script creates the account `demo` (password `demo-password`; change them with `--username` and `--password`) and fills the current month through the public API: a ₹30,000 opening balance, three budgets, nine expenses, three recurring templates (rent, Netflix, gym, already applied) and two savings goals. It refuses to add data to an account that already has some (`--force` overrides that). With Docker the container seeds the demo account itself on every start.
 
 **2. Open the app** (see [App](#app) for setup)
 
 ```bash
-cd app && flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000
+cd app && flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000 --dart-define=SHOW_DEMO=true
 ```
 
 **3. Take the tour**
 
 | Where | Try this | You should see |
 | --- | --- | --- |
-| **Login** | Log in as `demo` / `demo-password` (or tap **Create an account** to make your own) | The Dashboard for the current month. Use the account icon at the top right to see who is logged in or to log out |
-| **Dashboard** | Read the top panel and the lines | An amber panel: "₹4,226 left, ₹774 below your safety line", the balance line stopping short of the safety ring. *Fun* and *Food* run past their ring in red with "over budget"; *Transport* still has its ring ahead |
-| **Dashboard** | Tap the sliders icon (Balance settings), set *Opening balance* to `40000`, Save | The panel turns calm: "₹14,226 left, ₹9,226 above your safety line", with a check icon |
+| **Landing** | Click **Log in** | The login form. **Use demo account** fills in `demo` / `demo-password` (or click **Create an account** to make your own) |
+| **Dashboard** | Read the top of the page | "You have ₹4,226 left, ₹774 below your safety line." and a yellow low-balance banner. *Fun* and *Food* have full red bars marked "over budget"; *Transport* still has room |
+| **Dashboard** | Click the sliders icon (Balance settings), set *Opening balance* to `40000`, Save | The warning goes away: "You have ₹14,226 left, ₹9,226 above your safety line." |
 | **Dashboard** | Use the arrows by the month | Other months are empty; the arrows return you to this month |
-| **Add expense** | Tap **Add expense**, enter `500`, tap the *Food* chip, Save | An alert: **Over budget in food by ₹540** |
-| **Expenses** | Swipe a row to the left, or long-press it | The expense is deleted (long-press asks first) and an **Undo** appears |
-| **Budgets** | Tap *Food*, change the cap to `3000`, Save | Add the same `500` expense again: no alert any more |
-| **Recurring** | Tap **Apply to October 2026** (your current month) | "Nothing to add: ... is already up to date." Applying twice never adds duplicates |
-| **Recurring** | Tap **Add template**, enter `100` / `Netflix` / day `31`, Save | An inline message: "Pick a day from 1 to 28" |
-| **Goals** | Tap *Laptop*, add `1000` | "Added ₹1,000 to Laptop"; progress moves to ₹10,000 of ₹60,000 and the balance drops by ₹1,000 |
+| **Expenses** | Click **Add expense**, enter `500`, click the *Food* pill, Save | An alert: **Over budget in food by ₹540** |
+| **Expenses** | Click **Remove** on a row | The expense is deleted at once and an **Undo** appears |
+| **Expenses** | Click a row (or **Edit**), change the amount | The expense is updated, and the budget is checked again |
+| **Budgets** | Click **Change** on *Food*, set the cap to `3000`, Save | Add the same `500` expense again: no alert any more |
+| **Recurring** | Click **Apply to October 2026** (your current month) | "Nothing to add: ... is already up to date." Applying twice never adds duplicates |
+| **Recurring** | Click **Add template**, enter `100` / `Netflix` / day `31`, Save | An inline message: "Pick a day from 1 to 28" |
+| **Goals** | Click **Add money** on *Laptop*, add `1000` | "Added ₹1,000 to Laptop"; progress moves to ₹10,000 of ₹60,000 and the balance drops by ₹1,000 |
+| **Anywhere** | Click the moon icon, then **Log out** | The dark theme (remembered); the landing page |
 
 **Reset the demo:** stop the backend, delete `backend/budget.db` (with Docker: `docker compose down -v`), then start again and re-run the seed script.
 
@@ -187,7 +199,7 @@ docker compose up --build
 
 - App: http://localhost:8000
 - API docs: http://localhost:8000/docs
-- Demo data: `docker compose exec app python seed_demo.py`
+- Demo data: the container creates the `demo` account on every start (log in with **Use demo account**)
 - Data lives in the `budget-data` volume. `docker compose down -v` deletes it.
 
 Without Compose: `docker build -t budget-tracker . && docker run -p 8000:8000 -v budget-data:/data budget-tracker`.
@@ -203,9 +215,9 @@ Render builds the root `Dockerfile`, so one service gives you the app and the AP
 1. On https://render.com choose **New > Web Service** (or **New > Blueprint** to use `render.yaml`) and select this repository.
 2. Runtime **Docker**, repository root, default settings. No environment variables are needed.
 3. Wait for the first build (several minutes: it downloads Flutter and compiles the app), then open the service URL. The app is at `/` and the API docs at `/docs`.
-4. Optional demo data: `python backend/seed_demo.py --api https://<your-service>.onrender.com`
+4. The login screen has a **Use demo account** button; the container creates that account when it starts.
 
-Free-tier limits: the service sleeps after about 15 minutes idle (the first request then takes up to a minute), the filesystem is wiped on every restart or deploy so the SQLite data resets, and the URL is public with no login. Use it as a demo, not for real finances.
+Free-tier limits: the service sleeps after about 15 minutes idle (the first request then takes up to a minute; the app shows "Waking up the server…" and keeps retrying), and the filesystem is wiped on every restart or deploy, so accounts and data reset. The demo account is re-created on every start. Use it as a demo, not for real finances.
 
 ## Testing
 
@@ -225,20 +237,20 @@ flutter test --dart-define=API_URL=http://127.0.0.1:8000
 | Test | Needs backend? | Covers |
 | --- | --- | --- |
 | `test/format_test.dart` | no | Money formatting (Indian grouping, paise), day and month labels, category colours |
-| `test/widget_test.dart` | no | With nobody logged in the app opens on the login screen |
-| `test/ui_flow_test.dart` | no | Every screen against an in-memory stub of the API. Accounts: log in, register with validation, wrong password, taken username, unreachable server, log out, expired session, start-up retry. Plus alerts, inline validation, edit, Undo, long-press delete, month navigation, empty states, system Back, the wide layout, and 2x system text without overflow |
+| `test/widget_test.dart` | no | With nobody logged in the app opens on the landing page, and Log in opens the form |
+| `test/ui_flow_test.dart` | no | Every screen against an in-memory stub of the API, on a desktop window and on a phone. Public pages and the theme toggle; accounts (log in, register with validation, wrong password, taken username, unreachable server, log out, expired session); the waking-server retry; dashboard, expenses (add, edit, Remove and Undo, filters), budgets, recurring and goals with their alerts, inline validation and empty states; system Back; 2x system text without overflow |
 | `test/api_test.dart` | **yes**, port 8000 | The Dart API client against the real backend: accounts, login required, users isolated from each other, and the full feature flow. Registers its own users, so it can be re-run on any database |
 
 ### Full UI walkthrough (real browser)
 
-`e2e/walkthrough.py` drives the compiled web app in a real browser through everything: the login and registration screens (including their validation and a wrong password), every tab, budgets (add and edit), expenses (add, edit, swipe and long-press delete with Undo, overspend and low-balance alerts), recurring templates (applied twice), goals, log out and back in, staying logged in after a page reload, and a second user who sees none of the first user's data. Each run registers its own users, so the database does not need to be empty.
+`e2e/walkthrough.py` drives the compiled web app in a real browser through everything: the login and registration screens (including their validation and a wrong password), the landing page, every section, budgets (add and edit), expenses (add, edit, Remove with Undo, overspend and low-balance alerts), the dark theme, recurring templates (applied twice), goals, log out and back in, staying logged in after a page reload, and a second user who sees none of the first user's data. Each run registers its own users, so the database does not need to be empty.
 
 ```bash
 pip install playwright && playwright install chromium
 
 # build the app for a single server and put it next to the backend
-cd app && flutter build web --dart-define=API_URL=same-origin
-cp -r build/web ../backend/web            # (Windows: xcopy /E /I build\web ..ackend\web)
+cd app && flutter build web --dart-define=API_URL=same-origin --dart-define=SHOW_DEMO=true
+cp -r build/web ../backend/web            # (Windows: xcopy /E /I build\web ..\backend\web)
 
 # start the backend, which now serves the app too
 cd ../backend && uvicorn main:app --port 8000
@@ -247,7 +259,7 @@ cd ../backend && uvicorn main:app --port 8000
 BASE_URL=http://127.0.0.1:8000/ python e2e/walkthrough.py
 ```
 
-Set `BROWSER_CHANNEL=chrome` to use an installed Chrome instead of Playwright's Chromium, and `SLOW=2` on a slow machine. The last full run passed 60 of 60 steps.
+It runs phone-sized by default; add `VIEWPORT_W=1280 VIEWPORT_H=800` for the desktop layout. Set `BROWSER_CHANNEL=chrome` to use an installed Chrome instead of Playwright's Chromium, and `SLOW=2` on a slow machine. The last full run passed 63 of 63 steps on both layouts.
 
 ## Releases
 

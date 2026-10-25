@@ -20,19 +20,25 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
-    - family: Barlow
+    - family: Bricolage
       fonts:
-        - asset: assets/fonts/Barlow-Regular.ttf
+        - asset: assets/fonts/Bricolage-Regular.ttf
           weight: 400
-        - asset: assets/fonts/Barlow-Medium.ttf
+        - asset: assets/fonts/Bricolage-Medium.ttf
           weight: 500
-        - asset: assets/fonts/Barlow-SemiBold.ttf
+        - asset: assets/fonts/Bricolage-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/Barlow-Bold.ttf
+        - asset: assets/fonts/Bricolage-Bold.ttf
           weight: 700
-    - family: BarlowSemiCondensed
+    - family: BricolageDisplay
       fonts:
-        - asset: assets/fonts/BarlowSemiCondensed-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/BarlowSemiCondensed-Bold.ttf
+        - asset: assets/fonts/BricolageDisplay-Bold.ttf
           weight: 700
+        - asset: assets/fonts/BricolageDisplay-ExtraBold.ttf
+          weight: 800
+    - family: SourceSerif
+      fonts:
+        - asset: assets/fonts/SourceSerif4-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SourceSerif4-SemiBold.ttf
+          weight: 600

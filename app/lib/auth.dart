@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
+import 'common.dart' show WakePolicy, isServerAsleep;
 
 enum AuthStatus { loading, loggedOut, loggedIn, unreachable }
 
@@ -15,6 +16,9 @@ class AuthState extends ChangeNotifier {
 
   /// Shown on the login screen when the session ended without the user asking.
   String? notice;
+
+  /// True while a sleeping server is being retried at start-up.
+  bool waking = false;
 
   AuthState() {
     Api.onUnauthorized = _sessionEnded;
@@ -31,15 +35,33 @@ class AuthState extends ChangeNotifier {
       return;
     }
     Api.token = saved;
-    try {
-      username = (await Api.me())['username'] as String;
-      status = AuthStatus.loggedIn;
-    } on ApiException catch (e) {
-      // A 401 already signed us out through Api.onUnauthorized.
-      if (e.status != 401) status = AuthStatus.unreachable;
-    } catch (_) {
-      status = AuthStatus.unreachable;
+    for (var attempt = 0;; attempt++) {
+      try {
+        username = (await Api.me())['username'] as String;
+        status = AuthStatus.loggedIn;
+      } on ApiException catch (e) {
+        // A 401 already signed us out through Api.onUnauthorized.
+        if (e.status != 401) {
+          if (isServerAsleep(e) && attempt < WakePolicy.delays.length) {
+            waking = true;
+            notifyListeners();
+            await Future<void>.delayed(WakePolicy.delays[attempt]);
+            continue;
+          }
+          status = AuthStatus.unreachable;
+        }
+      } catch (e) {
+        if (isServerAsleep(e) && attempt < WakePolicy.delays.length) {
+          waking = true;
+          notifyListeners();
+          await Future<void>.delayed(WakePolicy.delays[attempt]);
+          continue;
+        }
+        status = AuthStatus.unreachable;
+      }
+      break;
     }
+    waking = false;
     notifyListeners();
   }
 

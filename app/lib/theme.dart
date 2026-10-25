@@ -1,107 +1,332 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Station-board navy: the header band that carries the month.
-const _navyLight = Color(0xFF12233F);
-const _navyDark = Color(0xFF0A1220);
+/// Design tokens. The values are the ones in the ResumeMatch stylesheet
+/// (ink navy, cobalt, highlighter yellow, green / amber / red states), in
+/// light and dark.
+@immutable
+class Tk extends ThemeExtension<Tk> {
+  final Color bg, paper, ink, ink2, ink3, line, line2;
+  final Color cobalt, cobaltDark, cobaltSoft, btn, btnHover, link;
+  final Color hl, onHl;
+  final Color match, matchSoft, miss, missSoft, amber, amberSoft;
+  final Color purple, purpleSoft;
+  final Color surface2, track, strong, onStrong;
 
-const _lightScheme = ColorScheme(
-  brightness: Brightness.light,
-  primary: Color(0xFF1B4BD2),
-  onPrimary: Color(0xFFFFFFFF),
-  primaryContainer: Color(0xFFDCE5FF),
-  onPrimaryContainer: Color(0xFF0A1F66),
-  secondary: Color(0xFF4A5B78),
-  onSecondary: Color(0xFFFFFFFF),
-  secondaryContainer: Color(0xFFDDE5F2),
-  onSecondaryContainer: Color(0xFF16243D),
-  tertiary: Color(0xFF8A4F00),
-  onTertiary: Color(0xFFFFFFFF),
-  tertiaryContainer: Color(0xFFFFE2B8),
-  onTertiaryContainer: Color(0xFF3A2000),
-  error: Color(0xFFB3261E),
-  onError: Color(0xFFFFFFFF),
-  errorContainer: Color(0xFFFFDAD5),
-  onErrorContainer: Color(0xFF410002),
-  surface: Color(0xFFF3F6FA),
-  onSurface: Color(0xFF111B2B),
-  onSurfaceVariant: Color(0xFF47546A),
-  outline: Color(0xFF76839A),
-  outlineVariant: Color(0xFFD3DBE8),
-  surfaceContainerLowest: Color(0xFFFFFFFF),
-  surfaceContainerLow: Color(0xFFEBF0F7),
-  surfaceContainer: Color(0xFFE5EBF4),
-  surfaceContainerHigh: Color(0xFFDFE6F0),
-  surfaceContainerHighest: Color(0xFFD9E1ED),
-  inverseSurface: Color(0xFF1F2B3F),
-  onInverseSurface: Color(0xFFEFF3FA),
-  inversePrimary: Color(0xFFB7C8FF),
-  shadow: Color(0xFF000000),
-  scrim: Color(0xFF000000),
-);
+  const Tk({
+    required this.bg,
+    required this.paper,
+    required this.ink,
+    required this.ink2,
+    required this.ink3,
+    required this.line,
+    required this.line2,
+    required this.cobalt,
+    required this.cobaltDark,
+    required this.cobaltSoft,
+    required this.btn,
+    required this.btnHover,
+    required this.link,
+    required this.hl,
+    required this.onHl,
+    required this.match,
+    required this.matchSoft,
+    required this.miss,
+    required this.missSoft,
+    required this.amber,
+    required this.amberSoft,
+    required this.purple,
+    required this.purpleSoft,
+    required this.surface2,
+    required this.track,
+    required this.strong,
+    required this.onStrong,
+  });
 
-const _darkScheme = ColorScheme(
-  brightness: Brightness.dark,
-  primary: Color(0xFFA9C0FF),
-  onPrimary: Color(0xFF0B2470),
-  primaryContainer: Color(0xFF1E3A99),
-  onPrimaryContainer: Color(0xFFDCE5FF),
-  secondary: Color(0xFFB4C4E0),
-  onSecondary: Color(0xFF1A2A44),
-  secondaryContainer: Color(0xFF2E3F5C),
-  onSecondaryContainer: Color(0xFFDDE5F2),
-  tertiary: Color(0xFFFFB95C),
-  onTertiary: Color(0xFF4A2800),
-  tertiaryContainer: Color(0xFF5C3600),
-  onTertiaryContainer: Color(0xFFFFE2B8),
-  error: Color(0xFFFFB4AB),
-  onError: Color(0xFF690005),
-  errorContainer: Color(0xFF93000A),
-  onErrorContainer: Color(0xFFFFDAD5),
-  surface: Color(0xFF0E141C),
-  onSurface: Color(0xFFE4EAF3),
-  onSurfaceVariant: Color(0xFFABB7CB),
-  outline: Color(0xFF7C889D),
-  outlineVariant: Color(0xFF2B3647),
-  surfaceContainerLowest: Color(0xFF090E14),
-  surfaceContainerLow: Color(0xFF131B25),
-  surfaceContainer: Color(0xFF18212D),
-  surfaceContainerHigh: Color(0xFF1F2A38),
-  surfaceContainerHighest: Color(0xFF273343),
-  inverseSurface: Color(0xFFE4EAF3),
-  onInverseSurface: Color(0xFF1F2B3F),
-  inversePrimary: Color(0xFF1B4BD2),
-  shadow: Color(0xFF000000),
-  scrim: Color(0xFF000000),
-);
+  static const light = Tk(
+    bg: Color(0xFFEDF0F4),
+    paper: Color(0xFFFFFFFF),
+    ink: Color(0xFF18223D),
+    ink2: Color(0xFF4A5470),
+    ink3: Color(0xFF5F6985),
+    line: Color(0xFFD9DEE7),
+    line2: Color(0xFF858EA6),
+    cobalt: Color(0xFF2F4FD8),
+    cobaltDark: Color(0xFF2340B8),
+    cobaltSoft: Color(0xFFE6EBFD),
+    btn: Color(0xFF2F4FD8),
+    btnHover: Color(0xFF2340B8),
+    link: Color(0xFF2F4FD8),
+    hl: Color(0xFFFFE45C),
+    onHl: Color(0xFF18223D),
+    match: Color(0xFF0F7A4F),
+    matchSoft: Color(0xFFDDF3E9),
+    miss: Color(0xFFB5332D),
+    missSoft: Color(0xFFFBE6E4),
+    amber: Color(0xFF8F5F00),
+    amberSoft: Color(0xFFFCF1D6),
+    purple: Color(0xFF5B3CC4),
+    purpleSoft: Color(0xFFEEE8FB),
+    surface2: Color(0xFFF4F6FA),
+    track: Color(0xFFE3E7EF),
+    strong: Color(0xFF18223D),
+    onStrong: Color(0xFFFFFFFF),
+  );
 
-/// Category line colours. Deliberately no red: red only ever means over budget.
-const _linesLight = <Color>[
-  Color(0xFF2458D6), // blue
-  Color(0xFF0F8A5F), // green
-  Color(0xFFC77100), // amber
-  Color(0xFF7A45C9), // violet
-  Color(0xFF0E8CA0), // teal
-  Color(0xFFB83280), // magenta
-  Color(0xFF8A5A2B), // brown
-  Color(0xFF4E6285), // slate
-  Color(0xFF6B7F1A), // olive
+  static const dark = Tk(
+    bg: Color(0xFF0D1322),
+    paper: Color(0xFF141B2F),
+    ink: Color(0xFFE7EBF7),
+    ink2: Color(0xFFAEB7D1),
+    ink3: Color(0xFF8993B0),
+    line: Color(0xFF2A3453),
+    line2: Color(0xFF6A759A),
+    cobalt: Color(0xFF4F6FF0),
+    cobaltDark: Color(0xFFA9BBFF),
+    cobaltSoft: Color(0xFF1E2A56),
+    btn: Color(0xFF3B58D6),
+    btnHover: Color(0xFF3250CC),
+    link: Color(0xFF8FA5FF),
+    hl: Color(0xFFFFE45C),
+    onHl: Color(0xFF18223D),
+    match: Color(0xFF4CCB93),
+    matchSoft: Color(0xFF12382B),
+    miss: Color(0xFFFF7B73),
+    missSoft: Color(0xFF3F1F1E),
+    amber: Color(0xFFE8AE45),
+    amberSoft: Color(0xFF3A2D10),
+    purple: Color(0xFFB7A5FF),
+    purpleSoft: Color(0xFF2A2352),
+    surface2: Color(0xFF1B2440),
+    track: Color(0xFF27304D),
+    strong: Color(0xFF2B3A72),
+    onStrong: Color(0xFFFFFFFF),
+  );
+
+  @override
+  Tk copyWith() => this;
+
+  @override
+  Tk lerp(ThemeExtension<Tk>? other, double t) =>
+      t < 0.5 ? this : (other as Tk? ?? this);
+}
+
+extension TkContext on BuildContext {
+  Tk get tk => Theme.of(this).extension<Tk>()!;
+}
+
+const sans = 'Bricolage';
+const display = 'BricolageDisplay';
+const serif = 'SourceSerif';
+
+TextStyle _t(double size, FontWeight w, Color color,
+        {String family = sans, double? height, double? ls}) =>
+    TextStyle(
+      fontFamily: family,
+      fontSize: size,
+      fontWeight: w,
+      color: color,
+      height: height,
+      letterSpacing: ls,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+
+TextTheme _textTheme(Tk k) => TextTheme(
+      // hero headline
+      displayLarge: _t(64, FontWeight.w800, k.ink,
+          family: display, height: 1.02, ls: -2.2),
+      displayMedium: _t(44, FontWeight.w800, k.ink,
+          family: display, height: 1.04, ls: -1.5),
+      // page title
+      headlineMedium: _t(33, FontWeight.w800, k.ink,
+          family: display, height: 1.15, ls: -0.4),
+      headlineSmall: _t(27, FontWeight.w800, k.ink,
+          family: display, height: 1.15, ls: -0.3),
+      titleLarge: _t(22, FontWeight.w800, k.ink,
+          family: display, height: 1.2, ls: -0.3),
+      // panel heading
+      titleMedium:
+          _t(17.6, FontWeight.w700, k.ink, family: display, height: 1.2),
+      titleSmall: _t(15, FontWeight.w700, k.ink, height: 1.25),
+      bodyLarge: _t(16, FontWeight.w400, k.ink, height: 1.5),
+      bodyMedium: _t(15, FontWeight.w400, k.ink, height: 1.5),
+      bodySmall: _t(14, FontWeight.w400, k.ink2, height: 1.45),
+      labelLarge: _t(15.2, FontWeight.w600, k.ink, height: 1.2),
+      labelMedium: _t(13.6, FontWeight.w600, k.ink2, height: 1.2),
+      labelSmall: _t(12.5, FontWeight.w600, k.ink3, height: 1.2),
+    );
+
+ThemeData buildTheme(Brightness brightness) {
+  final k = brightness == Brightness.dark ? Tk.dark : Tk.light;
+  final text = _textTheme(k);
+  final radius10 = BorderRadius.circular(10);
+  OutlineInputBorder border(Color c, [double w = 1.5]) => OutlineInputBorder(
+      borderRadius: radius10, borderSide: BorderSide(color: c, width: w));
+  return ThemeData(
+    useMaterial3: true,
+    brightness: brightness,
+    extensions: [k],
+    scaffoldBackgroundColor: k.bg,
+    colorScheme: ColorScheme(
+      brightness: brightness,
+      primary: k.btn,
+      onPrimary: Colors.white,
+      secondary: k.cobalt,
+      onSecondary: Colors.white,
+      error: k.miss,
+      onError: Colors.white,
+      surface: k.paper,
+      onSurface: k.ink,
+      onSurfaceVariant: k.ink2,
+      outline: k.line2,
+      outlineVariant: k.line,
+      surfaceContainerHighest: k.surface2,
+      primaryContainer: k.cobaltSoft,
+      onPrimaryContainer: k.cobaltDark,
+      errorContainer: k.missSoft,
+      onErrorContainer: k.miss,
+      secondaryContainer: k.cobaltSoft,
+      onSecondaryContainer: k.cobaltDark,
+      tertiaryContainer: k.amberSoft,
+      onTertiaryContainer: k.amber,
+      tertiary: k.amber,
+      inverseSurface: k.strong,
+      onInverseSurface: k.onStrong,
+      shadow: Colors.black,
+      scrim: Colors.black,
+    ),
+    textTheme: text,
+    primaryTextTheme: text,
+    fontFamily: sans,
+    splashFactory: InkRipple.splashFactory,
+    dividerTheme: DividerThemeData(color: k.line, space: 1, thickness: 1),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: k.paper,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      border: border(k.line2),
+      enabledBorder: border(k.line2),
+      focusedBorder: border(k.cobalt),
+      errorBorder: border(k.miss),
+      focusedErrorBorder: border(k.miss),
+      disabledBorder: border(k.line),
+      hintStyle: text.bodyLarge!.copyWith(color: k.ink3),
+      errorStyle:
+          text.labelSmall!.copyWith(color: k.miss, fontWeight: FontWeight.w500),
+      helperStyle:
+          text.labelSmall!.copyWith(color: k.ink3, fontWeight: FontWeight.w400),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: k.link,
+      selectionColor: k.hl.withValues(alpha: 0.6),
+      selectionHandleColor: k.cobalt,
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: k.strong,
+      contentTextStyle: text.bodyMedium!.copyWith(color: k.onStrong),
+      actionTextColor: k.hl,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      width: 560,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: k.paper,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: k.line)),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: k.paper,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: k.line)),
+      textStyle: text.bodyMedium,
+    ),
+    datePickerTheme: DatePickerThemeData(
+      backgroundColor: k.paper,
+      surfaceTintColor: Colors.transparent,
+      headerBackgroundColor: k.strong,
+      headerForegroundColor: k.onStrong,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(
+          color: k.strong, borderRadius: BorderRadius.circular(8)),
+      textStyle: text.labelMedium!.copyWith(color: k.onStrong),
+    ),
+    progressIndicatorTheme:
+        ProgressIndicatorThemeData(color: k.cobalt, linearTrackColor: k.track),
+    appBarTheme: AppBarTheme(
+      systemOverlayStyle: brightness == Brightness.dark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
+    ),
+  );
+}
+
+/// Light / dark / follow the system. The choice is remembered (see auth.dart).
+class ThemeController extends ChangeNotifier {
+  static const _key = 'theme';
+  ThemeMode mode = ThemeMode.system;
+
+  Future<void> restore() async {
+    try {
+      final v = (await SharedPreferences.getInstance()).getString(_key);
+      mode = switch (v) {
+        'dark' => ThemeMode.dark,
+        'light' => ThemeMode.light,
+        _ => ThemeMode.system,
+      };
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> set(ThemeMode m) async {
+    mode = m;
+    notifyListeners();
+    try {
+      await (await SharedPreferences.getInstance()).setString(_key, m.name);
+    } catch (_) {}
+  }
+}
+
+class ThemeScope extends InheritedNotifier<ThemeController> {
+  const ThemeScope(
+      {super.key, required ThemeController controller, required super.child})
+      : super(notifier: controller);
+
+  static ThemeController of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ThemeScope>()!.notifier!;
+}
+
+/// Category colours for the dot and tag next to a category name.
+const _catLight = <Color>[
+  Color(0xFF2F4FD8), // cobalt
+  Color(0xFF0F7A4F), // green
+  Color(0xFF8F5F00), // amber
+  Color(0xFF5B3CC4), // purple
+  Color(0xFF0E7C8C), // teal
+  Color(0xFFB1306F), // magenta
+  Color(0xFF7A4B20), // brown
+  Color(0xFF4A5470), // slate
+  Color(0xFF5E7A12), // olive
 ];
-
-const _linesDark = <Color>[
-  Color(0xFF7FA2FF),
-  Color(0xFF4CCB98),
-  Color(0xFFFFB347),
-  Color(0xFFB993F5),
+const _catDark = <Color>[
+  Color(0xFF8FA5FF),
+  Color(0xFF4CCB93),
+  Color(0xFFE8AE45),
+  Color(0xFFB7A5FF),
   Color(0xFF4FC6DA),
   Color(0xFFF07DB8),
   Color(0xFFD4A06A),
-  Color(0xFF9DB1D4),
+  Color(0xFFAEB7D1),
   Color(0xFFB4C95A),
 ];
 
-/// Common categories keep a fixed line colour; anything else hashes into the palette.
-const _knownLines = <String, int>{
+const _knownCats = <String, int>{
   'food': 2,
   'snacks': 2,
   'tea': 2,
@@ -116,188 +341,14 @@ const _knownLines = <String, int>{
   'gym': 8,
 };
 
-/// Stable colour for a category name (case-insensitive).
 Color categoryColor(String name, Brightness b) {
   final key = name.trim().toLowerCase();
-  final palette = b == Brightness.dark ? _linesDark : _linesLight;
-  final known = _knownLines[key];
+  final palette = b == Brightness.dark ? _catDark : _catLight;
+  final known = _knownCats[key];
   if (known != null) return palette[known];
   var h = 5381;
   for (final c in key.codeUnits) {
     h = ((h * 33) ^ c) & 0x7fffffff;
   }
   return palette[h % palette.length];
-}
-
-/// Colour of an overrun line segment and its terminus ring. In dark mode the
-/// text-safe pastel error colour is too close to the category lines, so the
-/// line itself uses a more saturated red.
-Color alertLineColor(Brightness b) =>
-    b == Brightness.dark ? const Color(0xFFFF5D4D) : _lightScheme.error;
-
-/// Header band colour, shared by the app bar and the navigation rail.
-Color headerColor(Brightness b) =>
-    b == Brightness.dark ? _navyDark : _navyLight;
-
-const _tabular = [FontFeature.tabularFigures()];
-
-/// Style for amounts: semi-condensed, tabular figures so columns line up.
-TextStyle amountStyle(BuildContext context,
-    {double size = 17, FontWeight weight = FontWeight.w600, Color? color}) {
-  return TextStyle(
-    fontFamily: 'BarlowSemiCondensed',
-    fontSize: size,
-    fontWeight: weight,
-    color: color ?? Theme.of(context).colorScheme.onSurface,
-    fontFeatures: _tabular,
-    height: 1.2,
-  );
-}
-
-TextTheme _textTheme(ColorScheme s) {
-  TextStyle t(double size, FontWeight w, {double? height, double? ls}) =>
-      TextStyle(
-        fontFamily: 'Barlow',
-        fontSize: size,
-        fontWeight: w,
-        height: height,
-        letterSpacing: ls,
-        color: s.onSurface,
-        fontFeatures: _tabular,
-      );
-  return TextTheme(
-    headlineMedium: t(30, FontWeight.w600, height: 1.15),
-    headlineSmall: t(25, FontWeight.w600, height: 1.2),
-    titleLarge: t(22, FontWeight.w600, height: 1.2),
-    titleMedium: t(18, FontWeight.w600, height: 1.25),
-    titleSmall: t(16, FontWeight.w600, height: 1.25),
-    bodyLarge: t(17, FontWeight.w400, height: 1.35),
-    bodyMedium: t(15, FontWeight.w400, height: 1.35),
-    bodySmall: t(13, FontWeight.w400, height: 1.3),
-    labelLarge: t(16, FontWeight.w600, height: 1.2, ls: 0.1),
-    labelMedium: t(14, FontWeight.w500, height: 1.2, ls: 0.2),
-    labelSmall: t(12, FontWeight.w500, height: 1.2, ls: 0.3),
-  );
-}
-
-ThemeData buildTheme(Brightness brightness) {
-  final s = brightness == Brightness.dark ? _darkScheme : _lightScheme;
-  final text = _textTheme(s);
-  final header = headerColor(brightness);
-  final radius = BorderRadius.circular(12);
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: s,
-    scaffoldBackgroundColor: s.surface,
-    textTheme: text,
-    primaryTextTheme: text,
-    fontFamily: 'Barlow',
-    visualDensity: VisualDensity.standard,
-    splashFactory: InkSparkle.splashFactory,
-    appBarTheme: AppBarTheme(
-      backgroundColor: header,
-      foregroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      centerTitle: false,
-      titleTextStyle: text.titleLarge!.copyWith(color: Colors.white),
-      systemOverlayStyle:
-          SystemUiOverlayStyle.light.copyWith(statusBarColor: header),
-    ),
-    navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: s.surfaceContainer,
-      surfaceTintColor: Colors.transparent,
-      indicatorColor: s.primaryContainer,
-      height: 72,
-      labelTextStyle: WidgetStateProperty.resolveWith((states) =>
-          text.labelMedium!.copyWith(
-              fontSize: 13,
-              color: states.contains(WidgetState.selected)
-                  ? s.onSurface
-                  : s.onSurfaceVariant,
-              fontWeight: states.contains(WidgetState.selected)
-                  ? FontWeight.w600
-                  : FontWeight.w500)),
-      iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
-          size: 24,
-          color: states.contains(WidgetState.selected)
-              ? s.onPrimaryContainer
-              : s.onSurfaceVariant)),
-    ),
-    navigationRailTheme: NavigationRailThemeData(
-      backgroundColor: s.surfaceContainer,
-      indicatorColor: s.primaryContainer,
-      selectedLabelTextStyle: text.labelMedium!
-          .copyWith(color: s.onSurface, fontWeight: FontWeight.w600),
-      unselectedLabelTextStyle:
-          text.labelMedium!.copyWith(color: s.onSurfaceVariant),
-      selectedIconTheme: IconThemeData(color: s.onPrimaryContainer),
-      unselectedIconTheme: IconThemeData(color: s.onSurfaceVariant),
-    ),
-    floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: s.primary,
-      foregroundColor: s.onPrimary,
-      elevation: 3,
-      extendedTextStyle: text.labelLarge!.copyWith(color: s.onPrimary),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    ),
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(64, 48),
-        textStyle: text.labelLarge,
-        shape: RoundedRectangleBorder(borderRadius: radius),
-      ),
-    ),
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-          minimumSize: const Size(64, 48), textStyle: text.labelLarge),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: s.surfaceContainerLow,
-      border: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: s.outlineVariant)),
-      enabledBorder: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: s.outlineVariant)),
-      focusedBorder: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: s.primary, width: 2)),
-      errorBorder: OutlineInputBorder(
-          borderRadius: radius, borderSide: BorderSide(color: s.error)),
-      focusedErrorBorder: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: s.error, width: 2)),
-      labelStyle: text.bodyLarge!.copyWith(color: s.onSurfaceVariant),
-      helperStyle: text.bodySmall!.copyWith(color: s.onSurfaceVariant),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    ),
-    snackBarTheme: SnackBarThemeData(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: s.inverseSurface,
-      contentTextStyle: text.bodyMedium!.copyWith(color: s.onInverseSurface),
-      actionTextColor: s.inversePrimary,
-      shape: RoundedRectangleBorder(borderRadius: radius),
-    ),
-    bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: s.surfaceContainerLowest,
-      surfaceTintColor: Colors.transparent,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-    ),
-    dialogTheme: DialogThemeData(
-      backgroundColor: s.surfaceContainerLowest,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-    ),
-    dividerTheme:
-        DividerThemeData(color: s.outlineVariant, space: 1, thickness: 1),
-    listTileTheme: ListTileThemeData(
-      iconColor: s.onSurfaceVariant,
-      minVerticalPadding: 8,
-    ),
-  );
 }

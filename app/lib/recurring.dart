@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'api.dart';
 import 'common.dart';
 import 'theme.dart';
-import 'widgets.dart';
+import 'ui.dart';
 
 class RecurringScreen extends StatelessWidget {
   const RecurringScreen({super.key});
 
   Future<void> _add(BuildContext context) async {
     final app = AppScope.read(context);
-    final saved = await showFormSheet(
+    final saved = await showFormDialog(
       context,
       title: 'New recurring expense',
       subtitle:
@@ -95,100 +95,191 @@ class RecurringScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final s = Theme.of(context).colorScheme;
+    return Loader<List<dynamic>>(
+      loadKey: app.tick,
+      load: Api.recurring,
+      builder: (ctx, all, reload) => RefreshIndicator(
+        onRefresh: reload,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 48),
+          children: _content(context, all.cast<Map<String, dynamic>>()),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _content(BuildContext context, List<Map<String, dynamic>> rows) {
+    final app = AppScope.of(context);
+    final k = context.tk;
     final t = Theme.of(context).textTheme;
-    return Scaffold(
-      body: Loader<List<dynamic>>(
-        loadKey: app.tick,
-        load: Api.recurring,
-        builder: (ctx, all, reload) {
-          final rows = all.cast<Map<String, dynamic>>();
-          if (rows.isEmpty) {
-            return const EmptyState(
-              icon: Icons.repeat,
-              title: 'No recurring expenses',
-              message:
-                  'Tap Add template to set up rent or a subscription once, then add it to any month with one tap.',
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: reload,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 96),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                        color: s.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(20)),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                              'Adds each template once, on its day. Safe to repeat: nothing is added twice.',
-                              style: t.bodyMedium!
-                                  .copyWith(color: s.onSurfaceVariant)),
-                          const SizedBox(height: 12),
-                          FilledButton.tonalIcon(
-                            onPressed: () => _apply(context),
-                            icon: const Icon(Icons.playlist_add_check),
-                            label: Text('Apply to ${monthLabel(app.month)}'),
-                          ),
-                        ]),
-                  ),
-                ),
-                const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: SectionHeading('Templates')),
-                for (final r in rows)
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 64),
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          left: 16, right: 4, top: 4, bottom: 4),
-                      child: Row(children: [
-                        CategoryDot(r['category'] as String),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(titleCase(r['category'] as String),
-                                    style: t.titleSmall),
-                                Text(
-                                  'Day ${r['day_of_month']} of every month'
-                                  '${(r['note'] as String).isEmpty ? '' : ' · ${r['note']}'}',
-                                  style: t.bodySmall!
-                                      .copyWith(color: s.onSurfaceVariant),
-                                ),
-                              ]),
-                        ),
-                        const SizedBox(width: 8),
-                        Amount(money(r['amount'] as num),
-                            style: amountStyle(context, size: 18)),
-                        const SizedBox(width: 4),
-                        IconButton(
-                          tooltip:
-                              'Delete ${titleCase(r['category'] as String)} template',
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => _delete(context, r),
-                        ),
-                      ]),
-                    ),
-                  ),
-              ],
+    final wide = isWide(context);
+    final head = PageHead(
+      title: 'Recurring',
+      subtitle:
+          'Bills and subscriptions that repeat every month. Add them to any month with one click.',
+      actions: [
+        const MonthSwitcher(),
+        Btn('Add template', icon: Icons.add, onPressed: () => _add(context)),
+      ],
+    );
+    if (rows.isEmpty) {
+      return [
+        head,
+        EmptyPanel(
+          title: 'No recurring expenses',
+          message:
+              'Set up rent or a subscription once, then add it to any month with one click.',
+          actionLabel: 'Add your first template',
+          onAction: () => _add(context),
+        ),
+      ];
+    }
+    final total = rows.fold<double>(0, (a, r) => a + (r['amount'] as num));
+    final apply =
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Semantics(
+          header: true,
+          container: true,
+          child: Text('Add to ${monthLabel(app.month)}', style: t.titleMedium)),
+      const SizedBox(height: 4),
+      Text(
+          'Adds each template once, on its day. Safe to repeat: nothing is added twice.',
+          style: t.bodyMedium!.copyWith(color: k.ink2)),
+    ]);
+    final applyBtn = Btn('Apply to ${monthLabel(app.month)}',
+        icon: Icons.playlist_add_check, onPressed: () => _apply(context));
+    return [
+      head,
+      StatStrip([
+        Stat('${rows.length}', rows.length == 1 ? 'Template' : 'Templates'),
+        Stat(money(total), 'Added each month'),
+        Stat(
+            money(rows
+                .map((r) => (r['amount'] as num).toDouble())
+                .reduce((a, b) => a > b ? a : b)),
+            'Largest template'),
+      ]),
+      const SizedBox(height: 20),
+      Panel(
+        child: wide
+            ? Row(children: [
+                Expanded(child: apply),
+                const SizedBox(width: 20),
+                applyBtn
+              ])
+            : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                apply,
+                const SizedBox(height: 16),
+                applyBtn,
+              ]),
+      ),
+      const SizedBox(height: 20),
+      Panel(
+        padding: wide
+            ? const EdgeInsets.fromLTRB(24, 20, 24, 8)
+            : const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const PanelTitle('Templates'),
+          if (wide)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(children: [
+                SizedBox(
+                    width: 160,
+                    child: Text('Category',
+                        style: t.labelMedium!.copyWith(color: k.ink3))),
+                Expanded(
+                    child: Text('Note',
+                        style: t.labelMedium!.copyWith(color: k.ink3))),
+                SizedBox(
+                    width: 120,
+                    child: Text('Repeats on',
+                        style: t.labelMedium!.copyWith(color: k.ink3))),
+                SizedBox(
+                    width: 120,
+                    child: Text('Amount',
+                        textAlign: TextAlign.end,
+                        style: t.labelMedium!.copyWith(color: k.ink3))),
+                const SizedBox(width: 110),
+              ]),
             ),
-          );
-        },
+          for (var i = 0; i < rows.length; i++)
+            _Row(rows[i],
+                first: i == 0,
+                wide: wide,
+                onDelete: () => _delete(context, rows[i])),
+        ]),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _add(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Add template'),
-      ),
+    ];
+  }
+}
+
+class _Row extends StatelessWidget {
+  final Map<String, dynamic> r;
+  final bool first;
+  final bool wide;
+  final VoidCallback onDelete;
+  const _Row(this.r,
+      {required this.first, required this.wide, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.tk;
+    final t = Theme.of(context).textTheme;
+    final category = r['category'] as String;
+    final note = r['note'] as String;
+    final day = 'Day ${r['day_of_month']} of every month';
+    final amount = money(r['amount'] as num);
+    final remove = Btn('Remove',
+        kind: BtnKind.ghost,
+        small: true,
+        semanticLabel: 'Remove ${titleCase(category)} template',
+        onPressed: onDelete);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+          border: first ? null : Border(top: BorderSide(color: k.line))),
+      child: wide
+          ? Row(children: [
+              SizedBox(
+                  width: 160,
+                  child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: CategoryTag(category))),
+              Expanded(
+                  child: Text(note,
+                      overflow: TextOverflow.ellipsis,
+                      style: t.bodyMedium!.copyWith(color: k.ink2))),
+              SizedBox(
+                  width: 120,
+                  child: Text('Day ${r['day_of_month']}',
+                      style: t.bodyMedium!.copyWith(color: k.ink2))),
+              SizedBox(
+                  width: 120,
+                  child: Text(amount,
+                      textAlign: TextAlign.end,
+                      style:
+                          t.bodyLarge!.copyWith(fontWeight: FontWeight.w700))),
+              SizedBox(
+                  width: 110,
+                  child:
+                      Align(alignment: Alignment.centerRight, child: remove)),
+            ])
+          : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(
+                    child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: CategoryTag(category))),
+                Text(amount,
+                    style: t.bodyLarge!.copyWith(fontWeight: FontWeight.w700)),
+              ]),
+              const SizedBox(height: 6),
+              Text('$day${note.isEmpty ? '' : ' · $note'}', style: t.bodySmall),
+              const SizedBox(height: 10),
+              remove,
+            ]),
     );
   }
 }

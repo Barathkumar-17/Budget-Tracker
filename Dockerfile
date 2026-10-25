@@ -10,14 +10,14 @@ COPY app/assets assets
 COPY app/lib lib
 RUN flutter create . --project-name budget_tracker --platforms=web \
  && flutter pub get \
- && flutter build web --release --dart-define=API_URL=same-origin
+ && flutter build web --release --dart-define=API_URL=same-origin --dart-define=SHOW_DEMO=true
 
 # Stage 2: the API, serving the built app at "/".
 FROM python:3.12-slim
 WORKDIR /srv
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY backend/main.py backend/seed_demo.py ./
+COPY backend/main.py backend/seed_demo.py backend/start.sh ./
 COPY --from=web /src/app/build/web ./web
 
 # SQLite lives in /data (a volume locally; ephemeral on free hosting tiers).
@@ -27,4 +27,4 @@ VOLUME /data
 
 # Hosts like Render pass the port in $PORT; default to 8000 locally.
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "start.sh"]

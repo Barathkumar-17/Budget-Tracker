@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 import 'api.dart';
+import 'theme.dart';
+import 'ui.dart';
 
 // ---------------------------------------------------------------- formatting
 
@@ -99,6 +103,15 @@ class AppState extends ChangeNotifier {
   DateTime month = DateTime(DateTime.now().year, DateTime.now().month);
   int tick = 0;
 
+  /// Index of the open section (0 Dashboard, 1 Expenses, 2 Budgets, 3 Recurring, 4 Goals).
+  int tab = 0;
+
+  void goTo(int i) {
+    if (i == tab) return;
+    tab = i;
+    notifyListeners();
+  }
+
   String get key => monthKey(month);
 
   void shiftMonth(int delta) {
@@ -137,19 +150,11 @@ void snack(BuildContext c, String msg,
     String? action,
     VoidCallback? onAction,
     int seconds = 4}) {
-  final s = Theme.of(c).colorScheme;
+  final k = c.tk;
   final (bg, fg, icon) = switch (tone) {
-    SnackTone.alert => (
-        s.errorContainer,
-        s.onErrorContainer,
-        Icons.error_outline
-      ),
-    SnackTone.warning => (
-        s.tertiaryContainer,
-        s.onTertiaryContainer,
-        Icons.warning_amber_rounded
-      ),
-    SnackTone.neutral => (null, null, null),
+    SnackTone.alert => (k.missSoft, k.miss, Icons.error_outline),
+    SnackTone.warning => (k.amberSoft, k.amber, Icons.warning_amber_rounded),
+    SnackTone.neutral => (k.strong, k.onStrong, null),
   };
   final m = ScaffoldMessenger.of(c);
   m.clearSnackBars();
@@ -158,42 +163,107 @@ void snack(BuildContext c, String msg,
     duration: Duration(seconds: seconds),
     content: Row(children: [
       if (icon != null) ...[Icon(icon, color: fg), const SizedBox(width: 12)],
-      Expanded(
-          child: Text(msg, style: fg == null ? null : TextStyle(color: fg))),
+      Expanded(child: Text(msg, style: TextStyle(color: fg))),
     ]),
     action: action == null
         ? null
         : SnackBarAction(
             label: action,
-            textColor: fg == null ? null : s.primary,
+            textColor: tone == SnackTone.neutral ? k.hl : k.cobaltDark,
             onPressed: onAction ?? () {}),
   ));
 }
 
+/// A small dialog in the app's own style. Resolves true on the confirm button.
 Future<bool> confirm(
     BuildContext context, String title, String body, String action) async {
   final r = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(title),
-      content: Text(body),
+    builder: (ctx) => DialogShell(
+      title: title,
+      subtitle: body,
       actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel')),
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          style: TextButton.styleFrom(
-              foregroundColor: Theme.of(ctx).colorScheme.error),
-          child: Text(action),
-        ),
+        Btn('Cancel',
+            kind: BtnKind.ghost, onPressed: () => Navigator.pop(ctx, false)),
+        Btn(action,
+            kind: BtnKind.danger, onPressed: () => Navigator.pop(ctx, true)),
       ],
+      children: const [],
     ),
   );
   return r ?? false;
 }
 
+class DialogShell extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final List<Widget> children;
+  final List<Widget> actions;
+  const DialogShell(
+      {super.key,
+      required this.title,
+      this.subtitle,
+      required this.children,
+      required this.actions});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final k = context.tk;
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Semantics(
+                  header: true,
+                  container: true,
+                  child: Text(title, style: t.titleLarge)),
+              if (subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(subtitle!, style: t.bodyMedium!.copyWith(color: k.ink2)),
+              ],
+              if (children.isNotEmpty) const SizedBox(height: 18),
+              ...children,
+              const SizedBox(height: 22),
+              Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: actions),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // -------------------------------------------------------------------- loader
+
+/// How long to keep trying while a sleeping server (free hosting) wakes up.
+class WakePolicy {
+  static List<Duration> delays = const [
+    Duration(seconds: 2),
+    Duration(seconds: 4),
+    Duration(seconds: 6),
+    Duration(seconds: 8),
+    Duration(seconds: 10),
+    Duration(seconds: 12),
+  ];
+}
+
+/// True for failures that mean "the server is not answering yet": a network
+/// error or timeout, or a gateway error from a host that is still starting up.
+bool isServerAsleep(Object e) {
+  if (e is ApiException) return const [502, 503, 504].contains(e.status);
+  return e is http.ClientException || e is TimeoutException;
+}
 
 /// Loads data and renders it. Reloads when [loadKey] changes, keeping the old
 /// data on screen (with a thin progress line); drops it when [resetKey] changes.
@@ -219,6 +289,7 @@ class _LoaderState<T> extends State<Loader<T>> {
   bool _has = false;
   Object? _error;
   bool _loading = true;
+  bool _waking = false;
   int _gen = 0;
 
   @override
@@ -243,25 +314,40 @@ class _LoaderState<T> extends State<Loader<T>> {
   Future<void> _start({required bool notify}) async {
     final gen = ++_gen;
     if (notify) {
-      setState(() => _loading = true);
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
     } else {
       _loading = true;
     }
-    try {
-      final d = await widget.load();
-      if (!mounted || gen != _gen) return;
-      setState(() {
-        _data = d;
-        _has = true;
-        _error = null;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted || gen != _gen) return;
-      setState(() {
-        _error = e;
-        _loading = false;
-      });
+    for (var attempt = 0;; attempt++) {
+      try {
+        final d = await widget.load();
+        if (!mounted || gen != _gen) return;
+        setState(() {
+          _data = d;
+          _has = true;
+          _error = null;
+          _loading = false;
+          _waking = false;
+        });
+        return;
+      } catch (e) {
+        if (!mounted || gen != _gen) return;
+        if (isServerAsleep(e) && attempt < WakePolicy.delays.length) {
+          setState(() => _waking = true);
+          await Future<void>.delayed(WakePolicy.delays[attempt]);
+          if (!mounted || gen != _gen) return;
+          continue;
+        }
+        setState(() {
+          _error = e;
+          _loading = false;
+          _waking = false;
+        });
+        return;
+      }
     }
   }
 
@@ -270,6 +356,7 @@ class _LoaderState<T> extends State<Loader<T>> {
   @override
   Widget build(BuildContext context) {
     if (!_has) {
+      if (_waking) return const WakingPanel();
       if (_error != null) return ErrorState(onRetry: _reload);
       return const Center(child: CircularProgressIndicator());
     }
@@ -278,21 +365,46 @@ class _LoaderState<T> extends State<Loader<T>> {
           height: 3,
           child: _loading ? const LinearProgressIndicator(minHeight: 3) : null),
       if (_error != null)
-        Material(
-          color: Theme.of(context).colorScheme.errorContainer,
-          child: ListTile(
-            dense: true,
-            leading: Icon(Icons.cloud_off,
-                color: Theme.of(context).colorScheme.onErrorContainer),
-            title: Text('Could not refresh. Showing the last data.',
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.onErrorContainer)),
-            trailing:
-                TextButton(onPressed: _reload, child: const Text('Retry')),
-          ),
+        const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Alert('Could not refresh. Showing the last data you loaded.',
+              icon: Icons.cloud_off),
         ),
       Expanded(child: widget.builder(context, _data as T, _reload)),
     ]);
+  }
+}
+
+/// Shown while a sleeping server is starting.
+class WakingPanel extends StatelessWidget {
+  const WakingPanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final k = context.tk;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Panel(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 3)),
+            const SizedBox(height: 18),
+            Text('Waking up the server…',
+                style: t.titleMedium, textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            Text(
+                'Free hosting sleeps when nobody is using it. The first load can take up to a minute.',
+                style: t.bodyMedium!.copyWith(color: k.ink2),
+                textAlign: TextAlign.center),
+          ]),
+        ),
+      ),
+    );
   }
 }
 
@@ -302,33 +414,35 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
+    final k = context.tk;
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.cloud_off, size: 48, color: s.outline),
-          const SizedBox(height: 16),
-          Text('Could not reach the server',
-              style: t.titleMedium, textAlign: TextAlign.center),
-          const SizedBox(height: 8),
-          Text(
-              'Check that the backend is running and that you are online.\n${baseUrl.isEmpty ? 'This server' : baseUrl}',
-              style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry')),
-        ]),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Panel(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.cloud_off, size: 40, color: k.ink3),
+            const SizedBox(height: 14),
+            Text('Could not reach the server',
+                style: t.titleMedium, textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            Text(
+                baseUrl.isEmpty
+                    ? 'Check that you are online and try again.'
+                    : 'Check that the backend is running at $baseUrl and that you are online.',
+                style: t.bodyMedium!.copyWith(color: k.ink2),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            Btn('Retry', icon: Icons.refresh, onPressed: onRetry),
+          ]),
+        ),
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------- form sheet
+// ---------------------------------------------------------------- form dialog
 
 class Field {
   final String key;
@@ -346,14 +460,14 @@ class Field {
       this.readOnly = false});
 }
 
-/// Key under which [showFormSheet]'s submit callback reports a whole-form error.
+/// Key under which [showFormDialog]'s submit callback reports a whole-form error.
 const formError = '_';
 
-/// Bottom sheet with one text field per [Field]. [onSubmit] gets the trimmed
-/// values and returns null on success (the sheet closes), or a map of field key
-/// to message (use [formError] for a message not tied to a field), which is
-/// shown in the sheet so the user can correct it. Resolves true on success.
-Future<bool> showFormSheet(
+/// A dialog with one labelled input per [Field]. [onSubmit] gets the trimmed
+/// values and returns null on success (the dialog closes), or a map of field
+/// key to message (use [formError] for a message not tied to a field), which is
+/// shown so the user can correct it. Resolves true on success.
+Future<bool> showFormDialog(
   BuildContext context, {
   required String title,
   String? subtitle,
@@ -362,11 +476,9 @@ Future<bool> showFormSheet(
   required Future<Map<String, String>?> Function(Map<String, String> values)
       onSubmit,
 }) async {
-  final ok = await showModalBottomSheet<bool>(
+  final ok = await showDialog<bool>(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (ctx) => _FormSheet(
+    builder: (ctx) => _FormDialog(
         title: title,
         subtitle: subtitle,
         fields: fields,
@@ -376,13 +488,13 @@ Future<bool> showFormSheet(
   return ok ?? false;
 }
 
-class _FormSheet extends StatefulWidget {
+class _FormDialog extends StatefulWidget {
   final String title;
   final String? subtitle;
   final List<Field> fields;
   final String submit;
   final Future<Map<String, String>?> Function(Map<String, String>) onSubmit;
-  const _FormSheet(
+  const _FormDialog(
       {required this.title,
       this.subtitle,
       required this.fields,
@@ -390,10 +502,10 @@ class _FormSheet extends StatefulWidget {
       required this.onSubmit});
 
   @override
-  State<_FormSheet> createState() => _FormSheetState();
+  State<_FormDialog> createState() => _FormDialogState();
 }
 
-class _FormSheetState extends State<_FormSheet> {
+class _FormDialogState extends State<_FormDialog> {
   late final Map<String, TextEditingController> _c = {
     for (final f in widget.fields)
       f.key: TextEditingController(text: f.initial),
@@ -435,90 +547,40 @@ class _FormSheetState extends State<_FormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
-    final t = Theme.of(context).textTheme;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          20, 4, 20, 16 + MediaQuery.of(context).viewInsets.bottom),
-      child: SingleChildScrollView(
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(widget.title, style: t.titleLarge),
-              if (widget.subtitle != null) ...[
-                const SizedBox(height: 4),
-                Text(widget.subtitle!,
-                    style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant)),
-              ],
-              const SizedBox(height: 16),
-              for (var i = 0; i < widget.fields.length; i++) ...[
-                _field(widget.fields[i],
-                    first: i == 0, last: i == widget.fields.length - 1),
-                const SizedBox(height: 12),
-              ],
-              if (_errors[formError] != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                      color: s.errorContainer,
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Row(children: [
-                    Icon(Icons.error_outline, color: s.onErrorContainer),
-                    const SizedBox(width: 12),
-                    Expanded(
-                        child: Text(_errors[formError]!,
-                            style: t.bodyMedium!
-                                .copyWith(color: s.onErrorContainer))),
-                  ]),
-                ),
-                const SizedBox(height: 12),
-              ],
-              const SizedBox(height: 4),
-              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                TextButton(
-                    onPressed:
-                        _busy ? null : () => Navigator.pop(context, false),
-                    child: const Text('Cancel')),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _busy ? null : _submit,
-                  child: _busy
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2.5))
-                      : Text(widget.submit),
-                ),
-              ]),
-            ]),
-      ),
-    );
-  }
-
-  Widget _field(Field f, {required bool first, required bool last}) {
-    return TextField(
-      controller: _c[f.key],
-      autofocus: first && !f.readOnly,
-      readOnly: f.readOnly,
-      enabled: !f.readOnly,
-      textInputAction: last ? TextInputAction.done : TextInputAction.next,
-      onSubmitted: last ? (_) => _submit() : null,
-      keyboardType: f.numeric
-          ? const TextInputType.numberWithOptions(decimal: true)
-          : TextInputType.text,
-      inputFormatters: f.numeric
-          ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))]
-          : null,
-      textCapitalization:
-          f.numeric ? TextCapitalization.none : TextCapitalization.words,
-      decoration: InputDecoration(
-        labelText: f.label,
-        helperText: f.helper,
-        helperMaxLines: 3,
-        errorText: _errors[f.key],
-        prefixText: f.money ? '₹ ' : null,
-      ),
+    final fields = widget.fields;
+    return DialogShell(
+      title: widget.title,
+      subtitle: widget.subtitle,
+      actions: [
+        Btn('Cancel',
+            kind: BtnKind.ghost,
+            onPressed: _busy ? null : () => Navigator.pop(context, false)),
+        Btn(widget.submit, busy: _busy, onPressed: _submit),
+      ],
+      children: [
+        for (var i = 0; i < fields.length; i++) ...[
+          LabeledField(
+            fields[i].label,
+            _c[fields[i].key]!,
+            autofocus: i == 0,
+            numeric: fields[i].numeric,
+            money: fields[i].money,
+            readOnly: fields[i].readOnly,
+            helper: fields[i].helper,
+            error: _errors[fields[i].key],
+            capitalization: fields[i].numeric
+                ? TextCapitalization.none
+                : TextCapitalization.words,
+            action: i == fields.length - 1
+                ? TextInputAction.done
+                : TextInputAction.next,
+            onSubmitted: i == fields.length - 1 ? (_) => _submit() : null,
+          ),
+          const SizedBox(height: 14),
+        ],
+        if (_errors[formError] != null)
+          Alert(_errors[formError]!, icon: Icons.error_outline),
+      ],
     );
   }
 }

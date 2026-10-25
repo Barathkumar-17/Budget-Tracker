@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 
 import 'api.dart';
 import 'common.dart';
 import 'theme.dart';
-import 'widgets.dart';
+import 'ui.dart';
 
-/// Opens the add-expense page (or the edit page when [existing] is given) and
-/// reports the outcome (overspend / low balance).
+/// Opens the add-expense dialog (or the edit dialog when [existing] is given)
+/// and reports the outcome (overspend / low balance).
 Future<void> addExpense(BuildContext context,
     {Map<String, dynamic>? existing}) async {
   final app = AppScope.read(context);
-  final r = await Navigator.of(context).push<Map<String, dynamic>>(
-    MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => AddExpensePage(existing: existing)),
+  final r = await showDialog<Map<String, dynamic>>(
+    context: context,
+    builder: (_) => ExpenseDialog(existing: existing),
   );
   if (r == null || !context.mounted) return;
   app.changed();
@@ -42,16 +39,16 @@ Future<void> addExpense(BuildContext context,
   }
 }
 
-class AddExpensePage extends StatefulWidget {
+class ExpenseDialog extends StatefulWidget {
   /// An expense to edit; null means a new one.
   final Map<String, dynamic>? existing;
-  const AddExpensePage({super.key, this.existing});
+  const ExpenseDialog({super.key, this.existing});
 
   @override
-  State<AddExpensePage> createState() => _AddExpensePageState();
+  State<ExpenseDialog> createState() => _ExpenseDialogState();
 }
 
-class _AddExpensePageState extends State<AddExpensePage> {
+class _ExpenseDialogState extends State<ExpenseDialog> {
   static const _defaults = [
     'Food',
     'Transport',
@@ -120,6 +117,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
   }
 
   Future<void> _submit() async {
+    if (_busy) return;
     final amount = double.tryParse(_amount.text.trim());
     final category = _category.text.trim();
     setState(() {
@@ -149,123 +147,129 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
+    final k = context.tk;
     final t = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-          title: Text(widget.existing == null ? 'Add expense' : 'Edit expense'),
-          leading: const CloseButton()),
-      body: Column(children: [
-        Expanded(
-          child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-              children: [
-                TextField(
-                  controller: _amount,
-                  autofocus: true,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-                  ],
-                  textInputAction: TextInputAction.next,
-                  style:
-                      amountStyle(context, size: 32, weight: FontWeight.w700),
-                  decoration: InputDecoration(
-                    labelText: 'Amount',
-                    prefixText: '₹ ',
-                    prefixStyle: amountStyle(context,
-                        size: 32,
-                        weight: FontWeight.w700,
-                        color: s.onSurfaceVariant),
-                    errorText: _amountError,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _category,
-                  textCapitalization: TextCapitalization.words,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                      labelText: 'Category', errorText: _categoryError),
-                  onChanged: (_) => setState(() => _categoryError = null),
-                ),
-                const SizedBox(height: 8),
-                Wrap(spacing: 8, runSpacing: 0, children: [
-                  for (final c in _suggestions)
-                    ChoiceChip(
-                      label: Text(c),
-                      avatar: CategoryDot(c, size: 10),
-                      showCheckmark: false,
-                      selected: _category.text.trim().toLowerCase() ==
-                          c.toLowerCase(),
-                      onSelected: (_) => setState(() {
-                        _category.text = c;
-                        _categoryError = null;
-                      }),
-                    ),
-                ]),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: _pickDate,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                        labelText: 'Date',
-                        suffixIcon: Icon(Icons.calendar_today_outlined)),
-                    child: Text(
-                      '${dayLabel(dateKey(_date))} · ${shortDate(dateKey(_date))} ${_date.year}',
-                      style: t.bodyLarge,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _note,
-                  textCapitalization: TextCapitalization.sentences,
-                  textInputAction: TextInputAction.done,
-                  decoration:
-                      const InputDecoration(labelText: 'Note (optional)'),
-                  onSubmitted: (_) => _submit(),
-                ),
-                if (_formError != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                        color: s.errorContainer,
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Row(children: [
-                      Icon(Icons.error_outline, color: s.onErrorContainer),
-                      const SizedBox(width: 12),
-                      Expanded(
-                          child: Text(_formError!,
-                              style: t.bodyMedium!
-                                  .copyWith(color: s.onErrorContainer))),
-                    ]),
-                  ),
-                ],
-              ]),
-        ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _busy ? null : _submit,
-                child: _busy
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2.5))
-                    : const Text('Save'),
+    final typed = _category.text.trim().toLowerCase();
+    return DialogShell(
+      title: widget.existing == null ? 'Add expense' : 'Edit expense',
+      actions: [
+        Btn('Cancel',
+            kind: BtnKind.ghost,
+            onPressed: _busy ? null : () => Navigator.pop(context)),
+        Btn('Save', busy: _busy, onPressed: _submit),
+      ],
+      children: [
+        LabeledField('Amount', _amount,
+            numeric: true,
+            money: true,
+            autofocus: true,
+            fontSize: 24,
+            error: _amountError,
+            action: TextInputAction.next),
+        const SizedBox(height: 14),
+        LabeledField('Category', _category,
+            error: _categoryError,
+            capitalization: TextCapitalization.words,
+            action: TextInputAction.next,
+            onChanged: (_) => setState(() => _categoryError = null)),
+        const SizedBox(height: 8),
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          for (final c in _suggestions)
+            _Pill(
+              c,
+              selected: typed == c.toLowerCase(),
+              onTap: () => setState(() {
+                _category.text = c;
+                _categoryError = null;
+              }),
+            ),
+        ]),
+        const SizedBox(height: 14),
+        Text('Date', style: t.labelLarge!.copyWith(fontSize: 14.4)),
+        const SizedBox(height: 6),
+        Semantics(
+          button: true,
+          label:
+              'Date, ${dayLabel(dateKey(_date))} ${shortDate(dateKey(_date))} ${_date.year}',
+          excludeSemantics: true,
+          onTap: _pickDate,
+          child: InkWell(
+            onTap: _pickDate,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              decoration: BoxDecoration(
+                color: k.paper,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: k.line2, width: 1.5),
               ),
+              child: Row(children: [
+                Expanded(
+                  child: Text(
+                      '${dayLabel(dateKey(_date))} · ${shortDate(dateKey(_date))} ${_date.year}',
+                      style: t.bodyLarge),
+                ),
+                Icon(Icons.calendar_today_outlined, size: 18, color: k.ink3),
+              ]),
             ),
           ),
         ),
-      ]),
+        const SizedBox(height: 14),
+        LabeledField('Note (optional)', _note,
+            capitalization: TextCapitalization.sentences,
+            action: TextInputAction.done,
+            onSubmitted: (_) => _submit()),
+        if (_formError != null) ...[
+          const SizedBox(height: 14),
+          Alert(_formError!, icon: Icons.error_outline),
+        ],
+      ],
+    );
+  }
+}
+
+/// A suggestion pill; the chosen one is filled.
+class _Pill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _Pill(this.label, {required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.tk;
+    final c = categoryColor(label, Theme.of(context).brightness);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      onTap: onTap,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(99),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(10, 6, 13, 6),
+          decoration: BoxDecoration(
+            color: selected ? k.strong : k.surface2,
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                    color: selected ? k.hl : c, shape: BoxShape.circle)),
+            const SizedBox(width: 7),
+            Text(label,
+                style: TextStyle(
+                    fontFamily: sans,
+                    fontSize: 13.6,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? k.onStrong : k.ink)),
+          ]),
+        ),
+      ),
     );
   }
 }
@@ -278,8 +282,9 @@ class ExpensesScreen extends StatefulWidget {
 }
 
 class _ExpensesScreenState extends State<ExpensesScreen> {
-  /// Rows swiped away: hidden at once so the Dismissible leaves the tree in the same frame.
+  /// Rows removed by the user: hidden at once, before the list reloads.
   final _hidden = <int>{};
+  String? _category; // null = all
 
   Future<void> _delete(Map<String, dynamic> e) async {
     final app = AppScope.read(context);
@@ -316,107 +321,157 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
-  /// Long-press / accessibility path: ask first (there is no swipe to cancel), then delete with Undo.
-  Future<void> _confirmDelete(Map<String, dynamic> e) async {
-    final ok = await confirm(
-      context,
-      'Delete ${titleCase(e['category'] as String)} ${money(e['amount'] as num)}?',
-      'You can undo this right after.',
-      'Delete',
-    );
-    if (ok && mounted) await _delete(e);
-  }
-
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final key = app.key;
-    return Scaffold(
-      body: Loader<List<dynamic>>(
-        resetKey: key,
-        loadKey: app.tick,
-        load: () => Api.expenses(key),
-        builder: (ctx, all, reload) {
-          final rows = all
-              .cast<Map<String, dynamic>>()
-              .where((e) => !_hidden.contains(e['id']))
-              .toList();
-          if (rows.isEmpty) {
-            return EmptyState(
-              icon: Icons.receipt_long_outlined,
-              title: 'No expenses in ${monthLabel(app.month)}',
-              message:
-                  'Tap Add expense to log what you spend. You are warned the moment a purchase goes over a budget.',
-            );
-          }
-          final total =
-              rows.fold<double>(0, (a, e) => a + (e['amount'] as num));
-          final items = <Widget>[];
-          String? current;
-          for (var i = 0; i < rows.length; i++) {
-            final e = rows[i];
-            final date = e['date'] as String;
-            if (date != current) {
-              current = date;
-              final dayTotal = rows
-                  .where((r) => r['date'] == date)
-                  .fold<double>(0, (a, r) => a + (r['amount'] as num));
-              items.add(_DayHeader(label: dayLabel(date), total: dayTotal));
-            }
-            items.add(_ExpenseRow(e,
-                onEdit: () => addExpense(context, existing: e),
-                onDelete: () => _delete(e),
-                onDeleteConfirmed: () => _confirmDelete(e)));
-          }
-          return RefreshIndicator(
-            onRefresh: reload,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 96),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Text(
-                    '${rows.length} ${rows.length == 1 ? 'expense' : 'expenses'} · ${money(total)}',
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                ),
-                ...items,
-              ],
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => addExpense(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Add expense'),
-      ),
+    return Loader<List<dynamic>>(
+      resetKey: key,
+      loadKey: app.tick,
+      load: () => Api.expenses(key),
+      builder: (ctx, all, reload) {
+        final rows = all
+            .cast<Map<String, dynamic>>()
+            .where((e) => !_hidden.contains(e['id']))
+            .toList();
+        return RefreshIndicator(
+          onRefresh: reload,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 48),
+            children: _content(context, rows),
+          ),
+        );
+      },
     );
+  }
+
+  List<Widget> _content(BuildContext context, List<Map<String, dynamic>> rows) {
+    final app = AppScope.of(context);
+    final k = context.tk;
+    final wide = isWide(context);
+    final head = PageHead(
+      title: 'Expenses',
+      subtitle: rows.isEmpty
+          ? 'Everything you spend in ${monthLabel(app.month)} will be listed here.'
+          : 'Everything you spent in ${monthLabel(app.month)}. Click a row to edit it.',
+      actions: [
+        const MonthSwitcher(),
+        Btn('Add expense',
+            icon: Icons.add, onPressed: () => addExpense(context)),
+      ],
+    );
+    if (rows.isEmpty) {
+      return [
+        head,
+        EmptyPanel(
+          title: 'No expenses in ${monthLabel(app.month)}',
+          message:
+              'Add what you spend as you spend it. You are warned the moment a purchase goes over a budget.',
+          actionLabel: 'Add an expense',
+          onAction: () => addExpense(context),
+        ),
+      ];
+    }
+
+    // category totals, biggest first
+    final totals = <String, double>{};
+    final counts = <String, int>{};
+    for (final e in rows) {
+      final c = e['category'] as String;
+      totals[c] = (totals[c] ?? 0) + (e['amount'] as num);
+      counts[c] = (counts[c] ?? 0) + 1;
+    }
+    final order = totals.keys.toList()
+      ..sort((a, b) => totals[b]!.compareTo(totals[a]!));
+    final category = order.contains(_category) ? _category : null;
+    final shown = category == null
+        ? rows
+        : rows.where((e) => e['category'] == category).toList();
+
+    final total = rows.fold<double>(0, (a, e) => a + (e['amount'] as num));
+    final now = DateTime.now();
+    final daysInMonth = DateTime(app.month.year, app.month.month + 1, 0).day;
+    final elapsed = (app.month.year == now.year && app.month.month == now.month)
+        ? now.day
+        : daysInMonth;
+    final tabLabels = [
+      'All (${rows.length})',
+      for (final c in order) '${titleCase(c)} (${counts[c]})',
+    ];
+
+    final table = Panel(
+      padding: wide
+          ? const EdgeInsets.fromLTRB(24, 16, 24, 8)
+          : const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(children: [
+        if (wide) const _Head(),
+        for (var i = 0; i < shown.length; i++)
+          _ExpenseRow(
+            shown[i],
+            first: i == 0,
+            wide: wide,
+            onEdit: () => addExpense(context, existing: shown[i]),
+            onDelete: () => _delete(shown[i]),
+          ),
+      ]),
+    );
+
+    return [
+      head,
+      StatStrip([
+        Stat(
+            money(total), 'Spent in ${monthLabel(app.month).split(' ').first}'),
+        Stat('${rows.length}', rows.length == 1 ? 'Expense' : 'Expenses'),
+        Stat(titleCase(order.first), 'Biggest category'),
+        Stat(money(total / elapsed), 'Average per day'),
+      ]),
+      const SizedBox(height: 20),
+      SegTabs(
+        labels: tabLabels,
+        selected: category == null ? 0 : order.indexOf(category) + 1,
+        onChanged: (i) =>
+            setState(() => _category = i == 0 ? null : order[i - 1]),
+      ),
+      const SizedBox(height: 16),
+      table,
+      if (shown.length != rows.length)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Text(
+              '${shown.length} of ${rows.length} expenses, ${money(shown.fold<double>(0, (a, e) => a + (e['amount'] as num)))} in ${titleCase(category!)}',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall!
+                  .copyWith(color: k.ink2)),
+        ),
+    ];
   }
 }
 
-class _DayHeader extends StatelessWidget {
-  final String label;
-  final double total;
-  const _DayHeader({required this.label, required this.total});
+const _colDate = 84.0;
+const _colCategory = 160.0;
+const _colAmount = 120.0;
+const _colActions = 168.0;
+
+class _Head extends StatelessWidget {
+  const _Head();
 
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
+    final k = context.tk;
+    TextStyle s = t.labelMedium!.copyWith(color: k.ink3);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(children: [
-        Expanded(
-            child: Semantics(
-                header: true,
-                child: Text(label,
-                    style: t.labelLarge!.copyWith(color: s.onSurfaceVariant)))),
-        Text(money(total),
-            style: amountStyle(context,
-                size: 15, weight: FontWeight.w600, color: s.onSurfaceVariant)),
+        SizedBox(width: _colDate, child: Text('Date', style: s)),
+        SizedBox(width: _colCategory, child: Text('Category', style: s)),
+        Expanded(child: Text('Note', style: s)),
+        SizedBox(
+            width: _colAmount,
+            child: Text('Amount', textAlign: TextAlign.end, style: s)),
+        const SizedBox(width: _colActions),
       ]),
     );
   }
@@ -424,83 +479,98 @@ class _DayHeader extends StatelessWidget {
 
 class _ExpenseRow extends StatelessWidget {
   final Map<String, dynamic> e;
+  final bool first;
+  final bool wide;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final VoidCallback onDeleteConfirmed;
   const _ExpenseRow(this.e,
-      {required this.onEdit,
-      required this.onDelete,
-      required this.onDeleteConfirmed});
+      {required this.first,
+      required this.wide,
+      required this.onEdit,
+      required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
-    final s = Theme.of(context).colorScheme;
+    final k = context.tk;
     final t = Theme.of(context).textTheme;
     final category = e['category'] as String;
     final note = e['note'] as String;
     final recurring = e['recurring_id'] != null;
-    return Dismissible(
-      key: ValueKey('expense-${e['id']}'),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        color: s.errorContainer,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: Icon(Icons.delete_outline, color: s.onErrorContainer),
+    final amount = money(e['amount'] as num);
+    final what = '${titleCase(category)} $amount';
+    final noteWidget = Row(children: [
+      if (recurring) ...[
+        const Tag('Recurring',
+            kind: TagKind.purple, icon: Icons.autorenew_rounded),
+        const SizedBox(width: 8),
+      ],
+      Flexible(
+        child: Text(note,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: t.bodyMedium!.copyWith(color: k.ink2)),
       ),
-      onDismissed: (_) => onDelete(),
-      child: Semantics(
-        // Delete without a swipe, for TalkBack, switch and keyboard users.
-        customSemanticsActions: {
-          const CustomSemanticsAction(label: 'Delete expense'):
-              onDeleteConfirmed
-        },
-        child: InkWell(
-          onTap: onEdit,
-          onLongPress: onDeleteConfirmed,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 64),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(children: [
-                CategoryDot(category),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(titleCase(category), style: t.titleSmall),
-                        if (note.isNotEmpty || recurring)
-                          Row(children: [
-                            if (recurring) ...[
-                              Icon(Icons.repeat,
-                                  size: 14, color: s.onSurfaceVariant),
-                              const SizedBox(width: 4),
-                              Text('Recurring',
-                                  style: t.bodySmall!
-                                      .copyWith(color: s.onSurfaceVariant)),
-                              if (note.isNotEmpty)
-                                Text(' · ',
-                                    style: t.bodySmall!
-                                        .copyWith(color: s.onSurfaceVariant)),
-                            ],
-                            if (note.isNotEmpty)
-                              Flexible(
-                                child: Text(note,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: t.bodySmall!
-                                        .copyWith(color: s.onSurfaceVariant)),
-                              ),
-                          ]),
-                      ]),
-                ),
-                const SizedBox(width: 12),
-                Amount(money(e['amount'] as num),
-                    style: amountStyle(context, size: 18)),
-              ]),
-            ),
-          ),
+    ]);
+    final actions = Row(mainAxisSize: MainAxisSize.min, children: [
+      Btn('Edit',
+          kind: BtnKind.ghost,
+          small: true,
+          semanticLabel: 'Edit $what',
+          onPressed: onEdit),
+      const SizedBox(width: 6),
+      Btn('Remove',
+          kind: BtnKind.ghost,
+          small: true,
+          semanticLabel: 'Remove $what',
+          onPressed: onDelete),
+    ]);
+    return Container(
+      decoration: BoxDecoration(
+          border: first ? null : Border(top: BorderSide(color: k.line))),
+      child: InkWell(
+        onTap: onEdit,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: wide
+              ? Row(children: [
+                  SizedBox(
+                      width: _colDate,
+                      child: Text(shortDate(e['date'] as String),
+                          style: t.bodyMedium!.copyWith(color: k.ink2))),
+                  SizedBox(
+                      width: _colCategory,
+                      child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: CategoryTag(category))),
+                  Expanded(child: noteWidget),
+                  SizedBox(
+                      width: _colAmount,
+                      child: Text(amount,
+                          textAlign: TextAlign.end,
+                          style: t.bodyLarge!
+                              .copyWith(fontWeight: FontWeight.w700))),
+                  SizedBox(
+                      width: _colActions,
+                      child: Align(
+                          alignment: Alignment.centerRight, child: actions)),
+                ])
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Expanded(
+                        child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: CategoryTag(category))),
+                    Text(amount,
+                        style:
+                            t.bodyLarge!.copyWith(fontWeight: FontWeight.w700)),
+                  ]),
+                  const SizedBox(height: 6),
+                  Text(
+                      '${dayLabel(e['date'] as String)}${note.isEmpty ? '' : ' · $note'}${recurring ? ' · Recurring' : ''}',
+                      style: t.bodySmall),
+                  const SizedBox(height: 10),
+                  actions,
+                ]),
         ),
       ),
     );

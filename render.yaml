@@ -8,4 +8,4 @@ services:
     plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    healthCheckPath: /account
+    healthCheckPath: /
