@@ -76,6 +76,8 @@ class App:
         self.wait(5500)  # SnackBar lasts 4s; it also covers the FAB
 
     def shot(self, name):
+        self.pg.mouse.move(240, 450)  # park the pointer so no hover tooltip is captured
+        self.wait(700)
         self.pg.screenshot(path=os.path.join(SHOTS, name))
 
     # ---- actions ----

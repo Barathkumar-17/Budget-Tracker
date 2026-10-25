@@ -16,12 +16,62 @@ A personal budget and expense tracker: a **FastAPI + SQLite** backend and a **Fl
 
 Categories are case-insensitive (`Food` and `food` are the same category). Amounts are stored as integer paise and exposed as rupees, so there is no floating-point drift.
 
+## Demo
+
+Try it with realistic data in about two minutes.
+
+<p>
+  <img src="docs/img/dashboard.png" width="230" alt="Dashboard: balance, over-budget bars, daily spend">
+  <img src="docs/img/expenses.png" width="230" alt="Expenses list">
+  <img src="docs/img/overspend-alert.png" width="230" alt="Overspend alert after adding an expense">
+</p>
+<p>
+  <img src="docs/img/budgets.png" width="230" alt="Budgets">
+  <img src="docs/img/recurring.png" width="230" alt="Recurring templates">
+  <img src="docs/img/goals.png" width="230" alt="Savings goals">
+</p>
+
+**1. Start the backend on a fresh database and load the demo data**
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --port 8000          # leave running
+python seed_demo.py                    # in a second terminal
+```
+
+The seed script fills the current month through the public API: a ₹30,000 opening balance, three budgets, nine expenses, three recurring templates (rent, Netflix, gym, already applied) and two savings goals. It refuses to run on a database that already has data (`--force` overrides that). With Docker, run `docker compose exec api python seed_demo.py` instead.
+
+**2. Open the app** (see [App](#app) for setup)
+
+```bash
+cd app && flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000
+```
+
+**3. Take the tour**
+
+| Where | Try this | You should see |
+| --- | --- | --- |
+| **Dashboard** | Look at the card and the bars | A red *Low balance* card (balance ₹4226 is under the ₹5000 threshold); *food* and *fun* in red with **Over budget**; *transport* still within its cap |
+| **Dashboard** | Tap the gear, set *Opening balance* to `40000`, Save | The card turns normal: the balance is now above the threshold |
+| **Dashboard** | Use the arrows by the month | Other months are empty; the arrows return you to this month |
+| **Expenses** | Tap **+**, enter `500` and category `Food`, Save | A banner: **Over budget in food by ₹540.00** |
+| **Expenses** | Swipe a row to the left | The expense is deleted and the dashboard updates |
+| **Budgets** | Tap *food*, change the cap to `3000`, Save | Add the same `500` expense again: no alert any more |
+| **Recurring** | Tap **Apply to this month** | **Already applied**. Applying twice never adds duplicates |
+| **Recurring** | Tap **+**, add `100` / `Netflix` / day `31` | A validation message: the day must be 1-28 |
+| **Goals** | Tap *Laptop*, contribute `1000` | Progress moves to ₹10,000 of ₹60,000 and the balance drops by ₹1,000 |
+
+**Reset the demo:** stop the backend, delete `backend/budget.db` (with Docker: `docker compose down -v`), then start again and re-run the seed script.
+
 ## Repository layout
 
 ```
-backend/            FastAPI app (main.py), pytest suite, Dockerfile
+backend/            FastAPI app (main.py), pytest suite, demo seed script, Dockerfile
 app/                Flutter source: lib/ (screens, API client), test/, Dockerfile
-docker-compose.yml  Runs both together
+e2e/                Real-browser walkthrough of every page, README screenshot script
+docs/img/           Screenshots used in this README
+docker-compose.yml  Runs backend and web app together
 ```
 
 Flutter platform folders (`android/`, `web/`, ...) are generated, not committed.
@@ -102,7 +152,7 @@ docker compose up --build
 
 The web image bakes the API address in at build time (`API_URL` in `docker-compose.yml`, default `http://localhost:8000`). It must be an address the *browser* can reach. To serve it from another host, change that value and rebuild.
 
-> The Docker files have not been run through Docker on the author's machine (Docker wasn't installed). Their build steps were replayed natively and the base images verified to exist, but treat the first `docker compose up --build` as the real test.
+> The Docker files have not been run through Docker (it wasn't available where this was developed). Their build steps were replayed natively and the base images verified to exist, but treat the first `docker compose up --build` as the real test.
 
 ## Testing
 
@@ -125,7 +175,25 @@ flutter test --dart-define=API_URL=http://127.0.0.1:8000
 | `test/ui_flow_test.dart` | no | Every tab's flows against an in-memory stub of the API: alerts, validation, readable server errors, recurring apply twice, goals, retry on network failure |
 | `test/api_test.dart` | **yes**, port 8000 | The Dart API client end to end against the real backend |
 
-The web build was also driven in real Chrome against the real backend (account, budget, overspend and low-balance alerts, recurring applied twice, goals); all steps passed.
+### Full UI walkthrough (real browser)
+
+`e2e/walkthrough.py` drives the compiled web app in a real browser through every page: empty states, month navigation, account settings, adding/editing/deleting budgets, expenses (including swipe-to-delete, overspend and low-balance alerts, validation errors), recurring templates (applied twice), goals, and the final balance arithmetic. It needs a **fresh** database.
+
+```bash
+pip install playwright && playwright install chromium
+
+# terminal 1: backend on a FRESH database
+cd backend && uvicorn main:app --port 8000
+
+# terminal 2: build and serve the web app
+cd app && flutter build web --dart-define=API_URL=http://127.0.0.1:8000
+python -m http.server 8123 --directory build/web
+
+# terminal 3: run the walkthrough from the repository root
+BASE_URL=http://127.0.0.1:8123/ python e2e/walkthrough.py
+```
+
+Set `BROWSER_CHANNEL=chrome` to use an installed Chrome instead of Playwright's Chromium, and `SLOW=2` on a slow machine. The last full run passed 37 of 37 steps.
 
 ## Releases
 
