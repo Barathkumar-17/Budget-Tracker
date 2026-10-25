@@ -111,10 +111,11 @@ class _CategoryBar extends StatelessWidget {
               style: TextStyle(color: over ? Colors.red : null)),
         ]),
         const SizedBox(height: 4),
-        LinearProgressIndicator(
-          value: cap == null ? null : ratio,
-          color: over ? Colors.red : null,
-        ),
+        if (cap != null)
+          LinearProgressIndicator(
+            value: ratio,
+            color: over ? Colors.red : null,
+          ),
         if (over) const Text('Over budget', style: TextStyle(color: Colors.red, fontSize: 12)),
       ]),
     );

@@ -6,6 +6,28 @@ import 'package:http/http.dart' as http;
 const String baseUrl =
     String.fromEnvironment('API_URL', defaultValue: 'http://10.0.2.2:8000');
 
+/// A failed API call; [toString] is the message shown to the user.
+class ApiException implements Exception {
+  final String message;
+  ApiException(this.message);
+  @override
+  String toString() => message;
+}
+
+String _errorMessage(http.Response r) {
+  try {
+    final detail = (jsonDecode(r.body) as Map)['detail'];
+    if (detail is String) return detail;
+    if (detail is List && detail.isNotEmpty) {
+      return detail.map((e) {
+        final loc = e['loc'] as List;
+        return '${loc.last}: ${e['msg']}';
+      }).join('; ');
+    }
+  } catch (_) {}
+  return 'Server error ${r.statusCode}';
+}
+
 class Api {
   static Future<dynamic> _send(String method, String path,
       {Map<String, String>? query, Object? body}) async {
@@ -27,7 +49,7 @@ class Api {
         r = await http.get(uri);
     }
     if (r.statusCode >= 400) {
-      throw Exception('Server error ${r.statusCode}: ${r.body}');
+      throw ApiException(_errorMessage(r));
     }
     return r.body.isEmpty ? null : jsonDecode(r.body);
   }

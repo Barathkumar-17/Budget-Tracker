@@ -3,10 +3,11 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
+from typing import Annotated
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 DB_PATH = os.environ.get("BUDGET_DB", "budget.db")
 
@@ -82,28 +83,33 @@ init_db()
 
 
 # ---- schemas ----
+MONTH_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"
+Month = Annotated[str, Query(pattern=MONTH_PATTERN)]
+Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
+
 class ExpenseIn(BaseModel):
     amount: Decimal = Field(gt=0, decimal_places=2)
     date: date
-    category: str = Field(min_length=1)
+    category: Name
     note: str = ""
 
 
 class BudgetIn(BaseModel):
-    category: str = Field(min_length=1)
-    month: str = Field(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")
+    category: Name
+    month: str = Field(pattern=MONTH_PATTERN)
     cap: Decimal = Field(ge=0, decimal_places=2)
 
 
 class RecurringIn(BaseModel):
     amount: Decimal = Field(gt=0, decimal_places=2)
-    category: str = Field(min_length=1)
+    category: Name
     note: str = ""
     day_of_month: int = Field(ge=1, le=28)
 
 
 class GoalIn(BaseModel):
-    name: str = Field(min_length=1)
+    name: Name
     target: Decimal = Field(gt=0, decimal_places=2)
     deadline: date | None = None
 
@@ -185,7 +191,7 @@ def add_expense(e: ExpenseIn):
 
 
 @app.get("/expenses")
-def list_expenses(month: str | None = None, category: str | None = None):
+def list_expenses(month: Month | None = None, category: str | None = None):
     q, args = "SELECT * FROM expenses WHERE 1=1", []
     if month:
         q += " AND substr(date,1,7)=?"
@@ -229,7 +235,7 @@ def set_budget(b: BudgetIn):
 
 
 @app.get("/budgets")
-def list_budgets(month: str):
+def list_budgets(month: Month):
     with db() as c:
         return [
             {"category": r["category"], "month": r["month"], "cap": rupees(r["cap"])}
@@ -268,10 +274,8 @@ def delete_recurring(rid: int):
 
 
 @app.post("/recurring/apply")
-def apply_recurring(month: str):
+def apply_recurring(month: Month):
     """Create this month's expenses from templates. Safe to call repeatedly."""
-    if len(month) != 7 or month[4] != "-":
-        raise HTTPException(422, "month must be YYYY-MM")
     created = 0
     with db() as c:
         for t in c.execute("SELECT * FROM recurring").fetchall():
@@ -328,7 +332,7 @@ def delete_goal(gid: int):
 
 # ---- dashboard ----
 @app.get("/dashboard")
-def dashboard(month: str):
+def dashboard(month: Month):
     """Spent vs budget per category for a month, daily trend, balance state."""
     with db() as c:
         spent = {

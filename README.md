@@ -36,7 +36,7 @@ Flutter platform folders (`android/`, `web/`, ...) are generated, not committed.
 ```bash
 cd backend
 pip install -r requirements.txt
-pytest                                   # 4 tests
+pytest                                   # 10 tests
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -102,7 +102,13 @@ flutter analyze
 flutter test --dart-define=API_URL=http://127.0.0.1:8000
 ```
 
-`test/api_test.dart` is an end-to-end test of the Dart API client and needs the backend running on port 8000. `test/widget_test.dart` checks the app shell and tab navigation.
+| Test | Needs backend? | Covers |
+| --- | --- | --- |
+| `test/widget_test.dart` | no | App shell and tab navigation |
+| `test/ui_flow_test.dart` | no | Every tab's flows against an in-memory stub of the API: alerts, validation, readable server errors, recurring apply twice, goals, retry on network failure |
+| `test/api_test.dart` | **yes**, port 8000 | The Dart API client end to end against the real backend |
+
+The web build was also driven in real Chrome against the real backend (account, budget, overspend and low-balance alerts, recurring applied twice, goals); all steps passed.
 
 ## Releases
 
