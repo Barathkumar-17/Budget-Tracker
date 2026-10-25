@@ -117,7 +117,7 @@ Generate the platform folders once (this does not touch `lib/` or `test/`):
 
 ```bash
 cd app
-flutter create . --project-name budget_tracker
+flutter create . --project-name budget_tracker   # add --platforms=web,android,windows to pick targets
 flutter pub get
 ```
 
@@ -131,12 +131,28 @@ flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000
 flutter run --dart-define=API_URL=http://10.0.2.2:8000
 ```
 
-The default `API_URL` is `http://10.0.2.2:8000`. On a physical device use your computer's LAN IP and start the backend with `--host 0.0.0.0`. For Android over plain HTTP, add `android:usesCleartextTraffic="true"` to the `<application>` tag in `android/app/src/main/AndroidManifest.xml`.
+The default `API_URL` is `http://10.0.2.2:8000`. On a physical device use your computer's LAN IP and start the backend with `--host 0.0.0.0`.
 
-Build for the web:
+### Android: one extra step
+
+`flutter create` only grants the `INTERNET` permission to *debug* builds, so a release APK cannot reach the API. After generating the platform folders, run:
 
 ```bash
-flutter build web --dart-define=API_URL=http://127.0.0.1:8000
+python tool/patch_android.py --cleartext   # --cleartext only for a plain http:// API
+```
+
+It is safe to run repeatedly. Then build the APK:
+
+```bash
+flutter build apk --release --dart-define=API_URL=http://10.0.2.2:8000
+# -> build/app/outputs/flutter-apk/app-release.apk
+```
+
+### Other builds
+
+```bash
+flutter build web --release --dart-define=API_URL=http://127.0.0.1:8000       # build/web
+flutter build windows --release --dart-define=API_URL=http://127.0.0.1:8000   # Windows desktop (add --platforms=windows to flutter create)
 ```
 
 ## Docker
