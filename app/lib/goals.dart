@@ -23,7 +23,8 @@ class GoalsScreen extends StatelessWidget {
         final target = double.tryParse(v['target']!);
         final errors = <String, String>{
           if (v['name']!.isEmpty) 'name': 'Name your goal, for example Laptop',
-          if (target == null || target <= 0) 'target': 'Enter an amount above 0',
+          if (target == null || target <= 0)
+            'target': 'Enter an amount above 0',
         };
         if (errors.isNotEmpty) return errors;
         try {
@@ -59,7 +60,9 @@ class GoalsScreen extends StatelessWidget {
     );
     if (!saved) return;
     app.changed();
-    if (context.mounted) snack(context, 'Added ${money(added!)} to ${g['name']}');
+    if (context.mounted) {
+      snack(context, 'Added ${money(added!)} to ${g['name']}');
+    }
   }
 
   Future<void> _delete(BuildContext context, Map<String, dynamic> g) async {
@@ -92,7 +95,8 @@ class GoalsScreen extends StatelessWidget {
             return const EmptyState(
               icon: Icons.savings_outlined,
               title: 'No savings goals yet',
-              message: 'Tap Add goal to set money aside for something you want. Contributions come out of your balance.',
+              message:
+                  'Tap Add goal to set money aside for something you want. Contributions come out of your balance.',
             );
           }
           return RefreshIndicator(
@@ -149,14 +153,17 @@ class _GoalRow extends StatelessWidget {
               tooltip: 'Options for ${g['name']}',
               onSelected: onMenu,
               itemBuilder: (_) => const [
-                PopupMenuItem(value: _GoalAction.addMoney, child: Text('Add money')),
-                PopupMenuItem(value: _GoalAction.delete, child: Text('Delete goal')),
+                PopupMenuItem(
+                    value: _GoalAction.addMoney, child: Text('Add money')),
+                PopupMenuItem(
+                    value: _GoalAction.delete, child: Text('Delete goal')),
               ],
             ),
           ]),
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: RouteLine(fill: saved, total: target, station: target, color: s.primary),
+            child: RouteLine(
+                fill: saved, total: target, station: target, color: s.primary),
           ),
           const SizedBox(height: 4),
           Padding(
@@ -166,12 +173,15 @@ class _GoalRow extends StatelessWidget {
                 Icon(Icons.check_circle, size: 16, color: s.primary),
                 const SizedBox(width: 6),
                 Flexible(
-                  child: Text('Goal reached: ${money(saved)} of ${money(target)}',
-                      style: t.bodySmall!.copyWith(color: s.primary, fontWeight: FontWeight.w600)),
+                  child: Text(
+                      'Goal reached: ${money(saved)} of ${money(target)}',
+                      style: t.bodySmall!.copyWith(
+                          color: s.primary, fontWeight: FontWeight.w600)),
                 ),
               ] else
                 Flexible(
-                  child: Text('${money(saved)} of ${money(target)} · $percent% · ${money(target - saved)} to go',
+                  child: Text(
+                      '${money(saved)} of ${money(target)} · $percent% · ${money(target - saved)} to go',
                       style: t.bodySmall!.copyWith(color: s.onSurfaceVariant)),
                 ),
             ]),

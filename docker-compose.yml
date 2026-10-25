@@ -1,22 +1,11 @@
+# The whole app (web UI + API) in one container: http://localhost:8000
 services:
-  api:
-    build: ./backend
+  app:
+    build: .
     ports:
       - "8000:8000"
     volumes:
       - budget-data:/data
-    restart: unless-stopped
-
-  web:
-    build:
-      context: ./app
-      args:
-        # Must be reachable from the *browser*, not from inside Docker.
-        API_URL: http://localhost:8000
-    ports:
-      - "3000:80"
-    depends_on:
-      - api
     restart: unless-stopped
 
 volumes:

@@ -5,15 +5,40 @@ import 'api.dart';
 
 // ---------------------------------------------------------------- formatting
 
-String monthKey(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}';
+String monthKey(DateTime d) =>
+    '${d.year}-${d.month.toString().padLeft(2, '0')}';
 
-String dateKey(DateTime d) => '${monthKey(d)}-${d.day.toString().padLeft(2, '0')}';
+String dateKey(DateTime d) =>
+    '${monthKey(d)}-${d.day.toString().padLeft(2, '0')}';
 
 const _monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
-const _monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const _monthShort = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
+];
 const _weekdayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 String monthLabel(DateTime d) => '${_monthNames[d.month - 1]} ${d.year}';
@@ -54,12 +79,17 @@ String money(num v) {
   final paise = (v.abs() * 100).round();
   final rupees = paise ~/ 100;
   final p = paise % 100;
-  final body = _grouped(rupees) + (p == 0 ? '' : '.${p.toString().padLeft(2, '0')}');
+  final body =
+      _grouped(rupees) + (p == 0 ? '' : '.${p.toString().padLeft(2, '0')}');
   return '${v < 0 && paise != 0 ? '−' : ''}₹$body';
 }
 
-String titleCase(String s) =>
-    s.isEmpty ? s : s.split(' ').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+String titleCase(String s) => s.isEmpty
+    ? s
+    : s
+        .split(' ')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
 
 // ----------------------------------------------------------------- app state
 
@@ -84,7 +114,8 @@ class AppState extends ChangeNotifier {
 }
 
 class AppScope extends InheritedNotifier<AppState> {
-  const AppScope({super.key, required AppState state, required super.child}) : super(notifier: state);
+  const AppScope({super.key, required AppState state, required super.child})
+      : super(notifier: state);
 
   /// Watches the state: the caller rebuilds when the month or data tick changes.
   static AppState of(BuildContext context) =>
@@ -92,7 +123,9 @@ class AppScope extends InheritedNotifier<AppState> {
 
   /// Reads the state without subscribing (for use in callbacks).
   static AppState read(BuildContext context) =>
-      (context.getElementForInheritedWidgetOfExactType<AppScope>()!.widget as AppScope).notifier!;
+      (context.getElementForInheritedWidgetOfExactType<AppScope>()!.widget
+              as AppScope)
+          .notifier!;
 }
 
 // ------------------------------------------------------------------- snacks
@@ -100,11 +133,22 @@ class AppScope extends InheritedNotifier<AppState> {
 enum SnackTone { neutral, warning, alert }
 
 void snack(BuildContext c, String msg,
-    {SnackTone tone = SnackTone.neutral, String? action, VoidCallback? onAction, int seconds = 4}) {
+    {SnackTone tone = SnackTone.neutral,
+    String? action,
+    VoidCallback? onAction,
+    int seconds = 4}) {
   final s = Theme.of(c).colorScheme;
   final (bg, fg, icon) = switch (tone) {
-    SnackTone.alert => (s.errorContainer, s.onErrorContainer, Icons.error_outline),
-    SnackTone.warning => (s.tertiaryContainer, s.onTertiaryContainer, Icons.warning_amber_rounded),
+    SnackTone.alert => (
+        s.errorContainer,
+        s.onErrorContainer,
+        Icons.error_outline
+      ),
+    SnackTone.warning => (
+        s.tertiaryContainer,
+        s.onTertiaryContainer,
+        Icons.warning_amber_rounded
+      ),
     SnackTone.neutral => (null, null, null),
   };
   final m = ScaffoldMessenger.of(c);
@@ -114,25 +158,33 @@ void snack(BuildContext c, String msg,
     duration: Duration(seconds: seconds),
     content: Row(children: [
       if (icon != null) ...[Icon(icon, color: fg), const SizedBox(width: 12)],
-      Expanded(child: Text(msg, style: fg == null ? null : TextStyle(color: fg))),
+      Expanded(
+          child: Text(msg, style: fg == null ? null : TextStyle(color: fg))),
     ]),
     action: action == null
         ? null
-        : SnackBarAction(label: action, textColor: fg == null ? null : s.primary, onPressed: onAction ?? () {}),
+        : SnackBarAction(
+            label: action,
+            textColor: fg == null ? null : s.primary,
+            onPressed: onAction ?? () {}),
   ));
 }
 
-Future<bool> confirm(BuildContext context, String title, String body, String action) async {
+Future<bool> confirm(
+    BuildContext context, String title, String body, String action) async {
   final r = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(title),
       content: Text(body),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel')),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.error),
+          style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error),
           child: Text(action),
         ),
       ],
@@ -149,8 +201,14 @@ class Loader<T> extends StatefulWidget {
   final Future<T> Function() load;
   final Object? loadKey;
   final Object? resetKey;
-  final Widget Function(BuildContext, T, Future<void> Function() reload) builder;
-  const Loader({super.key, required this.load, required this.builder, this.loadKey, this.resetKey});
+  final Widget Function(BuildContext, T, Future<void> Function() reload)
+      builder;
+  const Loader(
+      {super.key,
+      required this.load,
+      required this.builder,
+      this.loadKey,
+      this.resetKey});
 
   @override
   State<Loader<T>> createState() => _LoaderState<T>();
@@ -216,16 +274,21 @@ class _LoaderState<T> extends State<Loader<T>> {
       return const Center(child: CircularProgressIndicator());
     }
     return Column(children: [
-      SizedBox(height: 3, child: _loading ? const LinearProgressIndicator(minHeight: 3) : null),
+      SizedBox(
+          height: 3,
+          child: _loading ? const LinearProgressIndicator(minHeight: 3) : null),
       if (_error != null)
         Material(
           color: Theme.of(context).colorScheme.errorContainer,
           child: ListTile(
             dense: true,
-            leading: Icon(Icons.cloud_off, color: Theme.of(context).colorScheme.onErrorContainer),
+            leading: Icon(Icons.cloud_off,
+                color: Theme.of(context).colorScheme.onErrorContainer),
             title: Text('Could not refresh. Showing the last data.',
-                style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer)),
-            trailing: TextButton(onPressed: _reload, child: const Text('Retry')),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onErrorContainer)),
+            trailing:
+                TextButton(onPressed: _reload, child: const Text('Retry')),
           ),
         ),
       Expanded(child: widget.builder(context, _data as T, _reload)),
@@ -247,12 +310,18 @@ class ErrorState extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.cloud_off, size: 48, color: s.outline),
           const SizedBox(height: 16),
-          Text('Could not reach the server', style: t.titleMedium, textAlign: TextAlign.center),
+          Text('Could not reach the server',
+              style: t.titleMedium, textAlign: TextAlign.center),
           const SizedBox(height: 8),
-          Text('Check that the backend is running and that you are online.\n$baseUrl',
-              style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant), textAlign: TextAlign.center),
+          Text(
+              'Check that the backend is running and that you are online.\n${baseUrl.isEmpty ? 'This server' : baseUrl}',
+              style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant),
+              textAlign: TextAlign.center),
           const SizedBox(height: 24),
-          FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: const Text('Retry')),
+          FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry')),
         ]),
       ),
     );
@@ -270,7 +339,11 @@ class Field {
   final String? helper;
   final bool readOnly;
   const Field(this.key, this.label,
-      {this.numeric = false, this.money = false, this.initial = '', this.helper, this.readOnly = false});
+      {this.numeric = false,
+      this.money = false,
+      this.initial = '',
+      this.helper,
+      this.readOnly = false});
 }
 
 /// Key under which [showFormSheet]'s submit callback reports a whole-form error.
@@ -286,13 +359,19 @@ Future<bool> showFormSheet(
   String? subtitle,
   required List<Field> fields,
   String submit = 'Save',
-  required Future<Map<String, String>?> Function(Map<String, String> values) onSubmit,
+  required Future<Map<String, String>?> Function(Map<String, String> values)
+      onSubmit,
 }) async {
   final ok = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (ctx) => _FormSheet(title: title, subtitle: subtitle, fields: fields, submit: submit, onSubmit: onSubmit),
+    builder: (ctx) => _FormSheet(
+        title: title,
+        subtitle: subtitle,
+        fields: fields,
+        submit: submit,
+        onSubmit: onSubmit),
   );
   return ok ?? false;
 }
@@ -304,7 +383,11 @@ class _FormSheet extends StatefulWidget {
   final String submit;
   final Future<Map<String, String>?> Function(Map<String, String>) onSubmit;
   const _FormSheet(
-      {required this.title, this.subtitle, required this.fields, required this.submit, required this.onSubmit});
+      {required this.title,
+      this.subtitle,
+      required this.fields,
+      required this.submit,
+      required this.onSubmit});
 
   @override
   State<_FormSheet> createState() => _FormSheetState();
@@ -312,7 +395,8 @@ class _FormSheet extends StatefulWidget {
 
 class _FormSheetState extends State<_FormSheet> {
   late final Map<String, TextEditingController> _c = {
-    for (final f in widget.fields) f.key: TextEditingController(text: f.initial),
+    for (final f in widget.fields)
+      f.key: TextEditingController(text: f.initial),
   };
   Map<String, String> _errors = {};
   bool _busy = false;
@@ -333,7 +417,8 @@ class _FormSheetState extends State<_FormSheet> {
     });
     Map<String, String>? errors;
     try {
-      errors = await widget.onSubmit({for (final e in _c.entries) e.key: e.value.text.trim()});
+      errors = await widget
+          .onSubmit({for (final e in _c.entries) e.key: e.value.text.trim()});
     } catch (e) {
       errors = {formError: '$e'};
     }
@@ -353,43 +438,60 @@ class _FormSheetState extends State<_FormSheet> {
     final s = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 4, 20, 16 + MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.fromLTRB(
+          20, 4, 20, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text(widget.title, style: t.titleLarge),
-          if (widget.subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(widget.subtitle!, style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant)),
-          ],
-          const SizedBox(height: 16),
-          for (var i = 0; i < widget.fields.length; i++) ...[
-            _field(widget.fields[i], first: i == 0, last: i == widget.fields.length - 1),
-            const SizedBox(height: 12),
-          ],
-          if (_errors[formError] != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: s.errorContainer, borderRadius: BorderRadius.circular(12)),
-              child: Row(children: [
-                Icon(Icons.error_outline, color: s.onErrorContainer),
-                const SizedBox(width: 12),
-                Expanded(child: Text(_errors[formError]!, style: t.bodyMedium!.copyWith(color: s.onErrorContainer))),
+        child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(widget.title, style: t.titleLarge),
+              if (widget.subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(widget.subtitle!,
+                    style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant)),
+              ],
+              const SizedBox(height: 16),
+              for (var i = 0; i < widget.fields.length; i++) ...[
+                _field(widget.fields[i],
+                    first: i == 0, last: i == widget.fields.length - 1),
+                const SizedBox(height: 12),
+              ],
+              if (_errors[formError] != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                      color: s.errorContainer,
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Row(children: [
+                    Icon(Icons.error_outline, color: s.onErrorContainer),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: Text(_errors[formError]!,
+                            style: t.bodyMedium!
+                                .copyWith(color: s.onErrorContainer))),
+                  ]),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const SizedBox(height: 4),
+              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                TextButton(
+                    onPressed:
+                        _busy ? null : () => Navigator.pop(context, false),
+                    child: const Text('Cancel')),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: _busy ? null : _submit,
+                  child: _busy
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2.5))
+                      : Text(widget.submit),
+                ),
               ]),
-            ),
-            const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 4),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            TextButton(onPressed: _busy ? null : () => Navigator.pop(context, false), child: const Text('Cancel')),
-            const SizedBox(width: 8),
-            FilledButton(
-              onPressed: _busy ? null : _submit,
-              child: _busy
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5))
-                  : Text(widget.submit),
-            ),
-          ]),
-        ]),
+            ]),
       ),
     );
   }
@@ -402,9 +504,14 @@ class _FormSheetState extends State<_FormSheet> {
       enabled: !f.readOnly,
       textInputAction: last ? TextInputAction.done : TextInputAction.next,
       onSubmitted: last ? (_) => _submit() : null,
-      keyboardType: f.numeric ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
-      inputFormatters: f.numeric ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))] : null,
-      textCapitalization: f.numeric ? TextCapitalization.none : TextCapitalization.words,
+      keyboardType: f.numeric
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : TextInputType.text,
+      inputFormatters: f.numeric
+          ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))]
+          : null,
+      textCapitalization:
+          f.numeric ? TextCapitalization.none : TextCapitalization.words,
       decoration: InputDecoration(
         labelText: f.label,
         helperText: f.helper,

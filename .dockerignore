@@ -1,8 +1,26 @@
 .git/
-app/
+**/__pycache__/
+.pytest_cache/
+*.db
+
+# generated Flutter folders and build output (the image regenerates them)
+app/build/
+app/.dart_tool/
+app/android/
+app/ios/
+app/web/
+app/windows/
+app/linux/
+app/macos/
+app/.metadata
+app/.gitignore
+app/analysis_options.yaml
+app/README.md
+app/pubspec.lock
+app/test/
+backend/web/
+backend/test_main.py
+
+# not needed at runtime
 e2e/
 docs/
-*.db
-__pycache__/
-.pytest_cache/
-backend/test_main.py

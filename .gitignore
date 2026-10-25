@@ -21,3 +21,6 @@ app/.packages
 
 # Output of e2e/walkthrough.py and e2e/screenshots.py when SHOTS is not set
 e2e-shots/
+
+# compiled web app copied next to the API for local single-server runs
+backend/web/

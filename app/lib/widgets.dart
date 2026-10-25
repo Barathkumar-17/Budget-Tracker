@@ -81,7 +81,9 @@ class _RoutePainter extends CustomPainter {
     const stroke = 6.0, ring = 8.0, left = 5.0;
     final right = size.width - ring - 2;
     final cy = size.height / 2;
-    double x(double v) => left + (right - left) * (total <= 0 ? 0.0 : (v / total).clamp(0.0, 1.0));
+    double x(double v) =>
+        left +
+        (right - left) * (total <= 0 ? 0.0 : (v / total).clamp(0.0, 1.0));
     Paint line(Color c) => Paint()
       ..color = c
       ..strokeWidth = stroke
@@ -92,7 +94,9 @@ class _RoutePainter extends CustomPainter {
     final st = station;
     final travelled = (overrun && st != null) ? math.min(fill, st) : fill;
     final end = left + (x(travelled) - left) * t;
-    if (end > left) canvas.drawLine(Offset(left, cy), Offset(end, cy), line(color));
+    if (end > left) {
+      canvas.drawLine(Offset(left, cy), Offset(end, cy), line(color));
+    }
 
     if (overrun && st != null) {
       final s0 = x(st);
@@ -120,9 +124,16 @@ class _RoutePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RoutePainter o) =>
-      o.fill != fill || o.total != total || o.station != station || o.color != color ||
-      o.overrun != overrun || o.t != t || o.track != track || o.ground != ground ||
-      o.idle != idle || o.alert != alert;
+      o.fill != fill ||
+      o.total != total ||
+      o.station != station ||
+      o.color != color ||
+      o.overrun != overrun ||
+      o.t != t ||
+      o.track != track ||
+      o.ground != ground ||
+      o.idle != idle ||
+      o.alert != alert;
 }
 
 /// One column per day of the month; the busiest day is highlighted.
@@ -152,33 +163,41 @@ class SpendColumns extends StatelessWidget {
       );
     }
     final maxDay = values.indexOf(maxV) + 1;
-    final summary = 'Highest day ${money(maxV)} on $maxDay ${monthLabel(month).split(' ').first}';
+    final summary =
+        'Highest day ${money(maxV)} on $maxDay ${monthLabel(month).split(' ').first}';
     final still = MediaQuery.of(context).disableAnimations;
     return Semantics(
       label: 'Daily spending. $summary.',
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        ExcludeSemantics(child: Text(summary, style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant))),
+        ExcludeSemantics(
+            child: Text(summary,
+                style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant))),
         const SizedBox(height: 12),
         ExcludeSemantics(
           child: SizedBox(
             height: 112,
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: still ? 1 : 0, end: 1),
-              duration: still ? Duration.zero : const Duration(milliseconds: 700),
+              duration:
+                  still ? Duration.zero : const Duration(milliseconds: 700),
               curve: Curves.easeOutExpo,
               builder: (_, p, __) => CustomPaint(
                 size: Size.infinite,
-                painter: _ColumnsPainter(values, maxV, s.secondary, s.primary, s.outlineVariant, p),
+                painter: _ColumnsPainter(
+                    values, maxV, s.secondary, s.primary, s.outlineVariant, p),
               ),
             ),
           ),
         ),
         const SizedBox(height: 6),
         ExcludeSemantics(
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('1', style: t.labelSmall!.copyWith(color: s.onSurfaceVariant)),
-            Text('${(days / 2).round()}', style: t.labelSmall!.copyWith(color: s.onSurfaceVariant)),
-            Text('$days', style: t.labelSmall!.copyWith(color: s.onSurfaceVariant)),
+            Text('${(days / 2).round()}',
+                style: t.labelSmall!.copyWith(color: s.onSurfaceVariant)),
+            Text('$days',
+                style: t.labelSmall!.copyWith(color: s.onSurfaceVariant)),
           ]),
         ),
       ]),
@@ -190,14 +209,16 @@ class _ColumnsPainter extends CustomPainter {
   final List<double> values;
   final double maxV, p;
   final Color bar, peak, axis;
-  _ColumnsPainter(this.values, this.maxV, this.bar, this.peak, this.axis, this.p);
+  _ColumnsPainter(
+      this.values, this.maxV, this.bar, this.peak, this.axis, this.p);
 
   @override
   void paint(Canvas canvas, Size size) {
     final n = values.length;
     const gap = 2.0;
     final w = (size.width - gap * (n - 1)) / n;
-    canvas.drawRect(Rect.fromLTWH(0, size.height - 1, size.width, 1), Paint()..color = axis);
+    canvas.drawRect(Rect.fromLTWH(0, size.height - 1, size.width, 1),
+        Paint()..color = axis);
     for (var i = 0; i < n; i++) {
       final v = values[i];
       if (v <= 0) continue;
@@ -212,7 +233,8 @@ class _ColumnsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ColumnsPainter o) => o.values != values || o.p != p || o.bar != bar;
+  bool shouldRepaint(covariant _ColumnsPainter o) =>
+      o.values != values || o.p != p || o.bar != bar;
 }
 
 /// A right-aligned amount that wraps instead of overflowing at large text
@@ -261,7 +283,11 @@ class SectionHeading extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 28, bottom: 8),
       child: Row(children: [
-        Expanded(child: Semantics(header: true, child: Text(text, style: Theme.of(context).textTheme.titleMedium))),
+        Expanded(
+            child: Semantics(
+                header: true,
+                child: Text(text,
+                    style: Theme.of(context).textTheme.titleMedium))),
         if (trailing != null) trailing!,
       ]),
     );
@@ -295,7 +321,9 @@ class EmptyState extends StatelessWidget {
           const SizedBox(height: 16),
           Text(title, style: t.titleMedium, textAlign: TextAlign.center),
           const SizedBox(height: 8),
-          Text(message, style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant), textAlign: TextAlign.center),
+          Text(message,
+              style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant),
+              textAlign: TextAlign.center),
           if (actionLabel != null) ...[
             const SizedBox(height: 24),
             FilledButton.tonal(onPressed: onAction, child: Text(actionLabel!)),

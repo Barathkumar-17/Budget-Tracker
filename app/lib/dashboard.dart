@@ -8,7 +8,8 @@ import 'expenses.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
-String _plain(num v) => v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+String _plain(num v) =>
+    v == v.roundToDouble() ? v.toInt().toString() : v.toString();
 
 /// Opens the balance settings sheet (opening balance and safety line).
 Future<void> editAccount(BuildContext context) async {
@@ -24,22 +25,27 @@ Future<void> editAccount(BuildContext context) async {
   await showFormSheet(
     context,
     title: 'Balance settings',
-    subtitle: 'Balance = opening balance, minus every expense, minus money put into goals.',
+    subtitle:
+        'Balance = opening balance, minus every expense, minus money put into goals.',
     fields: [
       Field('opening', 'Opening balance',
-          numeric: true, money: true, initial: _plain(acc['opening_balance'] as num)),
+          numeric: true,
+          money: true,
+          initial: _plain(acc['opening_balance'] as num)),
       Field('threshold', 'Safety line',
           numeric: true,
           money: true,
           initial: _plain(acc['low_balance_threshold'] as num),
-          helper: 'Warn me when the balance drops below this. 0 turns the warning off.'),
+          helper:
+              'Warn me when the balance drops below this. 0 turns the warning off.'),
     ],
     onSubmit: (v) async {
       final opening = double.tryParse(v['opening']!);
       final threshold = double.tryParse(v['threshold']!);
       final errors = <String, String>{
         if (opening == null) 'opening': 'Enter a number, for example 5000',
-        if (threshold == null) 'threshold': 'Enter a number, for example 1000 (or 0)',
+        if (threshold == null)
+          'threshold': 'Enter a number, for example 1000 (or 0)',
       };
       if (errors.isNotEmpty) return errors;
       try {
@@ -88,7 +94,8 @@ class _DashboardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final cats = (d['categories'] as List).cast<Map<String, dynamic>>().toList()
       ..sort((a, b) {
-        int rank(Map<String, dynamic> c) => c['over'] == true ? 0 : (c['cap'] != null ? 1 : 2);
+        int rank(Map<String, dynamic> c) =>
+            c['over'] == true ? 0 : (c['cap'] != null ? 1 : 2);
         final r = rank(a).compareTo(rank(b));
         return r != 0 ? r : (b['spent'] as num).compareTo(a['spent'] as num);
       });
@@ -150,12 +157,17 @@ class _StatusPanel extends StatelessWidget {
           if (hasLine) ...[
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Icon(low ? Icons.warning_amber_rounded : Icons.check_circle_outline,
+              child: Icon(
+                  low
+                      ? Icons.warning_amber_rounded
+                      : Icons.check_circle_outline,
                   color: low ? s.tertiary : s.primary),
             ),
             const SizedBox(width: 12),
           ],
-          Expanded(child: Text(headline, style: t.headlineSmall!.copyWith(color: fg))),
+          Expanded(
+              child:
+                  Text(headline, style: t.headlineSmall!.copyWith(color: fg))),
         ]),
         const SizedBox(height: 16),
         if (hasLine) ...[
@@ -169,7 +181,11 @@ class _StatusPanel extends StatelessWidget {
         ],
         if (hasLine)
           Wrap(spacing: 20, runSpacing: 4, children: [
-            _LineKey(filled: true, color: low ? s.tertiary : s.primary, label: 'Balance ${money(balance)}', fg: sub),
+            _LineKey(
+                filled: true,
+                color: low ? s.tertiary : s.primary,
+                label: 'Balance ${money(balance)}',
+                fg: sub),
             // Same colour rule as the station on the line: idle until the balance reaches it.
             _LineKey(
                 filled: false,
@@ -186,7 +202,9 @@ class _StatusPanel extends StatelessWidget {
               style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant)),
           Align(
             alignment: Alignment.centerLeft,
-            child: TextButton(onPressed: () => editAccount(context), child: const Text('Set safety line')),
+            child: TextButton(
+                onPressed: () => editAccount(context),
+                child: const Text('Set safety line')),
           ),
         ],
       ]),
@@ -200,7 +218,11 @@ class _LineKey extends StatelessWidget {
   final Color color;
   final Color fg;
   final String label;
-  const _LineKey({required this.filled, required this.color, required this.label, required this.fg});
+  const _LineKey(
+      {required this.filled,
+      required this.color,
+      required this.label,
+      required this.fg});
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +239,8 @@ class _LineKey extends StatelessWidget {
         ),
       ),
       const SizedBox(width: 8),
-      Text(label, style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: fg)),
+      Text(label,
+          style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: fg)),
     ]);
   }
 }
@@ -242,8 +265,10 @@ class _CategoryRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(child: Text(titleCase(name), style: t.titleSmall)),
           const SizedBox(width: 8),
-          Amount(cap == null ? money(spent) : '${money(spent)} of ${money(cap)}',
-              style: amountStyle(context, size: 18, color: over ? s.error : null)),
+          Amount(
+              cap == null ? money(spent) : '${money(spent)} of ${money(cap)}',
+              style:
+                  amountStyle(context, size: 18, color: over ? s.error : null)),
         ]),
         if (cap != null) ...[
           const SizedBox(height: 6),
@@ -262,13 +287,15 @@ class _CategoryRow extends StatelessWidget {
               Icon(Icons.error_outline, size: 16, color: s.error),
               const SizedBox(width: 6),
               Text('${money(spent - cap!)} over budget',
-                  style: t.bodySmall!.copyWith(color: s.error, fontWeight: FontWeight.w600)),
+                  style: t.bodySmall!
+                      .copyWith(color: s.error, fontWeight: FontWeight.w600)),
             ]),
           )
         else if (cap == null)
           Padding(
             padding: const EdgeInsets.only(left: 24),
-            child: Text('No budget set', style: t.bodySmall!.copyWith(color: s.onSurfaceVariant)),
+            child: Text('No budget set',
+                style: t.bodySmall!.copyWith(color: s.onSurfaceVariant)),
           ),
       ]),
     );

@@ -85,8 +85,9 @@ backend/            FastAPI app (main.py), pytest suite, demo seed script, Docke
 app/                Flutter source: lib/ (screens, theme, API client), test/, assets/fonts, Dockerfile
 e2e/                Real-browser walkthrough of every page, README screenshot script
 docs/img/           Screenshots used in this README
-docker-compose.yml  Runs backend and web app together
-render.yaml         Render blueprint (two Docker services)
+Dockerfile          Builds the app and the API into one image
+docker-compose.yml  Runs that image locally on port 8000
+render.yaml         Render blueprint (one Docker service)
 ```
 
 Flutter platform folders (`android/`, `web/`, ...) are generated, not committed.
@@ -171,33 +172,33 @@ flutter build windows --release --dart-define=API_URL=http://127.0.0.1:8000   # 
 
 ## Docker
 
-Run the backend and the web app together:
+One container runs the whole app: the Flutter web app and the API, behind one port.
 
 ```bash
 docker compose up --build
 ```
 
-- App: http://localhost:3000
-- API and docs: http://localhost:8000 and http://localhost:8000/docs
-- Data is kept in the `budget-data` volume. `docker compose down -v` deletes it.
+- App: http://localhost:8000
+- API docs: http://localhost:8000/docs
+- Demo data: `docker compose exec app python seed_demo.py`
+- Data lives in the `budget-data` volume. `docker compose down -v` deletes it.
 
-The web image bakes the API address in at build time (`API_URL` in `docker-compose.yml`, default `http://localhost:8000`). It must be an address the *browser* can reach. To serve it from another host, change that value and rebuild.
+Without Compose: `docker build -t budget-tracker . && docker run -p 8000:8000 -v budget-data:/data budget-tracker`.
 
-> The Docker files have not been run through Docker (it wasn't available where this was developed). Their build steps were replayed natively and the base images verified to exist, but treat the first `docker compose up --build` as the real test.
+The `Dockerfile` has two stages. The first builds the Flutter web app with `API_URL=same-origin`, so the app talks to whatever server it was loaded from. The second is the API image, which serves that build at `/`. The first build downloads the Flutter SDK image, so it takes a few minutes.
+
+To run the same thing without Docker: build the app with `flutter build web --dart-define=API_URL=same-origin`, copy `app/build/web` to `backend/web`, and start `uvicorn main:app`. The backend serves `backend/web` at `/` whenever it exists (override the folder with `WEB_DIR`).
 
 ## Deploy on Render (free tier)
 
-`render.yaml` describes two Docker web services, the API and the web app.
+Render builds the root `Dockerfile`, so one service gives you the app and the API at one URL.
 
-1. On https://render.com choose **New > Blueprint** and select this repository. Do **not** create a plain "Web Service" at the repo root: the Dockerfiles live in `backend/` and `app/`, so Render would fail with "open Dockerfile: no such file".
-2. After the first deploy, open the API service and copy its URL. If it is not `https://budget-tracker-api.onrender.com` (names must be unique across Render), set the web service's `API_URL` environment variable to the real URL and redeploy the web service. The URL is baked into the web build.
-3. Optional demo data: `python backend/seed_demo.py --api https://<your-api>.onrender.com`
+1. On https://render.com choose **New > Web Service** (or **New > Blueprint** to use `render.yaml`) and select this repository.
+2. Runtime **Docker**, repository root, default settings. No environment variables are needed.
+3. Wait for the first build (several minutes: it downloads Flutter and compiles the app), then open the service URL. The app is at `/` and the API docs at `/docs`.
+4. Optional demo data: `python backend/seed_demo.py --api https://<your-service>.onrender.com`
 
-A root `Dockerfile` also exists that builds the API, so a plain "Web Service" created at the repo root deploys the API as is. The web app still needs its own service (Root Directory `app`).
-
-If you create the services by hand instead, set **Root Directory** to `backend` (API) or `app` (web), runtime **Docker**, and give the web service an `API_URL` environment variable.
-
-Free-tier limits: services sleep after about 15 minutes idle (the first request then takes up to a minute), the filesystem is wiped on every restart or deploy so the SQLite data resets, and the URLs are public with no login. Use it as a demo, not for real finances. The Flutter build is memory-hungry and may not fit on a free instance.
+Free-tier limits: the service sleeps after about 15 minutes idle (the first request then takes up to a minute), the filesystem is wiped on every restart or deploy so the SQLite data resets, and the URL is public with no login. Use it as a demo, not for real finances.
 
 ## Testing
 

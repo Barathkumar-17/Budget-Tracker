@@ -11,6 +11,19 @@ void main() {
   test('full flow against live backend', () async {
     const m = '2031-03';
 
+    // Start from a clean month so the test can be run again on the same database.
+    Future<void> clearMonth(String month) async {
+      for (final e in await Api.expenses(month)) {
+        await Api.deleteExpense((e as Map<String, dynamic>)['id'] as int);
+      }
+    }
+
+    await clearMonth(m);
+    addTearDown(() async {
+      await clearMonth(m);
+      await clearMonth('2031-04');
+    });
+
     await Api.setAccount(5000, 500);
     await Api.setBudget('food', m, 100);
 
@@ -32,17 +45,26 @@ void main() {
 
     // recurring: apply twice, second time must add nothing
     await Api.addRecurring(499, 'subscriptions', 'music', 5);
-    expect(await Api.applyRecurring('2031-04'), 1);
+    expect(await Api.applyRecurring('2031-04'), greaterThanOrEqualTo(1));
     expect(await Api.applyRecurring('2031-04'), 0);
-    final tmpl = (await Api.recurring()).first as Map<String, dynamic>;
+    final tmpl = (await Api.recurring())
+        .cast<Map<String, dynamic>>()
+        .lastWhere((t) => t['category'] == 'subscriptions');
     await Api.deleteRecurring(tmpl['id'] as int);
-    expect(await Api.recurring(), isEmpty);
+    expect(
+        (await Api.recurring())
+            .cast<Map<String, dynamic>>()
+            .any((t) => t['id'] == tmpl['id']),
+        isFalse);
 
     // goals
     await Api.addGoal('Headphones', 500);
-    final goal = (await Api.goals()).first as Map<String, dynamic>;
+    Future<Map<String, dynamic>> headphones() async => (await Api.goals())
+        .cast<Map<String, dynamic>>()
+        .lastWhere((g) => g['name'] == 'Headphones');
+    final goal = await headphones();
     await Api.contribute(goal['id'] as int, 100);
-    final updated = (await Api.goals()).first as Map<String, dynamic>;
+    final updated = await headphones();
     expect(updated['saved'], 100);
     expect(updated['progress'], 0.2);
     await Api.deleteGoal(goal['id'] as int);

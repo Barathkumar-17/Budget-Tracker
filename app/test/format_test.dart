@@ -53,15 +53,30 @@ void main() {
   });
 
   group('category colours', () {
-    test('are stable, case-insensitive and distinct for the common categories', () {
-      expect(categoryColor('Food', Brightness.light), categoryColor(' food ', Brightness.light));
-      final names = ['food', 'transport', 'rent', 'fun', 'shopping', 'bills', 'health', 'subscriptions', 'gym'];
-      final colors = {for (final n in names) categoryColor(n, Brightness.light)};
+    test('are stable, case-insensitive and distinct for the common categories',
+        () {
+      expect(categoryColor('Food', Brightness.light),
+          categoryColor(' food ', Brightness.light));
+      final names = [
+        'food',
+        'transport',
+        'rent',
+        'fun',
+        'shopping',
+        'bills',
+        'health',
+        'subscriptions',
+        'gym'
+      ];
+      final colors = {
+        for (final n in names) categoryColor(n, Brightness.light)
+      };
       expect(colors.length, names.length);
     });
 
     test('dark palette differs from light', () {
-      expect(categoryColor('food', Brightness.dark), isNot(categoryColor('food', Brightness.light)));
+      expect(categoryColor('food', Brightness.dark),
+          isNot(categoryColor('food', Brightness.light)));
     });
 
     test('unknown names still get a palette colour', () {

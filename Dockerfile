@@ -1,13 +1,24 @@
-# API image for hosts that build from the repository root (e.g. a Render
-# service with the default settings). Same image as backend/Dockerfile, but
-# with the repo root as the build context. The web app has its own
-# Dockerfile in app/.
-FROM python:3.12-slim
+# The whole app in one image: the Flutter web app and the API behind one port.
+#   docker build -t budget-tracker . && docker run -p 8000:8000 budget-tracker
+# Then open http://localhost:8000 (app) and http://localhost:8000/docs (API).
 
+# Stage 1: build the Flutter web app. It talks to the API on the same origin.
+FROM ghcr.io/cirruslabs/flutter:3.35.7 AS web
+WORKDIR /src/app
+COPY app/pubspec.yaml ./
+COPY app/assets assets
+COPY app/lib lib
+RUN flutter create . --project-name budget_tracker --platforms=web \
+ && flutter pub get \
+ && flutter build web --release --dart-define=API_URL=same-origin
+
+# Stage 2: the API, serving the built app at "/".
+FROM python:3.12-slim
 WORKDIR /srv
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/main.py backend/seed_demo.py ./
+COPY --from=web /src/app/build/web ./web
 
 # SQLite lives in /data (a volume locally; ephemeral on free hosting tiers).
 ENV BUDGET_DB=/data/budget.db

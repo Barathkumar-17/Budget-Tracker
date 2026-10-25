@@ -136,7 +136,8 @@ Color alertLineColor(Brightness b) =>
     b == Brightness.dark ? const Color(0xFFFF5D4D) : _lightScheme.error;
 
 /// Header band colour, shared by the app bar and the navigation rail.
-Color headerColor(Brightness b) => b == Brightness.dark ? _navyDark : _navyLight;
+Color headerColor(Brightness b) =>
+    b == Brightness.dark ? _navyDark : _navyLight;
 
 const _tabular = [FontFeature.tabularFigures()];
 
@@ -154,7 +155,8 @@ TextStyle amountStyle(BuildContext context,
 }
 
 TextTheme _textTheme(ColorScheme s) {
-  TextStyle t(double size, FontWeight w, {double? height, double? ls}) => TextStyle(
+  TextStyle t(double size, FontWeight w, {double? height, double? ls}) =>
+      TextStyle(
         fontFamily: 'Barlow',
         fontSize: size,
         fontWeight: w,
@@ -200,26 +202,36 @@ ThemeData buildTheme(Brightness brightness) {
       scrolledUnderElevation: 0,
       centerTitle: false,
       titleTextStyle: text.titleLarge!.copyWith(color: Colors.white),
-      systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(statusBarColor: header),
+      systemOverlayStyle:
+          SystemUiOverlayStyle.light.copyWith(statusBarColor: header),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: s.surfaceContainer,
       surfaceTintColor: Colors.transparent,
       indicatorColor: s.primaryContainer,
       height: 72,
-      labelTextStyle: WidgetStateProperty.resolveWith((states) => text.labelMedium!.copyWith(
-          fontSize: 13,
-          color: states.contains(WidgetState.selected) ? s.onSurface : s.onSurfaceVariant,
-          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w500)),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) =>
+          text.labelMedium!.copyWith(
+              fontSize: 13,
+              color: states.contains(WidgetState.selected)
+                  ? s.onSurface
+                  : s.onSurfaceVariant,
+              fontWeight: states.contains(WidgetState.selected)
+                  ? FontWeight.w600
+                  : FontWeight.w500)),
       iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
           size: 24,
-          color: states.contains(WidgetState.selected) ? s.onPrimaryContainer : s.onSurfaceVariant)),
+          color: states.contains(WidgetState.selected)
+              ? s.onPrimaryContainer
+              : s.onSurfaceVariant)),
     ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: s.surfaceContainer,
       indicatorColor: s.primaryContainer,
-      selectedLabelTextStyle: text.labelMedium!.copyWith(color: s.onSurface, fontWeight: FontWeight.w600),
-      unselectedLabelTextStyle: text.labelMedium!.copyWith(color: s.onSurfaceVariant),
+      selectedLabelTextStyle: text.labelMedium!
+          .copyWith(color: s.onSurface, fontWeight: FontWeight.w600),
+      unselectedLabelTextStyle:
+          text.labelMedium!.copyWith(color: s.onSurfaceVariant),
       selectedIconTheme: IconThemeData(color: s.onPrimaryContainer),
       unselectedIconTheme: IconThemeData(color: s.onSurfaceVariant),
     ),
@@ -238,16 +250,26 @@ ThemeData buildTheme(Brightness brightness) {
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(minimumSize: const Size(64, 48), textStyle: text.labelLarge),
+      style: TextButton.styleFrom(
+          minimumSize: const Size(64, 48), textStyle: text.labelLarge),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: s.surfaceContainerLow,
-      border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: s.outlineVariant)),
-      enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: s.outlineVariant)),
-      focusedBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: s.primary, width: 2)),
-      errorBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: s.error)),
-      focusedErrorBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: s.error, width: 2)),
+      border: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: s.outlineVariant)),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: s.outlineVariant)),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: s.primary, width: 2)),
+      errorBorder: OutlineInputBorder(
+          borderRadius: radius, borderSide: BorderSide(color: s.error)),
+      focusedErrorBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide(color: s.error, width: 2)),
       labelStyle: text.bodyLarge!.copyWith(color: s.onSurfaceVariant),
       helperStyle: text.bodySmall!.copyWith(color: s.onSurfaceVariant),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -263,14 +285,16 @@ ThemeData buildTheme(Brightness brightness) {
       backgroundColor: s.surfaceContainerLowest,
       surfaceTintColor: Colors.transparent,
       showDragHandle: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: s.surfaceContainerLowest,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
     ),
-    dividerTheme: DividerThemeData(color: s.outlineVariant, space: 1, thickness: 1),
+    dividerTheme:
+        DividerThemeData(color: s.outlineVariant, space: 1, thickness: 1),
     listTileTheme: ListTileThemeData(
       iconColor: s.onSurfaceVariant,
       minVerticalPadding: 8,

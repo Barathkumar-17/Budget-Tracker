@@ -13,7 +13,8 @@ class RecurringScreen extends StatelessWidget {
     final saved = await showFormSheet(
       context,
       title: 'New recurring expense',
-      subtitle: 'Repeats on the same day every month, for example rent or a subscription.',
+      subtitle:
+          'Repeats on the same day every month, for example rent or a subscription.',
       fields: const [
         Field('amount', 'Amount', numeric: true, money: true),
         Field('category', 'Category'),
@@ -24,9 +25,12 @@ class RecurringScreen extends StatelessWidget {
         final amount = double.tryParse(v['amount']!);
         final day = int.tryParse(v['day']!);
         final errors = <String, String>{
-          if (amount == null || amount <= 0) 'amount': 'Enter an amount above 0',
-          if (v['category']!.isEmpty) 'category': 'Give it a category, for example Rent',
-          if (day == null || day < 1 || day > 28) 'day': 'Pick a day from 1 to 28',
+          if (amount == null || amount <= 0)
+            'amount': 'Enter an amount above 0',
+          if (v['category']!.isEmpty)
+            'category': 'Give it a category, for example Rent',
+          if (day == null || day < 1 || day > 28)
+            'day': 'Pick a day from 1 to 28',
         };
         if (errors.isNotEmpty) return errors;
         try {
@@ -46,10 +50,12 @@ class RecurringScreen extends StatelessWidget {
       final n = await Api.applyRecurring(app.key);
       if (!context.mounted) return;
       if (n == 0) {
-        snack(context, 'Nothing to add: ${monthLabel(app.month)} is already up to date.');
+        snack(context,
+            'Nothing to add: ${monthLabel(app.month)} is already up to date.');
       } else {
         app.changed();
-        snack(context, 'Added $n ${n == 1 ? 'expense' : 'expenses'} to ${monthLabel(app.month)}');
+        snack(context,
+            'Added $n ${n == 1 ? 'expense' : 'expenses'} to ${monthLabel(app.month)}');
       }
     } catch (e) {
       if (context.mounted) snack(context, '$e', tone: SnackTone.alert);
@@ -73,8 +79,11 @@ class RecurringScreen extends StatelessWidget {
       seconds: 6,
       onAction: () async {
         try {
-          await Api.addRecurring((r['amount'] as num).toDouble(), r['category'] as String,
-              r['note'] as String, r['day_of_month'] as int);
+          await Api.addRecurring(
+              (r['amount'] as num).toDouble(),
+              r['category'] as String,
+              r['note'] as String,
+              r['day_of_month'] as int);
           app.changed();
         } catch (e) {
           if (context.mounted) snack(context, '$e', tone: SnackTone.alert);
@@ -98,7 +107,8 @@ class RecurringScreen extends StatelessWidget {
             return const EmptyState(
               icon: Icons.repeat,
               title: 'No recurring expenses',
-              message: 'Tap Add template to set up rent or a subscription once, then add it to any month with one tap.',
+              message:
+                  'Tap Add template to set up rent or a subscription once, then add it to any month with one tap.',
             );
           }
           return RefreshIndicator(
@@ -111,43 +121,58 @@ class RecurringScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: s.surfaceContainerLow, borderRadius: BorderRadius.circular(20)),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                      Text('Adds each template once, on its day. Safe to repeat: nothing is added twice.',
-                          style: t.bodyMedium!.copyWith(color: s.onSurfaceVariant)),
-                      const SizedBox(height: 12),
-                      FilledButton.tonalIcon(
-                        onPressed: () => _apply(context),
-                        icon: const Icon(Icons.playlist_add_check),
-                        label: Text('Apply to ${monthLabel(app.month)}'),
-                      ),
-                    ]),
+                    decoration: BoxDecoration(
+                        color: s.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(20)),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                              'Adds each template once, on its day. Safe to repeat: nothing is added twice.',
+                              style: t.bodyMedium!
+                                  .copyWith(color: s.onSurfaceVariant)),
+                          const SizedBox(height: 12),
+                          FilledButton.tonalIcon(
+                            onPressed: () => _apply(context),
+                            icon: const Icon(Icons.playlist_add_check),
+                            label: Text('Apply to ${monthLabel(app.month)}'),
+                          ),
+                        ]),
                   ),
                 ),
-                const Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: SectionHeading('Templates')),
+                const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: SectionHeading('Templates')),
                 for (final r in rows)
                   ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 64),
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 16, right: 4, top: 4, bottom: 4),
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 4, top: 4, bottom: 4),
                       child: Row(children: [
                         CategoryDot(r['category'] as String),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(titleCase(r['category'] as String), style: t.titleSmall),
-                            Text(
-                              'Day ${r['day_of_month']} of every month'
-                              '${(r['note'] as String).isEmpty ? '' : ' · ${r['note']}'}',
-                              style: t.bodySmall!.copyWith(color: s.onSurfaceVariant),
-                            ),
-                          ]),
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(titleCase(r['category'] as String),
+                                    style: t.titleSmall),
+                                Text(
+                                  'Day ${r['day_of_month']} of every month'
+                                  '${(r['note'] as String).isEmpty ? '' : ' · ${r['note']}'}',
+                                  style: t.bodySmall!
+                                      .copyWith(color: s.onSurfaceVariant),
+                                ),
+                              ]),
                         ),
                         const SizedBox(width: 8),
-                        Amount(money(r['amount'] as num), style: amountStyle(context, size: 18)),
+                        Amount(money(r['amount'] as num),
+                            style: amountStyle(context, size: 18)),
                         const SizedBox(width: 4),
                         IconButton(
-                          tooltip: 'Delete ${titleCase(r['category'] as String)} template',
+                          tooltip:
+                              'Delete ${titleCase(r['category'] as String)} template',
                           icon: const Icon(Icons.delete_outline),
                           onPressed: () => _delete(context, r),
                         ),

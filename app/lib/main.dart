@@ -127,7 +127,9 @@ class _ShellState extends State<Shell> {
                 Expanded(
                   child: Align(
                     alignment: Alignment.topCenter,
-                    child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 640), child: body),
+                    child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 640),
+                        child: body),
                   ),
                 ),
               ])
@@ -139,7 +141,10 @@ class _ShellState extends State<Shell> {
                 onDestinationSelected: (i) => setState(() => _i = i),
                 destinations: [
                   for (final t in _tabs)
-                    NavigationDestination(icon: Icon(t.icon), selectedIcon: Icon(t.selectedIcon), label: t.title),
+                    NavigationDestination(
+                        icon: Icon(t.icon),
+                        selectedIcon: Icon(t.selectedIcon),
+                        label: t.title),
                 ],
               ),
       ),

@@ -1,10 +1,19 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
-/// Override with: flutter run --dart-define=API_URL=http://<host>:8000
-/// 10.0.2.2 is the host machine as seen from the Android emulator.
-const String baseUrl =
-    String.fromEnvironment('API_URL', defaultValue: 'http://10.0.2.2:8000');
+const String _configured = String.fromEnvironment('API_URL');
+
+/// Where the API lives. Set with --dart-define=API_URL=http://<host>:8000.
+/// `same-origin` means the page and the API share one server (the Docker image).
+/// Defaults: 10.0.2.2 (the host as seen from the Android emulator), and
+/// 127.0.0.1:8000 for web builds.
+final String baseUrl = switch (_configured) {
+  'same-origin' => '',
+  '' => kIsWeb ? 'http://127.0.0.1:8000' : 'http://10.0.2.2:8000',
+  final url => url,
+};
 
 /// A failed API call; [toString] is the message shown to the user.
 class ApiException implements Exception {
@@ -101,7 +110,8 @@ class Api {
         'day_of_month': day,
       });
 
-  static Future<void> deleteRecurring(int id) => _send('DELETE', '/recurring/$id');
+  static Future<void> deleteRecurring(int id) =>
+      _send('DELETE', '/recurring/$id');
 
   static Future<int> applyRecurring(String month) async {
     final r = await _send('POST', '/recurring/apply', query: {'month': month});

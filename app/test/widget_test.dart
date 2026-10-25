@@ -9,7 +9,8 @@ void main() {
 
   testWidgets('shell renders and switches tabs', (tester) async {
     tester.view.devicePixelRatio = 1.0;
-    tester.view.physicalSize = const Size(400, 800); // a phone: bottom navigation bar
+    tester.view.physicalSize =
+        const Size(400, 800); // a phone: bottom navigation bar
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(const BudgetApp());
@@ -18,7 +19,8 @@ void main() {
     expect(find.text('Dashboard'), findsNWidgets(2));
 
     for (final tab in ['Expenses', 'Budgets', 'Recurring', 'Goals']) {
-      await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(tab)));
+      await tester.tap(find.descendant(
+          of: find.byType(NavigationBar), matching: find.text(tab)));
       await tester.pump();
       expect(find.text(tab), findsNWidgets(2));
     }

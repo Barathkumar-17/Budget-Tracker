@@ -3,22 +3,29 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, StringConstraints
 
 DB_PATH = os.environ.get("BUDGET_DB", "budget.db")
+# Compiled Flutter web app. When present (as in the Docker image) it is served at "/".
+WEB_DIR = Path(os.environ.get("WEB_DIR", Path(__file__).parent / "web"))
+HAS_WEB = (WEB_DIR / "index.html").is_file()
 
 app = FastAPI(title="Budget Tracker")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
-@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
-def root():
-    """Friendly landing response; also satisfies host health probes."""
-    return {"name": "Budget Tracker API", "docs": "/docs"}
+if not HAS_WEB:
+
+    @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+    def root():
+        """Friendly landing response; also satisfies host health probes."""
+        return {"name": "Budget Tracker API", "docs": "/docs"}
 
 
 # ---- money: stored as integer paise, exposed as rupees ----
@@ -365,3 +372,8 @@ def dashboard(month: Month):
                      "over": cap is not None and s > cap})
     return {"month": month, "total_spent": rupees(sum(spent.values())),
             "categories": cats, "trend": trend, **bal}
+
+
+# Registered last so every API route above wins; anything else is a web app file.
+if HAS_WEB:
+    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")

@@ -7,12 +7,14 @@ import 'common.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
-String _plain(num v) => v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+String _plain(num v) =>
+    v == v.roundToDouble() ? v.toInt().toString() : v.toString();
 
 class BudgetsScreen extends StatelessWidget {
   const BudgetsScreen({super.key});
 
-  Future<void> _edit(BuildContext context, {String category = '', num? cap}) async {
+  Future<void> _edit(BuildContext context,
+      {String category = '', num? cap}) async {
     final app = AppScope.read(context);
     final editing = category.isNotEmpty;
     final saved = await showFormSheet(
@@ -20,13 +22,18 @@ class BudgetsScreen extends StatelessWidget {
       title: editing ? 'Change budget' : 'New budget',
       subtitle: 'For ${monthLabel(app.month)}',
       fields: [
-        Field('category', 'Category', initial: titleCase(category), readOnly: editing),
-        Field('cap', 'Monthly cap', numeric: true, money: true, initial: cap == null ? '' : _plain(cap)),
+        Field('category', 'Category',
+            initial: titleCase(category), readOnly: editing),
+        Field('cap', 'Monthly cap',
+            numeric: true,
+            money: true,
+            initial: cap == null ? '' : _plain(cap)),
       ],
       onSubmit: (v) async {
         final amount = double.tryParse(v['cap']!);
         final errors = <String, String>{
-          if (v['category']!.isEmpty) 'category': 'Give the category a name, for example Food',
+          if (v['category']!.isEmpty)
+            'category': 'Give the category a name, for example Food',
           if (amount == null || amount < 0) 'cap': 'Enter an amount, 0 or more',
         };
         if (errors.isNotEmpty) return errors;
@@ -56,14 +63,19 @@ class BudgetsScreen extends StatelessWidget {
               .where((c) => c['cap'] != null)
               .toList()
             ..sort((a, b) {
-              final r = ((a['over'] == true) ? 0 : 1).compareTo((b['over'] == true) ? 0 : 1);
-              return r != 0 ? r : (a['category'] as String).compareTo(b['category'] as String);
+              final r = ((a['over'] == true) ? 0 : 1)
+                  .compareTo((b['over'] == true) ? 0 : 1);
+              return r != 0
+                  ? r
+                  : (a['category'] as String)
+                      .compareTo(b['category'] as String);
             });
           if (rows.isEmpty) {
             return EmptyState(
               icon: Icons.pie_chart_outline,
               title: 'No budgets for ${monthLabel(app.month)}',
-              message: 'Tap Add budget to set a monthly cap per category and get warned the moment you pass it.',
+              message:
+                  'Tap Add budget to set a monthly cap per category and get warned the moment you pass it.',
             );
           }
           return RefreshIndicator(
@@ -75,14 +87,17 @@ class BudgetsScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text('Tap a budget to change its cap.',
-                      style: Theme.of(context).textTheme.bodyMedium!
-                          .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant)),
                 ),
                 const SizedBox(height: 8),
                 for (final c in rows)
                   _BudgetRow(
                     c,
-                    onTap: () => _edit(context, category: c['category'] as String, cap: c['cap'] as num),
+                    onTap: () => _edit(context,
+                        category: c['category'] as String,
+                        cap: c['cap'] as num),
                   ),
               ],
             ),
@@ -118,7 +133,8 @@ class _BudgetRow extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 72),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               CategoryDot(name),
               const SizedBox(width: 12),
@@ -142,9 +158,12 @@ class _BudgetRow extends StatelessWidget {
               ],
               Flexible(
                 child: Text(
-                  over ? '${money(spent)} spent, ${money(-left)} over' : '${money(spent)} spent, ${money(left)} left',
+                  over
+                      ? '${money(spent)} spent, ${money(-left)} over'
+                      : '${money(spent)} spent, ${money(left)} left',
                   style: t.bodySmall!.copyWith(
-                      color: over ? s.error : s.onSurfaceVariant, fontWeight: over ? FontWeight.w600 : null),
+                      color: over ? s.error : s.onSurfaceVariant,
+                      fontWeight: over ? FontWeight.w600 : null),
                 ),
               ),
             ]),

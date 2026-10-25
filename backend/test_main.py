@@ -2,6 +2,7 @@ import os
 import tempfile
 
 os.environ["BUDGET_DB"] = os.path.join(tempfile.mkdtemp(), "t.db")
+os.environ["WEB_DIR"] = os.path.join(tempfile.mkdtemp(), "no-web")  # tests run API-only
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -121,3 +122,28 @@ def test_account_validation_and_low_balance_threshold_zero_disables_warning():
 def test_root_and_head_for_health_probes():
     assert client.get("/").json() == {"name": "Budget Tracker API", "docs": "/docs"}
     assert client.head("/").status_code == 200
+
+
+def test_serves_the_web_app_when_present(tmp_path, monkeypatch):
+    """With a compiled web app next to the API (the Docker image), "/" is the app and the API still works."""
+    import importlib
+
+    import main as main_module
+
+    (tmp_path / "index.html").write_text("<html>the app</html>")
+    (tmp_path / "main.dart.js").write_text("console.log('js')")
+    monkeypatch.setenv("WEB_DIR", str(tmp_path))
+    reloaded = importlib.reload(main_module)
+    try:
+        c = TestClient(reloaded.app)
+        assert c.get("/").text == "<html>the app</html>"
+        assert c.head("/").status_code == 200
+        assert c.get("/main.dart.js").text == "console.log('js')"
+        assert c.get("/missing-file.js").status_code == 404
+        # API routes registered before the static mount still win
+        assert c.get("/account").json()["balance"] is not None
+        assert c.get("/dashboard", params={"month": "2026-10"}).status_code == 200
+        assert c.get("/docs").status_code == 200
+    finally:
+        monkeypatch.delenv("WEB_DIR")
+        importlib.reload(main_module)
