@@ -336,7 +336,9 @@ class Panel extends StatelessWidget {
         ],
       ),
       child: Stack(children: [
-        Padding(padding: padding, child: child),
+        SizedBox(
+            width: double.infinity,
+            child: Padding(padding: padding, child: child)),
         Positioned(
           top: 0,
           left: radius,

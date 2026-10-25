@@ -10,7 +10,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:8123/")
+BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:8000/")
 SHOTS = os.environ.get("SHOTS", "e2e-shots")
 CHANNEL = os.environ.get("BROWSER_CHANNEL") or None  # e.g. "chrome" locally
 SLOW = float(os.environ.get("SLOW", "1"))  # multiply waits on slow machines

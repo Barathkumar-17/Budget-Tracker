@@ -4,8 +4,8 @@ Run `python backend/seed_demo.py` first (it creates the account `demo`), then:
 
     BASE_URL=http://localhost:8000/ SHOTS=docs/img python e2e/screenshots.py
 
-Desktop (1280x800) for the product pages and every section, and phone-sized
-(390x844) shots of the landing page, dashboard and expenses.
+Desktop (1280x800) for the product pages and every section, phone-sized
+(390x844) shots of the landing page, dashboard and expenses, and the whole landing page.
 """
 import os
 
@@ -71,5 +71,12 @@ with sync_playwright() as p:
     app.tab("Expenses")
     app.wait(800)
     app.shot("phone-expenses.png")
+    browser.close()
+
+    # ---- the whole landing page, in one tall window ----
+    browser, app, _ = open_app(p, scheme="dark", width=1280, height=2300, scale=1)
+    app.has("Know where your money goes.")
+    app.wait(1500)
+    app.shot("landing-full.png")
     browser.close()
 print("screenshots written")

@@ -28,7 +28,7 @@ def step(name, ok):
         print("     page text:", _app.text()[:300], flush=True)
 
 
-stamp = int(time.time())
+stamp = int(time.time() * 1000)  # milliseconds: parallel runs must not share user names
 username = f"walk{stamp}"
 other_user = f"other{stamp}"
 password = "walkthrough pw 1"
