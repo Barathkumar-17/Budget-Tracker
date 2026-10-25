@@ -18,3 +18,6 @@ app/README.md
 app/pubspec.lock
 app/.flutter-plugins*
 app/.packages
+
+# Output of e2e/walkthrough.py and e2e/screenshots.py when SHOTS is not set
+e2e-shots/

@@ -1,8 +1,8 @@
 """Shared helpers for driving the Flutter web app in a real browser.
 
 Flutter draws to a canvas, so we switch on its accessibility layer and read
-text from aria-labels. Taps on unlabeled widgets (tabs, FAB) use coordinates
-for a 480x900 viewport.
+text from aria-labels and the semantics DOM. Buttons are found by accessible
+name; only the bottom navigation tabs are clicked by coordinates.
 """
 import os
 import re
@@ -14,8 +14,11 @@ BASE_URL = os.environ.get("BASE_URL", "http://127.0.0.1:8123/")
 SHOTS = os.environ.get("SHOTS", "e2e-shots")
 CHANNEL = os.environ.get("BROWSER_CHANNEL") or None  # e.g. "chrome" locally
 SLOW = float(os.environ.get("SLOW", "1"))  # multiply waits on slow machines
+WIDTH = int(os.environ.get("VIEWPORT_W", "390"))
+HEIGHT = int(os.environ.get("VIEWPORT_H", "844"))
+SCHEME = os.environ.get("COLOR_SCHEME", "light")  # light | dark
 
-TAB_X = {"Dashboard": 48, "Expenses": 144, "Budgets": 240, "Recurring": 336, "Goals": 432}
+TABS = ["Dashboard", "Expenses", "Budgets", "Recurring", "Goals"]
 
 ALL_TEXT_JS = r"""() => {
   const labels = Array.from(document.querySelectorAll('[aria-label]')).map(e => e.getAttribute('aria-label'));
@@ -31,11 +34,6 @@ ROW_JS = r"""(needle) => {
   hits.sort((a, b) => a.height - b.height);
   return hits[0] || null;
 }"""
-
-BUTTONS_JS = """() => Array.from(document.querySelectorAll('flt-semantics[role=button]')).map(e => {
-  const r = e.getBoundingClientRect();
-  return {x: r.x + r.width / 2, y: r.y + r.height / 2, w: r.width, h: r.height};
-})"""
 
 
 def norm(s):
@@ -73,21 +71,43 @@ class App:
         return False
 
     def snack_gone(self):
-        self.wait(5500)  # SnackBar lasts 4s; it also covers the FAB
+        self.wait(6500)  # SnackBars last 4-6s
 
     def shot(self, name):
-        self.pg.mouse.move(240, 450)  # park the pointer so no hover tooltip is captured
+        self.pg.mouse.move(WIDTH / 2, 8)  # park the pointer on the header: no hover tooltip or row highlight
         self.wait(700)
         self.pg.screenshot(path=os.path.join(SHOTS, name))
 
     # ---- actions ----
     def tab(self, name):
-        self.pg.mouse.click(TAB_X[name], 850)
-        self.wait(1300)
+        x = (TABS.index(name) + 0.5) * WIDTH / len(TABS)
+        self.pg.mouse.click(x, HEIGHT - 36)
+        self.wait(1400)
 
-    def fab(self):
-        self.pg.mouse.click(436, 776)
+    def button(self, name, exact=True, last=False):
+        loc = self.pg.get_by_role("button", name=name, exact=exact)
+        (loc.last if last else loc.first).click()
+        self.wait(1000)
+
+    def snack_action(self, name):
+        """Press a SnackBar action. The snackbar slides in, and a click on a moving
+        semantics node can miss, so let it settle first and retry if it is still there."""
         self.wait(900)
+        for _ in range(3):
+            self.pg.get_by_role("button", name=name, exact=True).first.click()
+            self.wait(1300)
+            if not self.pg.get_by_role("button", name=name, exact=True).count():
+                return
+        raise AssertionError(f"snackbar action {name!r} never went away")
+
+    def fab(self, label):
+        self.button(label)
+
+    def month_prev(self):
+        self.button("Previous month")
+
+    def month_next(self):
+        self.button("Next month")
 
     def fill(self, label, value):
         f = self.pg.get_by_label(label, exact=False).first
@@ -99,12 +119,11 @@ class App:
             self.pg.keyboard.type(value, delay=15)
 
     def save(self):
-        self.pg.get_by_role("button", name="Save").click()
-        self.wait(1500)
+        self.button("Save")
+        self.wait(500)
 
     def cancel(self):
-        self.pg.get_by_role("button", name="Cancel").click()
-        self.wait(800)
+        self.button("Cancel")
 
     def row_box(self, needle):
         """Bounding box of the innermost semantics node containing `needle`."""
@@ -118,15 +137,13 @@ class App:
         self.pg.mouse.click(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2)
         self.wait(900)
 
-    def right_buttons(self):
-        """Icon buttons in the right-hand column of the list area, top to bottom."""
-        bs = self.pg.evaluate(BUTTONS_JS)
-        return sorted((b for b in bs if b["x"] > 400 and 80 < b["y"] < 735), key=lambda b: b["y"])
-
-    def click_right_button(self, index):
-        b = self.right_buttons()[index]
-        self.pg.mouse.click(b["x"], b["y"])
-        self.wait(1300)
+    def long_press(self, needle, hold_ms=800):
+        bb = self.row_box(needle)
+        self.pg.mouse.move(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2)
+        self.pg.mouse.down()
+        self.pg.wait_for_timeout(hold_ms)
+        self.pg.mouse.up()
+        self.wait(1000)
 
     def swipe_left(self, needle):
         box = self.row_box(needle)
@@ -135,15 +152,17 @@ class App:
         self.pg.mouse.move(start, cy)
         self.pg.mouse.down()
         for i in range(1, 11):
-            self.pg.mouse.move(start - i * 40, cy)
+            self.pg.mouse.move(start - i * 30, cy)
             self.pg.wait_for_timeout(30)
         self.pg.mouse.up()
         self.wait(1500)
 
 
-def open_app(playwright, base_url=BASE_URL):
+def open_app(playwright, base_url=BASE_URL, scheme=None):
     browser = playwright.chromium.launch(channel=CHANNEL, headless=True)
-    page = browser.new_page(viewport={"width": 480, "height": 900})
+    ctx = browser.new_context(
+        viewport={"width": WIDTH, "height": HEIGHT}, color_scheme=scheme or SCHEME, device_scale_factor=2)
+    page = ctx.new_page()
     errors = []
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(str(e)))

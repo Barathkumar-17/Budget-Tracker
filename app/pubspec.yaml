@@ -18,3 +18,20 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Barlow
+      fonts:
+        - asset: assets/fonts/Barlow-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Barlow-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Barlow-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Barlow-Bold.ttf
+          weight: 700
+    - family: BarlowSemiCondensed
+      fonts:
+        - asset: assets/fonts/BarlowSemiCondensed-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/BarlowSemiCondensed-Bold.ttf
+          weight: 700

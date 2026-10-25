@@ -6,29 +6,43 @@ A personal budget and expense tracker: a **FastAPI + SQLite** backend and a **Fl
 
 ## Features
 
-| Tab | What it does |
+| Screen | What it does |
 | --- | --- |
-| **Dashboard** | Balance, spent vs budget per category, daily spend trend, month navigation, opening balance and low-balance threshold |
-| **Expenses** | Add an expense (amount, date, category, note), swipe to delete, instant overspend and low-balance alerts |
-| **Budgets** | Monthly cap per category |
+| **Dashboard** | A one-line verdict ("₹4,226 left, ₹774 below your safety line"), spent vs budget per category as rail lines, daily spend columns, month navigation, balance settings (opening balance and safety line) |
+| **Expenses** | Grouped by day; add with amount, category chips, date picker and note; instant overspend and low-balance alerts; swipe or long-press to delete, with Undo |
+| **Budgets** | Monthly cap per category, each shown as a line with its spend so far |
 | **Recurring** | Templates (e.g. rent on the 1st) applied to a month with one tap; applying twice never duplicates |
 | **Goals** | Savings goals with progress; contributions reduce the balance |
 
 Categories are case-insensitive (`Food` and `food` are the same category). Amounts are stored as integer paise and exposed as rupees, so there is no floating-point drift.
+
+## Design
+
+The app treats a budget as a journey with a destination. Every budget category, savings goal and your balance is drawn as a **rail line**: the filled part is how far you have gone, the ring is the station you are heading for (a cap, a target, your safety line), and overspending runs the line past its ring in red. Red is used for nothing else.
+
+- Navy header carrying the month; light and dark themes follow the system.
+- Barlow typeface with tabular figures so amounts line up (bundled in `app/assets/fonts`, SIL Open Font License).
+- Android-first Material 3: bottom navigation bar on phones, navigation rail and a centred column on wide windows, 48dp touch targets, system Back returns to the Dashboard.
+- Status is never colour alone: over-budget and low-balance also use words and icons. Text scales with the system font size (tested at 2x). Expenses can be deleted without swiping (long-press, or the screen reader's actions menu).
+- Amounts use Indian digit grouping (₹1,50,000) and drop the decimals when there are no paise.
 
 ## Demo
 
 Try it with realistic data in about two minutes.
 
 <p>
-  <img src="docs/img/dashboard.png" width="230" alt="Dashboard: balance, over-budget bars, daily spend">
-  <img src="docs/img/expenses.png" width="230" alt="Expenses list">
-  <img src="docs/img/overspend-alert.png" width="230" alt="Overspend alert after adding an expense">
+  <img src="docs/img/dashboard.png" width="230" alt="Dashboard: verdict, balance line and budget lines">
+  <img src="docs/img/expenses.png" width="230" alt="Expenses grouped by day">
+  <img src="docs/img/add-expense.png" width="230" alt="Add expense page">
 </p>
 <p>
-  <img src="docs/img/budgets.png" width="230" alt="Budgets">
+  <img src="docs/img/overspend-alert.png" width="230" alt="Alert after an over-budget expense">
+  <img src="docs/img/budgets.png" width="230" alt="Budgets as rail lines">
   <img src="docs/img/recurring.png" width="230" alt="Recurring templates">
+</p>
+<p>
   <img src="docs/img/goals.png" width="230" alt="Savings goals">
+  <img src="docs/img/dashboard-dark.png" width="230" alt="Dashboard in the dark theme">
 </p>
 
 **1. Start the backend on a fresh database and load the demo data**
@@ -52,15 +66,15 @@ cd app && flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000
 
 | Where | Try this | You should see |
 | --- | --- | --- |
-| **Dashboard** | Look at the card and the bars | A red *Low balance* card (balance ₹4226 is under the ₹5000 threshold); *food* and *fun* in red with **Over budget**; *transport* still within its cap |
-| **Dashboard** | Tap the gear, set *Opening balance* to `40000`, Save | The card turns normal: the balance is now above the threshold |
+| **Dashboard** | Read the top panel and the lines | An amber panel: "₹4,226 left, ₹774 below your safety line", the balance line stopping short of the safety ring. *Fun* and *Food* run past their ring in red with "over budget"; *Transport* still has its ring ahead |
+| **Dashboard** | Tap the sliders icon (Balance settings), set *Opening balance* to `40000`, Save | The panel turns calm: "₹14,226 left, ₹9,226 above your safety line", with a check icon |
 | **Dashboard** | Use the arrows by the month | Other months are empty; the arrows return you to this month |
-| **Expenses** | Tap **+**, enter `500` and category `Food`, Save | A banner: **Over budget in food by ₹540.00** |
-| **Expenses** | Swipe a row to the left | The expense is deleted and the dashboard updates |
-| **Budgets** | Tap *food*, change the cap to `3000`, Save | Add the same `500` expense again: no alert any more |
-| **Recurring** | Tap **Apply to this month** | **Already applied**. Applying twice never adds duplicates |
-| **Recurring** | Tap **+**, add `100` / `Netflix` / day `31` | A validation message: the day must be 1-28 |
-| **Goals** | Tap *Laptop*, contribute `1000` | Progress moves to ₹10,000 of ₹60,000 and the balance drops by ₹1,000 |
+| **Add expense** | Tap **Add expense**, enter `500`, tap the *Food* chip, Save | An alert: **Over budget in food by ₹540** |
+| **Expenses** | Swipe a row to the left, or long-press it | The expense is deleted (long-press asks first) and an **Undo** appears |
+| **Budgets** | Tap *Food*, change the cap to `3000`, Save | Add the same `500` expense again: no alert any more |
+| **Recurring** | Tap **Apply to October 2026** (your current month) | "Nothing to add: ... is already up to date." Applying twice never adds duplicates |
+| **Recurring** | Tap **Add template**, enter `100` / `Netflix` / day `31`, Save | An inline message: "Pick a day from 1 to 28" |
+| **Goals** | Tap *Laptop*, add `1000` | "Added ₹1,000 to Laptop"; progress moves to ₹10,000 of ₹60,000 and the balance drops by ₹1,000 |
 
 **Reset the demo:** stop the backend, delete `backend/budget.db` (with Docker: `docker compose down -v`), then start again and re-run the seed script.
 
@@ -68,7 +82,7 @@ cd app && flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000
 
 ```
 backend/            FastAPI app (main.py), pytest suite, demo seed script, Dockerfile
-app/                Flutter source: lib/ (screens, API client), test/, Dockerfile
+app/                Flutter source: lib/ (screens, theme, API client), test/, assets/fonts, Dockerfile
 e2e/                Real-browser walkthrough of every page, README screenshot script
 docs/img/           Screenshots used in this README
 docker-compose.yml  Runs backend and web app together
@@ -202,8 +216,9 @@ flutter test --dart-define=API_URL=http://127.0.0.1:8000
 
 | Test | Needs backend? | Covers |
 | --- | --- | --- |
+| `test/format_test.dart` | no | Money formatting (Indian grouping, paise), day and month labels, category colours |
 | `test/widget_test.dart` | no | App shell and tab navigation |
-| `test/ui_flow_test.dart` | no | Every tab's flows against an in-memory stub of the API: alerts, validation, readable server errors, recurring apply twice, goals, retry on network failure |
+| `test/ui_flow_test.dart` | no | Every screen against an in-memory stub of the API: alerts, inline validation, readable server errors, Undo, long-press delete, month navigation, empty states, system Back, the wide layout, and 2x system text size without overflow |
 | `test/api_test.dart` | **yes**, port 8000 | The Dart API client end to end against the real backend |
 
 ### Full UI walkthrough (real browser)
@@ -224,7 +239,7 @@ python -m http.server 8123 --directory build/web
 BASE_URL=http://127.0.0.1:8123/ python e2e/walkthrough.py
 ```
 
-Set `BROWSER_CHANNEL=chrome` to use an installed Chrome instead of Playwright's Chromium, and `SLOW=2` on a slow machine. The last full run passed 37 of 37 steps.
+Set `BROWSER_CHANNEL=chrome` to use an installed Chrome instead of Playwright's Chromium, and `SLOW=2` on a slow machine. The last full run passed 45 of 45 steps.
 
 ## Releases
 
