@@ -163,6 +163,8 @@ The web image bakes the API address in at build time (`API_URL` in `docker-compo
 2. After the first deploy, open the API service and copy its URL. If it is not `https://budget-tracker-api.onrender.com` (names must be unique across Render), set the web service's `API_URL` environment variable to the real URL and redeploy the web service. The URL is baked into the web build.
 3. Optional demo data: `python backend/seed_demo.py --api https://<your-api>.onrender.com`
 
+A root `Dockerfile` also exists that builds the API, so a plain "Web Service" created at the repo root deploys the API as is. The web app still needs its own service (Root Directory `app`).
+
 If you create the services by hand instead, set **Root Directory** to `backend` (API) or `app` (web), runtime **Docker**, and give the web service an `API_URL` environment variable.
 
 Free-tier limits: services sleep after about 15 minutes idle (the first request then takes up to a minute), the filesystem is wiped on every restart or deploy so the SQLite data resets, and the URLs are public with no login. Use it as a demo, not for real finances. The Flutter build is memory-hungry and may not fit on a free instance.

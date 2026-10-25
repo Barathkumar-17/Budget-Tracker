@@ -1,0 +1,8 @@
+.git/
+app/
+e2e/
+docs/
+*.db
+__pycache__/
+.pytest_cache/
+backend/test_main.py
