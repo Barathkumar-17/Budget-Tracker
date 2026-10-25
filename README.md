@@ -112,4 +112,4 @@ The web build was also driven in real Chrome against the real backend (account, 
 
 ## Releases
 
-Tagged releases (`v0.1.0`, ...) mark known-good states of `main`.
+Tagged releases mark known-good states of `main`.
