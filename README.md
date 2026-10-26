@@ -23,7 +23,6 @@
 ## Contents
 
 - [Highlights](#highlights)
-- [Screens](#screens)
 - [Try the demo](#try-the-demo)
 - [Take the tour](#take-the-tour)
 - [Quick start](#quick-start)
@@ -37,6 +36,8 @@
 - [Testing](#testing)
 - [Deployment](#deployment)
 - [Project layout](#project-layout)
+- [Screens](#screens)
+- [License](#license)
 
 ## Highlights
 
@@ -50,41 +51,6 @@
 | **Exact money** | Amounts are integer paise in the database and rupees on the wire: no floating-point drift. Indian digit grouping (₹1,50,000). |
 | **One image** | The Flutter web app and the API run from a single Docker image behind one port. Render rebuilds it on every push. |
 | **Accessible and resilient** | Every control has a name for screen readers, text scales to 2x without overflow, and while a free-tier server wakes up the app waits and says so instead of failing. |
-
-## Screens
-
-<p align="center">
-  <img src="docs/img/landing-full.png" alt="The landing page: headline, three glass cards, features and three steps" width="62%">
-</p>
-
-<table>
-  <tr>
-    <td width="50%"><img src="docs/img/login.png" alt="The sign-in card, with the demo account button"><br><sub><b>Sign in.</b> One centred glass card; the demo button sits under an OR divider.</sub></td>
-    <td width="50%"><img src="docs/img/dashboard.png" alt="Dashboard"><br><sub><b>Dashboard.</b> Verdict, banner, stats, budgets, ring, recent expenses.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/img/expenses.png" alt="Expenses table with an over-budget alert"><br><sub><b>Expenses.</b> The alert appears the moment an expense crosses a budget.</sub></td>
-    <td><img src="docs/img/add-expense.png" alt="Add expense dialog"><br><sub><b>Add expense.</b> Amount, category pills, date, note.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/img/budgets.png" alt="Budgets as bars with status tags"><br><sub><b>Budgets.</b> Spent, left and an Over / Within budget tag per category.</sub></td>
-    <td><img src="docs/img/recurring.png" alt="Recurring templates"><br><sub><b>Recurring.</b> Apply a month with one click; applying twice adds nothing.</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/img/goals.png" alt="Savings goals with progress rings"><br><sub><b>Goals.</b> Progress rings, add money, remove.</sub></td>
-    <td><img src="docs/img/overspend-alert.png" alt="Over budget alert"><br><sub><b>Alerts.</b> Over budget and low balance are told in words and icons, not colour alone.</sub></td>
-  </tr>
-</table>
-
-On a phone the top pill becomes a floating pill at the bottom of the screen:
-
-<p align="center">
-  <img src="docs/img/phone-landing.png" alt="Landing on a phone" width="24%">
-  &nbsp;
-  <img src="docs/img/phone-dashboard.png" alt="Dashboard on a phone" width="24%">
-  &nbsp;
-  <img src="docs/img/phone-expenses.png" alt="Expenses on a phone" width="24%">
-</p>
 
 ## Try the demo
 
@@ -894,6 +860,41 @@ These are deliberate simplifications of a prototype, listed so nobody is surpris
 - A goal's optional `deadline` is accepted by the API but the app has no field for it. Budgets cannot be deleted, and goals and templates cannot be edited, only removed and re-added.
 - Amounts, notes and names have no upper length limit; absurdly large amounts return a server error.
 - `requirements.txt` is not pinned.
+
+## Screens
+
+<p align="center">
+  <img src="docs/img/landing-full.png" alt="The landing page: headline, three glass cards, features and three steps" width="62%">
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/login.png" alt="The sign-in card, with the demo account button"><br><sub><b>Sign in.</b> One centred glass card; the demo button sits under an OR divider.</sub></td>
+    <td width="50%"><img src="docs/img/dashboard.png" alt="Dashboard"><br><sub><b>Dashboard.</b> Verdict, banner, stats, budgets, ring, recent expenses.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/expenses.png" alt="Expenses table with an over-budget alert"><br><sub><b>Expenses.</b> The alert appears the moment an expense crosses a budget.</sub></td>
+    <td><img src="docs/img/add-expense.png" alt="Add expense dialog"><br><sub><b>Add expense.</b> Amount, category pills, date, note.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/budgets.png" alt="Budgets as bars with status tags"><br><sub><b>Budgets.</b> Spent, left and an Over / Within budget tag per category.</sub></td>
+    <td><img src="docs/img/recurring.png" alt="Recurring templates"><br><sub><b>Recurring.</b> Apply a month with one click; applying twice adds nothing.</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/goals.png" alt="Savings goals with progress rings"><br><sub><b>Goals.</b> Progress rings, add money, remove.</sub></td>
+    <td><img src="docs/img/overspend-alert.png" alt="Over budget alert"><br><sub><b>Alerts.</b> Over budget and low balance are told in words and icons, not colour alone.</sub></td>
+  </tr>
+</table>
+
+On a phone the top pill becomes a floating pill at the bottom of the screen:
+
+<p align="center">
+  <img src="docs/img/phone-landing.png" alt="Landing on a phone" width="24%">
+  &nbsp;
+  <img src="docs/img/phone-dashboard.png" alt="Dashboard on a phone" width="24%">
+  &nbsp;
+  <img src="docs/img/phone-expenses.png" alt="Expenses on a phone" width="24%">
+</p>
 
 ## License
 
