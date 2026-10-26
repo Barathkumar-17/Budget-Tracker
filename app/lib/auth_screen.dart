@@ -31,6 +31,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _username = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
+  final _errorKey = GlobalKey();
   bool _showPassword = false;
   bool _busy = false;
   String? _usernameError;
@@ -106,6 +107,15 @@ class _AuthScreenState extends State<AuthScreen> {
           'Could not reach the server. Check your connection and try again.');
     } finally {
       if (mounted) setState(() => _busy = false);
+      // With the keyboard open the message can sit below the visible part.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final c = _errorKey.currentContext;
+        if (c != null && mounted) {
+          Scrollable.ensureVisible(c,
+              duration: const Duration(milliseconds: 200),
+              alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd);
+        }
+      });
     }
   }
 
@@ -242,7 +252,10 @@ class _AuthScreenState extends State<AuthScreen> {
                             ],
                             if (_formError != null) ...[
                               const SizedBox(height: 16),
-                              Alert(_formError!, icon: Icons.error_outline),
+                              KeyedSubtree(
+                                  key: _errorKey,
+                                  child: Alert(_formError!,
+                                      icon: Icons.error_outline)),
                             ],
                             const SizedBox(height: 24),
                             Btn(_registering ? 'Create account' : 'Log in',

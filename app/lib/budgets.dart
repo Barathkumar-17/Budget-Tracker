@@ -21,7 +21,7 @@ class BudgetsScreen extends StatelessWidget {
       subtitle: 'For ${monthLabel(app.month)}',
       fields: [
         Field('category', 'Category',
-            initial: titleCase(category), readOnly: editing),
+            initial: titleCase(category), readOnly: editing, maxLength: 60),
         Field('cap', 'Monthly cap',
             numeric: true,
             money: true,
@@ -32,7 +32,9 @@ class BudgetsScreen extends StatelessWidget {
         final errors = <String, String>{
           if (v['category']!.isEmpty)
             'category': 'Give the category a name, for example Food',
-          if (amount == null || amount < 0) 'cap': 'Enter an amount, 0 or more',
+          if (amountProblem(amount, 'Enter an amount, 0 or more', zeroOk: true)
+              case final p?)
+            'cap': p,
         };
         if (errors.isNotEmpty) return errors;
         try {

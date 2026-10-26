@@ -86,7 +86,8 @@ class Tk extends ThemeExtension<Tk> {
   static final dark = Tk(
     bg: midnight,
     paper: frostA(0.03),
-    deep: const Color(0xF705060F),
+    // Opaque (the reference uses 97%): text behind a dialog must not ghost through.
+    deep: const Color(0xFF070812),
     ink: ice,
     ink2: frost,
     ink3: mist,
@@ -249,7 +250,6 @@ ThemeData buildTheme() {
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: k.line2)),
-      width: 560,
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: k.deep,

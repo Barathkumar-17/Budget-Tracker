@@ -220,17 +220,19 @@ class _LogoPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1
           ..color = Tk.frostA(0.24));
-    RRect bar(double l, double t, double w) => RRect.fromRectAndRadius(
-        Rect.fromLTWH(l * u, t * u, w * u, 2.6 * u), Radius.circular(1.3 * u));
+    // three rising columns, like a tiny bar chart
+    RRect bar(double l, double h) => RRect.fromRectAndRadius(
+        Rect.fromLTWH(l * u, (21.5 - h) * u, 3.4 * u, h * u),
+        Radius.circular(1.7 * u));
     final fill = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
         colors: [Tk.ice, Tk.iceDeep],
       ).createShader(Offset.zero & s);
-    canvas.drawRRect(bar(8, 8.5, 14), fill);
-    canvas.drawRRect(bar(8, 13.7, 14), fill);
-    canvas.drawRRect(bar(8, 18.9, 8.5), fill);
+    canvas.drawRRect(bar(8.6, 6), fill);
+    canvas.drawRRect(bar(13.3, 9.5), fill);
+    canvas.drawRRect(bar(18, 13), fill);
   }
 
   @override
@@ -503,18 +505,23 @@ class _StatCell extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text.rich(
-          TextSpan(children: [
-            TextSpan(
-                text: s.value,
-                style: t.headlineMedium!
-                    .copyWith(fontSize: 30, color: s.color ?? k.ink)),
-            if (s.small != null)
-              TextSpan(
-                  text: s.small,
-                  style: t.titleSmall!.copyWith(fontSize: 16, color: k.ink4)),
-          ]),
-        ),
+        FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text.rich(
+              softWrap: false,
+              TextSpan(children: [
+                TextSpan(
+                    text: s.value,
+                    style: t.headlineMedium!
+                        .copyWith(fontSize: 30, color: s.color ?? k.ink)),
+                if (s.small != null)
+                  TextSpan(
+                      text: s.small,
+                      style:
+                          t.titleSmall!.copyWith(fontSize: 16, color: k.ink4)),
+              ]),
+            )),
         const SizedBox(height: 4),
         Text(s.label, style: t.bodySmall!.copyWith(color: k.ink4)),
       ]),
@@ -1002,6 +1009,9 @@ class LabeledField extends StatelessWidget {
   final TextCapitalization capitalization;
   final double? fontSize;
 
+  /// Stops typing at this many characters (the server's limit).
+  final int? maxLength;
+
   const LabeledField(
     this.label,
     this.controller, {
@@ -1020,6 +1030,7 @@ class LabeledField extends StatelessWidget {
     this.autofillHints,
     this.capitalization = TextCapitalization.none,
     this.fontSize,
+    this.maxLength,
   });
 
   @override
@@ -1047,9 +1058,10 @@ class LabeledField extends StatelessWidget {
           keyboardType: numeric
               ? const TextInputType.numberWithOptions(decimal: true)
               : TextInputType.text,
-          inputFormatters: numeric
-              ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))]
-              : null,
+          inputFormatters: [
+            if (numeric) FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+          ],
           style: t.bodyLarge!.copyWith(
               fontSize: fontSize, color: readOnly ? k.ink4 : Colors.white),
           decoration: InputDecoration(

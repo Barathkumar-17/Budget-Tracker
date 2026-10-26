@@ -44,9 +44,14 @@ Future<void> editAccount(BuildContext context) async {
       final opening = double.tryParse(v['opening']!);
       final threshold = double.tryParse(v['threshold']!);
       final errors = <String, String>{
-        if (opening == null) 'opening': 'Enter a number, for example 5000',
-        if (threshold == null)
-          'threshold': 'Enter a number, for example 1000 (or 0)',
+        if (amountProblem(opening, 'Enter a number, for example 5000',
+                zeroOk: true)
+            case final p?)
+          'opening': p,
+        if (amountProblem(threshold, 'Enter a number, for example 1000 (or 0)',
+                zeroOk: true)
+            case final p?)
+          'threshold': p,
       };
       if (errors.isNotEmpty) return errors;
       try {

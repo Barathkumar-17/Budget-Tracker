@@ -188,8 +188,10 @@ class _TopNav extends StatelessWidget {
           BoxDecoration(border: Border(bottom: BorderSide(color: k.line))),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       child: Row(children: [
-        const Expanded(
-            child: Align(alignment: Alignment.centerLeft, child: Logo())),
+        Expanded(
+            child: Align(
+                alignment: Alignment.centerLeft,
+                child: Logo(compact: width < 1000))),
         Semantics(
           container: true,
           label: 'Main navigation',
@@ -362,21 +364,27 @@ class _BottomNav extends StatelessWidget {
                       color: i == selected ? k.strong : Colors.transparent,
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(_sections[i].icon,
-                          size: 20, color: i == selected ? k.ink : k.ink4),
-                      const SizedBox(height: 2),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(_sections[i].title,
-                            maxLines: 1,
-                            style: TextStyle(
-                                fontFamily: sans,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: i == selected ? Colors.white : k.ink4)),
-                      ),
-                    ]),
+                    child: MediaQuery(
+                        data: MediaQuery.of(context).copyWith(
+                            textScaler: MediaQuery.textScalerOf(context)
+                                .clamp(maxScaleFactor: 1.15)),
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(_sections[i].icon,
+                              size: 20, color: i == selected ? k.ink : k.ink4),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(_sections[i].title,
+                                maxLines: 1,
+                                style: TextStyle(
+                                    fontFamily: sans,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        i == selected ? Colors.white : k.ink4)),
+                          ),
+                        ])),
                   ),
                 ),
               ),

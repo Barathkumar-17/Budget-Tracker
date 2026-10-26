@@ -9,11 +9,13 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, NamedTuple
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Path as PathParam, Query, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field, StrictInt, StringConstraints
 
 DB_PATH = os.environ.get("BUDGET_DB", "budget.db")
 # Compiled Flutter web app. When present (as in the Docker image) it is served at "/".
@@ -23,6 +25,25 @@ SESSION_DAYS = 30
 
 app = FastAPI(title="Budget Tracker")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+MAX_BODY_BYTES = 8192  # every request body in this API is a few hundred bytes
+
+
+@app.middleware("http")
+async def limit_body_size(request: Request, call_next):
+    """Refuse oversized bodies up front (also blocks absurdly deep JSON)."""
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > MAX_BODY_BYTES:
+        return JSONResponse({"detail": "Request body is too large"}, status_code=413)
+    return await call_next(request)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request: Request, exc: RequestValidationError):
+    """422 with the problems only. FastAPI also echoes the offending input, which
+    cannot always be turned into JSON (NaN, lone surrogates) and would crash."""
+    errors = [{"loc": list(e["loc"]), "msg": e["msg"], "type": e["type"]} for e in exc.errors()]
+    return JSONResponse({"detail": errors}, status_code=422)
 
 
 if not HAS_WEB:
@@ -185,9 +206,14 @@ CurrentUser = Annotated[User, Depends(current_user)]
 
 
 # ---- schemas ----
-MONTH_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"
+# a four-digit year from 0001 (dates before that do not exist), then a real month
+MONTH_PATTERN = r"^(000[1-9]|00[1-9][0-9]|0[1-9][0-9]{2}|[1-9][0-9]{3})-(0[1-9]|1[0-2])$"
+MAX_RUPEES = Decimal(10) ** 10  # 1,000 crore: far beyond any personal budget, far below overflow
+Rupees = Annotated[Decimal, Field(decimal_places=2, le=MAX_RUPEES)]
+RowId = Annotated[int, PathParam(ge=1, le=2**63 - 1)]
 Month = Annotated[str, Query(pattern=MONTH_PATTERN)]
-Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+Note = Annotated[str, StringConstraints(max_length=500)]
 Username = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=3, max_length=30, pattern=r"^[A-Za-z0-9_.-]+$")
 ]
@@ -204,38 +230,38 @@ class LoginIn(BaseModel):
 
 
 class ExpenseIn(BaseModel):
-    amount: Decimal = Field(gt=0, decimal_places=2)
+    amount: Rupees = Field(gt=0)
     date: date
     category: Name
-    note: str = ""
+    note: Note = ""
 
 
 class BudgetIn(BaseModel):
     category: Name
     month: str = Field(pattern=MONTH_PATTERN)
-    cap: Decimal = Field(ge=0, decimal_places=2)
+    cap: Rupees = Field(ge=0)
 
 
 class RecurringIn(BaseModel):
-    amount: Decimal = Field(gt=0, decimal_places=2)
+    amount: Rupees = Field(gt=0)
     category: Name
-    note: str = ""
-    day_of_month: int = Field(ge=1, le=28)
+    note: Note = ""
+    day_of_month: StrictInt = Field(ge=1, le=28)
 
 
 class GoalIn(BaseModel):
     name: Name
-    target: Decimal = Field(gt=0, decimal_places=2)
+    target: Rupees = Field(gt=0)
     deadline: date | None = None
 
 
 class ContributeIn(BaseModel):
-    amount: Decimal = Field(gt=0, decimal_places=2)
+    amount: Rupees = Field(gt=0)
 
 
 class AccountIn(BaseModel):
-    opening_balance: Decimal = Field(ge=0, decimal_places=2)
-    low_balance_threshold: Decimal = Field(ge=0, decimal_places=2)
+    opening_balance: Rupees = Field(ge=0)
+    low_balance_threshold: Rupees = Field(ge=0)
 
 
 def expense_out(r):
@@ -353,19 +379,22 @@ def list_expenses(user: CurrentUser, month: Month | None = None, category: str |
         args.append(month)
     if category:
         q += " AND category=?"
-        args.append(category.lower())
+        args.append(category.strip().lower())
     with db() as c:
         return [expense_out(r) for r in c.execute(q + " ORDER BY date DESC, id DESC", args)]
 
 
 @app.put("/expenses/{expense_id}")
-def update_expense(expense_id: int, e: ExpenseIn, user: CurrentUser):
+def update_expense(expense_id: RowId, e: ExpenseIn, user: CurrentUser):
     cat = e.category.lower()
     with db() as c:
-        cur = c.execute(
-            "UPDATE expenses SET amount=?, date=?, category=?, note=? WHERE id=? AND user_id=?",
-            (to_paise(e.amount), e.date.isoformat(), cat, e.note, expense_id, user.id),
-        )
+        try:
+            cur = c.execute(
+                "UPDATE expenses SET amount=?, date=?, category=?, note=? WHERE id=? AND user_id=?",
+                (to_paise(e.amount), e.date.isoformat(), cat, e.note, expense_id, user.id),
+            )
+        except sqlite3.IntegrityError:
+            raise HTTPException(409, "This recurring expense already exists on that date")
         if cur.rowcount == 0:
             raise HTTPException(404, "expense not found")
         row = c.execute("SELECT * FROM expenses WHERE id=?", (expense_id,)).fetchone()
@@ -375,7 +404,7 @@ def update_expense(expense_id: int, e: ExpenseIn, user: CurrentUser):
 
 
 @app.delete("/expenses/{expense_id}", status_code=204)
-def delete_expense(expense_id: int, user: CurrentUser):
+def delete_expense(expense_id: RowId, user: CurrentUser):
     with db() as c:
         if c.execute("DELETE FROM expenses WHERE id=? AND user_id=?", (expense_id, user.id)).rowcount == 0:
             raise HTTPException(404, "expense not found")
@@ -429,7 +458,7 @@ def list_recurring(user: CurrentUser):
 
 
 @app.delete("/recurring/{rid}", status_code=204)
-def delete_recurring(rid: int, user: CurrentUser):
+def delete_recurring(rid: RowId, user: CurrentUser):
     with db() as c:
         if c.execute("DELETE FROM recurring WHERE id=? AND user_id=?", (rid, user.id)).rowcount == 0:
             raise HTTPException(404, "template not found")
@@ -442,6 +471,12 @@ def apply_recurring(month: Month, user: CurrentUser):
     with db() as c:
         for t in c.execute("SELECT * FROM recurring WHERE user_id=?", (user.id,)).fetchall():
             d = f"{month}-{t['day_of_month']:02d}"
+            # Already there this month (even if the user moved it to another day)?
+            if c.execute(
+                "SELECT 1 FROM expenses WHERE user_id=? AND recurring_id=? AND substr(date,1,7)=?",
+                (user.id, t["id"], month),
+            ).fetchone():
+                continue
             cur = c.execute(
                 "INSERT OR IGNORE INTO expenses (user_id, amount, date, category, note, recurring_id) "
                 "VALUES (?,?,?,?,?,?)",
@@ -477,7 +512,7 @@ def list_goals(user: CurrentUser):
 
 
 @app.post("/goals/{gid}/contribute")
-def contribute(gid: int, body: ContributeIn, user: CurrentUser):
+def contribute(gid: RowId, body: ContributeIn, user: CurrentUser):
     with db() as c:
         cur = c.execute(
             "UPDATE goals SET saved = saved + ? WHERE id=? AND user_id=?",
@@ -490,7 +525,7 @@ def contribute(gid: int, body: ContributeIn, user: CurrentUser):
 
 
 @app.delete("/goals/{gid}", status_code=204)
-def delete_goal(gid: int, user: CurrentUser):
+def delete_goal(gid: RowId, user: CurrentUser):
     with db() as c:
         if c.execute("DELETE FROM goals WHERE id=? AND user_id=?", (gid, user.id)).rowcount == 0:
             raise HTTPException(404, "goal not found")
@@ -529,5 +564,13 @@ def dashboard(month: Month, user: CurrentUser):
 
 
 # Registered last so every API route above wins; anything else is a web app file.
+class SafeStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        try:
+            return await super().get_response(path, scope)
+        except ValueError:  # e.g. an embedded NUL character in the path
+            raise HTTPException(404)
+
+
 if HAS_WEB:
-    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
+    app.mount("/", SafeStaticFiles(directory=WEB_DIR, html=True), name="web")

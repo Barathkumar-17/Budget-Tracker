@@ -8,6 +8,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-SQLite-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
 [![Render](https://img.shields.io/badge/Render-auto--deploy-46E3B7?logo=render&logoColor=white)](#render)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 <img src="docs/img/hero.png" alt="Budget Tracker on a desktop and on two phones: the dashboard, and the expenses list" width="100%">
 
@@ -234,6 +235,7 @@ python seed_demo.py
 # 3. The app (terminal 3). The platform folders are generated, not committed.
 cd app
 flutter create . --project-name budget_tracker --platforms=web
+python tool/patch_web.py          # the app's own title, colours and icons
 flutter pub get
 flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000 --dart-define=SHOW_DEMO=true
 ```
@@ -248,7 +250,7 @@ flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000 --dart-define=
 ```bash
 cd app
 flutter create . --project-name budget_tracker --platforms=web,android,windows
-python tool/patch_android.py --cleartext      # --cleartext only for a plain http:// API; safe to repeat
+python tool/patch_android.py --cleartext      # network access, app name and icon; --cleartext only for a plain http:// API; safe to repeat
 flutter build apk --release --dart-define=API_URL=http://10.0.2.2:8000
 # -> build/app/outputs/flutter-apk/app-release.apk
 
@@ -696,15 +698,16 @@ For Android release builds, `python app/tool/patch_android.py` (run from `app/` 
 
 | Layer | Location | Count | Needs | What it covers |
 | --- | --- | --- | --- | --- |
-| Backend API tests | `backend/test_main.py` | 39 test cases (21 test functions; one is parametrised over 19 endpoints) | Nothing running; uses a temporary SQLite file | Register, login, logout, session expiry; hashing and salting; uniform login failures; 401 on every data endpoint; per-user isolation and 404s; expense, budget and dashboard flow; overspend alert and editing; low balance and goals; recurring idempotence; month, name, amount-precision and account validation; serving the web app next to the API; handling of a database that holds older unowned tables |
+| Backend API tests | `backend/test_main.py` | 55 test cases (parametrised cases counted) | Nothing running; uses a temporary SQLite file | Register, login, logout, session expiry; hashing and salting; uniform login failures; 401 on every data endpoint; per-user isolation and 404s; expense, budget and dashboard flow; overspend alert and editing; low balance and goals; recurring idempotence; month, name, amount-precision and account validation; serving the web app next to the API; handling of a database that holds older unowned tables |
 | Dart format tests | `app/test/format_test.dart` | 9 | Nothing | Money formatting (Indian grouping, paise, minus sign), day/month labels, title case, category colours |
 | Dart widget tests | `app/test/widget_test.dart` | 2 | Nothing | Logged-out start shows the landing page; Log in opens the form |
 | Dart UI-flow tests | `app/test/ui_flow_test.dart` | 55 in 9 groups | Nothing (an in-memory stub of the API via `MockClient`) | Public pages; accounts (login, register validation, wrong password, taken username, unreachable server, logout, ended session); waking-server retries; dashboard; expenses (add, edit, alerts, Remove/Undo, filters); budgets; recurring; goals; shell navigation (wide and phone); 2x text scale on every screen |
 | Dart API-client tests | `app/test/api_test.dart` | 6 | A running backend and `--dart-define=API_URL` | The `Api` client against the real server: accounts, login required, user isolation, a full feature flow, error surfacing. Registers its own throwaway users, so it can be repeated on any database |
+| API sweep | `e2e/api_sweep.py` | about 420 checks | A running backend (local or hosted) | Every endpoint with valid and invalid input, isolation, concurrency, limits; `python e2e/api_sweep.py http://127.0.0.1:8000` |
 | Demo tour | `e2e/demo_tour.py` | 30 `step(...)` checks | The same as the walkthrough, plus a freshly seeded demo account | The [guided tour](#take-the-tour) above, step by step on the demo account, saving the screenshots in `docs/img/tour/`. Passes at desktop and phone size |
 | Browser walkthrough | `e2e/walkthrough.py` | 61 `step(...)` checks | Compiled web app served by the backend, Playwright + Chromium | Landing, login and registration validation, every section, add/edit/remove with Undo, alerts, recurring applied twice, goals, logout/login, reload keeps the session, a second user sees none of the first user's data, no console errors (CORS, fetch, uncaught) |
 
-Flutter totals: 72 tests, 66 of which need no backend. The UI-flow tests run at 1200 x 1000 by default and at 400 x 900 where a test asks for a phone.
+Flutter totals: about 80 tests, 74 of which need no backend (format, widget, UI-flow and timeout tests). The UI-flow tests run at 1200 x 1000 by default and at 400 x 900 where a test asks for a phone.
 
 Commands:
 
@@ -832,10 +835,13 @@ cd ../backend && uvicorn main:app --port 8000
 ├── render.yaml              Render Blueprint (one free Docker web service, auto-deploy from main)
 ├── .dockerignore            Keeps tests, e2e, docs and generated folders out of the image
 ├── .gitignore               Ignores generated Flutter folders, build output, databases, e2e output
+├── .editorconfig            Editor defaults: UTF-8, LF, two spaces for Dart/YAML/JSON/Markdown
+├── LICENSE                  MIT
+├── CHANGELOG.md             What each release contains
 ├── README.md
 ├── backend/
 │   ├── main.py              The whole API: schema, auth, endpoints, static web mount
-│   ├── test_main.py         pytest suite (39 test cases)
+│   ├── test_main.py         pytest suite (55 test cases)
 │   ├── seed_demo.py         Fills the demo account through the public API (standard library only)
 │   ├── start.sh             Container entry point: start uvicorn, then seed the demo account
 │   ├── requirements.txt     fastapi, uvicorn, httpx, pytest (unpinned)
@@ -844,6 +850,7 @@ cd ../backend && uvicorn main:app --port 8000
 │   ├── pubspec.yaml         Dependencies and bundled fonts
 │   ├── analysis_options.yaml  flutter_lints configuration
 │   ├── assets/fonts/        Inter, Space Grotesk, JetBrains Mono and their OFL licences
+│   ├── brand/               The app icon in every size the web shell and Android need
 │   ├── lib/
 │   │   ├── main.dart        App entry, auth gate, navigation shell
 │   │   ├── api.dart         HTTP client and API_URL handling
@@ -864,7 +871,9 @@ cd ../backend && uvicorn main:app --port 8000
 │   │   ├── ui_flow_test.dart    Every screen against a stubbed API
 │   │   ├── api_test.dart        API client against a live backend
 │   │   └── test_fonts.dart      Loads the bundled fonts so layouts match a device
-│   ├── tool/patch_android.py    Adds INTERNET (and optionally cleartext) to the Android manifest
+│   ├── tool/patch_android.py    Android: network access (optionally cleartext), app name, launcher icon
+│   ├── tool/patch_web.py        Web: title, description, theme colour and icons for the generated shell
+│   ├── tool/make_icons.py       Draws app/brand from the logo mark (needs Pillow)
 │   └── android/ web/ windows/ build/   Generated by flutter create or flutter build (git-ignored)
 ├── e2e/
 │   ├── common.py            Playwright helpers: accessibility-layer driving, waits, screenshots
@@ -885,3 +894,7 @@ These are deliberate simplifications of a prototype, listed so nobody is surpris
 - A goal's optional `deadline` is accepted by the API but the app has no field for it. Budgets cannot be deleted, and goals and templates cannot be edited, only removed and re-added.
 - Amounts, notes and names have no upper length limit; absurdly large amounts return a server error.
 - `requirements.txt` is not pinned.
+
+## License
+
+Released under the [MIT License](LICENSE). The bundled fonts (Inter, Space Grotesk, JetBrains Mono) are open source under the SIL Open Font License; their licence texts sit next to them in `app/assets/fonts`.

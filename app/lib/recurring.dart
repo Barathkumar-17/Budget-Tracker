@@ -25,8 +25,8 @@ class RecurringScreen extends StatelessWidget {
         final amount = double.tryParse(v['amount']!);
         final day = int.tryParse(v['day']!);
         final errors = <String, String>{
-          if (amount == null || amount <= 0)
-            'amount': 'Enter an amount above 0',
+          if (amountProblem(amount, 'Enter an amount above 0') case final p?)
+            'amount': p,
           if (v['category']!.isEmpty)
             'category': 'Give it a category, for example Rent',
           if (day == null || day < 1 || day > 28)

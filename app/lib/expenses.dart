@@ -122,8 +122,7 @@ class _ExpenseDialogState extends State<ExpenseDialog> {
     final category = _category.text.trim();
     setState(() {
       _formError = null;
-      _amountError =
-          (amount == null || amount <= 0) ? 'Enter an amount above 0' : null;
+      _amountError = amountProblem(amount, 'Enter an amount above 0');
       _categoryError = category.isEmpty ? 'Pick or type a category' : null;
     });
     if (_amountError != null || _categoryError != null) return;
@@ -168,6 +167,7 @@ class _ExpenseDialogState extends State<ExpenseDialog> {
             action: TextInputAction.next),
         const SizedBox(height: 14),
         LabeledField('Category', _category,
+            maxLength: 60,
             error: _categoryError,
             capitalization: TextCapitalization.words,
             action: TextInputAction.next,
@@ -216,6 +216,7 @@ class _ExpenseDialogState extends State<ExpenseDialog> {
         ),
         const SizedBox(height: 14),
         LabeledField('Note (optional)', _note,
+            maxLength: 500,
             capitalization: TextCapitalization.sentences,
             action: TextInputAction.done,
             onSubmitted: (_) => _submit()),
@@ -355,7 +356,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       title: 'Expenses',
       subtitle: rows.isEmpty
           ? 'Everything you spend in ${monthLabel(app.month)} will be listed here.'
-          : 'Everything you spent in ${monthLabel(app.month)}. Click a row to edit it.',
+          : 'Everything you spent in ${monthLabel(app.month)}. ${isWide(context) ? 'Click' : 'Tap'} a row to edit it.',
       actions: [
         const MonthSwitcher(),
         Btn('Add expense',

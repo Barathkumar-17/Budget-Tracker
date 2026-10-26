@@ -1,5 +1,6 @@
 // Hermetic UI tests: the real app talks to an in-memory stub of the API
 // (package:http MockClient), so no backend is needed.
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:budget_tracker/api.dart';
@@ -179,6 +180,17 @@ void main() {
       expect(find.text('Use demo account'),
           findsNothing); // only when built with SHOW_DEMO
       expect(calls.where((c) => c.url.path == '/dashboard'), isEmpty);
+    }, loggedIn: false);
+
+    uiTest('system Back on the login form returns to the landing page', {},
+        (t, calls) async {
+      await t.tap(find.widgetWithText(OutlinedButton, 'Log in').first);
+      await settle(t);
+      expect(find.text('Welcome back'), findsOneWidget);
+      await t.binding.handlePopRoute();
+      await settle(t);
+      expect(find.text('Know where your money goes.'), findsOneWidget);
+      expect(find.text('Welcome back'), findsNothing);
     }, loggedIn: false);
 
     uiTest('landing leads to log in, register and back', {}, (t, calls) async {
@@ -377,6 +389,19 @@ void main() {
       await settle(t);
       expect(find.text('Could not reach the server'), findsOneWidget);
       await t.tap(find.widgetWithText(FilledButton, 'Retry'));
+      await settle(t);
+      expect(find.text('Could not reach the server'), findsNothing);
+      expect(find.text('₹1,000'), findsOneWidget);
+    });
+
+    uiTest('a request that times out is retried like a sleeping server', {
+      'GET /dashboard': (() {
+        var n = 0;
+        return (http.Request _) => n++ == 0
+            ? throw TimeoutException('no answer')
+            : json(emptyDashboard);
+      })(),
+    }, (t, calls) async {
       await settle(t);
       expect(find.text('Could not reach the server'), findsNothing);
       expect(find.text('₹1,000'), findsOneWidget);
@@ -601,6 +626,18 @@ void main() {
       await fillAndSubmit(t, {'Amount': '0'});
       expect(find.text('Enter an amount above 0'), findsOneWidget);
       expect(find.text('Pick or type a category'), findsOneWidget);
+      expect(called(calls, 'POST', '/expenses'), isFalse);
+    });
+
+    uiTest('amounts above the limit and over-long text are stopped in the form',
+        {}, (t, calls) async {
+      await tab(t, 'Expenses');
+      await press(t, 'Add expense');
+      await fillIn(t, {'Amount': '99999999999', 'Category': 'c' * 80});
+      expect(valueOf(t, 'Category').length,
+          60); // typing stops at the server's limit
+      await press(t, 'Save');
+      expect(find.text('Use an amount up to ₹1,000 crore'), findsOneWidget);
       expect(called(calls, 'POST', '/expenses'), isFalse);
     });
 
@@ -969,6 +1006,34 @@ void main() {
       expect(nav.dx, closeTo(600, 40));
       expect(nav.dy, lessThan(80));
     });
+
+    uiTest('on a phone a message floats above the bottom navigation pill', {
+      'POST /recurring/apply': (_) => json({'month': thisMonth, 'created': 0}),
+      'GET /recurring': (_) => json([
+            {
+              'id': 1,
+              'amount': 499.0,
+              'category': 'music',
+              'note': '',
+              'day_of_month': 5
+            }
+          ]),
+    }, (t, calls) async {
+      await tab(t, 'Recurring');
+      await press(t, 'Apply to $monthName');
+      // the SnackBar widget's own box includes its margin: measure the surface
+      final snackBottom = t
+          .getBottomLeft(find
+              .descendant(
+                  of: find.byType(SnackBar), matching: find.byType(Material))
+              .first)
+          .dy;
+      final navTop = t
+          .getTopLeft(find.byWidgetPredicate(
+              (w) => w is Semantics && w.properties.label == 'Main navigation'))
+          .dy;
+      expect(snackBottom, lessThanOrEqualTo(navTop + 1));
+    }, size: phone);
 
     uiTest('a phone gets a top bar and a floating bottom navigation pill', {},
         (t, calls) async {

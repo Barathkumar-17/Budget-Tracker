@@ -29,6 +29,16 @@ class _PublicAreaState extends State<PublicArea> {
 
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      canPop: _page == _Page.landing,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) setState(() => _page = _Page.landing);
+      },
+      child: _body(),
+    );
+  }
+
+  Widget _body() {
     return switch (_page) {
       _Page.landing => LandingScreen(
           onLogin: () => setState(() => _page = _Page.login),

@@ -8,7 +8,12 @@ WORKDIR /src/app
 COPY app/pubspec.yaml ./
 COPY app/assets assets
 COPY app/lib lib
-RUN flutter create . --project-name budget_tracker --platforms=web \
+COPY app/brand brand
+COPY app/tool/patch_web.py tool/patch_web.py
+# The web shell gets the app's own title, colours and icons (needs Python).
+RUN (command -v python3 >/dev/null || (apt-get update -qq && apt-get install -y -qq python3)) \
+ && flutter create . --project-name budget_tracker --platforms=web \
+ && python3 tool/patch_web.py \
  && flutter pub get \
  && flutter build web --release --dart-define=API_URL=same-origin --dart-define=SHOW_DEMO=true
 

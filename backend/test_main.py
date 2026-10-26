@@ -326,3 +326,105 @@ def test_old_single_user_database_is_kept_not_destroyed(tmp_path, monkeypatch):
     finally:
         monkeypatch.setenv("BUDGET_DB", original_db)
         importlib.reload(main)
+
+
+# ------------------------------------------------------------ hard limits
+def _expense(amount, **over):
+    body = {"amount": amount, "date": "2026-10-03", "category": "food", "note": ""}
+    body.update(over)
+    return body
+
+
+@pytest.mark.parametrize("amount", [10**10 + 0.01, 1e18, 9.3e16, "1e1000000", "99999999999999999999.99"])
+def test_amounts_beyond_the_cap_are_refused_not_a_server_error(user, amount):
+    assert client.post("/expenses", json=_expense(amount), headers=user).status_code == 422
+
+
+def test_the_largest_allowed_amount_still_works_and_totals_stay_sane(user):
+    for _ in range(3):
+        assert client.post("/expenses", json=_expense(10**10), headers=user).status_code == 201
+    assert client.get("/dashboard?month=2026-10", headers=user).json()["total_spent"] == 3 * 10**10
+
+
+def test_two_huge_templates_cannot_break_the_account(user):
+    big = {"amount": 10**10, "category": "big", "day_of_month": 1}
+    for _ in range(2):
+        assert client.post("/recurring", json=big, headers=user).status_code == 201
+    assert client.post("/recurring/apply?month=2026-10", headers=user).json()["created"] == 2
+    assert client.get("/account", headers=user).status_code == 200
+    assert client.get("/dashboard?month=2026-10", headers=user).status_code == 200
+
+
+def test_validation_errors_never_echo_unserialisable_input(user):
+    raw = '{"amount": NaN, "date": "2026-10-03", "category": "x"}'
+    r = client.post("/expenses", content=raw, headers={**user, "Content-Type": "application/json"})
+    assert r.status_code == 422 and "detail" in r.json()
+    surrogate = r'{"amount": 5, "date": "2026-10-03", "category": "\ud800"}'  # a lone surrogate, JSON-escaped
+    r = client.post("/expenses", content=surrogate, headers={**user, "Content-Type": "application/json"})
+    assert r.status_code == 422
+
+
+def test_ids_outside_the_integer_range_are_rejected_cleanly(user):
+    for path in ("/expenses/99999999999999999999", "/goals/9223372036854775808", "/recurring/0"):
+        assert client.delete(path, headers=user).status_code in (404, 422)
+
+
+def test_text_and_body_limits(user):
+    assert client.post("/expenses", json=_expense(5, category="c" * 61), headers=user).status_code == 422
+    assert client.post("/expenses", json=_expense(5, category="c" * 60), headers=user).status_code == 201
+    assert client.post("/expenses", json=_expense(5, note="n" * 501), headers=user).status_code == 422
+    assert client.post("/expenses", json=_expense(5, note="n" * 20000), headers=user).status_code == 413
+
+
+def test_month_must_be_a_real_calendar_month(user):
+    assert client.post("/recurring/apply?month=0000-01", headers=user).status_code == 422
+    assert client.post("/recurring/apply?month=2026-13", headers=user).status_code == 422
+    assert client.post("/recurring/apply?month=0001-01", headers=user).status_code == 200
+
+
+def test_day_of_month_must_be_a_number_not_a_boolean(user):
+    body = {"amount": 5, "category": "x", "day_of_month": True}
+    assert client.post("/recurring", json=body, headers=user).status_code == 422
+
+
+def test_recurring_apply_adds_one_expense_per_template_and_month(user):
+    tid = client.post("/recurring", json={"amount": 100, "category": "rent", "day_of_month": 5}, headers=user).json()["id"]
+    assert client.post("/recurring/apply?month=2026-11", headers=user).json()["created"] == 1
+    # the user moves it to another day: applying again must not add a second one
+    eid = client.get("/expenses?month=2026-11", headers=user).json()[0]["id"]
+    moved = _expense(100, date="2026-11-20", category="rent")
+    assert client.put(f"/expenses/{eid}", json=moved, headers=user).status_code == 200
+    assert client.post("/recurring/apply?month=2026-11", headers=user).json()["created"] == 0
+    # but if the expense is deleted, applying fills the gap again
+    assert client.delete(f"/expenses/{eid}", headers=user).status_code == 204
+    assert client.post("/recurring/apply?month=2026-11", headers=user).json()["created"] == 1
+    assert tid
+
+
+def test_moving_a_generated_expense_onto_its_sibling_is_a_conflict_not_a_crash(user):
+    client.post("/recurring", json={"amount": 100, "category": "rent", "day_of_month": 5}, headers=user)
+    client.post("/recurring/apply?month=2026-11", headers=user)
+    client.post("/recurring/apply?month=2026-12", headers=user)
+    dec = client.get("/expenses?month=2026-12", headers=user).json()[0]
+    clash = _expense(100, date="2026-11-05", category="rent")
+    assert client.put(f"/expenses/{dec['id']}", json=clash, headers=user).status_code == 409
+
+
+def test_category_filter_trims_like_writes_do(user):
+    client.post("/expenses", json=_expense(5, category=" Food "), headers=user)
+    assert len(client.get("/expenses?category=%20food%20", headers=user).json()) == 1
+
+
+def test_a_nul_byte_in_a_path_is_not_found_not_a_crash(tmp_path, monkeypatch):
+    web = tmp_path / "web"
+    web.mkdir()
+    (web / "index.html").write_text("<!doctype html><title>x</title>")
+    monkeypatch.setenv("WEB_DIR", str(web))
+    reloaded = importlib.reload(main)
+    try:
+        c = TestClient(reloaded.app)
+        assert c.get("/%00").status_code == 404
+        assert c.get("/").status_code == 200
+    finally:
+        monkeypatch.undo()
+        importlib.reload(main)

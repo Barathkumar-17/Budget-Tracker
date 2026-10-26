@@ -15,15 +15,15 @@ class GoalsScreen extends StatelessWidget {
       title: 'New savings goal',
       subtitle: 'Money you put towards a goal comes out of your balance.',
       fields: const [
-        Field('name', 'Name'),
+        Field('name', 'Name', maxLength: 60),
         Field('target', 'Target amount', numeric: true, money: true),
       ],
       onSubmit: (v) async {
         final target = double.tryParse(v['target']!);
         final errors = <String, String>{
           if (v['name']!.isEmpty) 'name': 'Name your goal, for example Laptop',
-          if (target == null || target <= 0)
-            'target': 'Enter an amount above 0',
+          if (amountProblem(target, 'Enter an amount above 0') case final p?)
+            'target': p,
         };
         if (errors.isNotEmpty) return errors;
         try {
@@ -47,9 +47,11 @@ class GoalsScreen extends StatelessWidget {
       fields: const [Field('amount', 'Amount', numeric: true, money: true)],
       onSubmit: (v) async {
         final a = double.tryParse(v['amount']!);
-        if (a == null || a <= 0) return {'amount': 'Enter an amount above 0'};
+        if (amountProblem(a, 'Enter an amount above 0') case final p?) {
+          return {'amount': p};
+        }
         try {
-          await Api.contribute(g['id'] as int, a);
+          await Api.contribute(g['id'] as int, a!);
           added = a;
           return null;
         } on ApiException catch (e) {

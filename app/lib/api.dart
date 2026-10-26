@@ -35,12 +35,19 @@ String _errorMessage(http.Response r) {
       }).join('; ');
     }
   } catch (_) {}
-  return 'Server error ${r.statusCode}';
+  return switch (r.statusCode) {
+    413 => 'That is too long to send. Try shorter text.',
+    403 => 'The server refused this request. Try different text.',
+    _ => 'Server error ${r.statusCode}',
+  };
 }
 
 class Api {
   /// Login token sent with every request. Set by the auth state.
   static String? token;
+
+  /// How long one request may take before it counts as "server not answering".
+  static Duration requestTimeout = const Duration(seconds: 20);
 
   /// Called when the server rejects the token (expired or revoked session).
   static void Function()? onUnauthorized;
@@ -53,20 +60,15 @@ class Api {
       if (auth && token != null) 'Authorization': 'Bearer $token',
     };
     final payload = body == null ? null : jsonEncode(body);
-    final http.Response r;
-    switch (method) {
-      case 'POST':
-        r = await http.post(uri, headers: headers, body: payload);
-        break;
-      case 'PUT':
-        r = await http.put(uri, headers: headers, body: payload);
-        break;
-      case 'DELETE':
-        r = await http.delete(uri, headers: headers);
-        break;
-      default:
-        r = await http.get(uri, headers: headers);
-    }
+    final Future<http.Response> call = switch (method) {
+      'POST' => http.post(uri, headers: headers, body: payload),
+      'PUT' => http.put(uri, headers: headers, body: payload),
+      'DELETE' => http.delete(uri, headers: headers),
+      _ => http.get(uri, headers: headers),
+    };
+    // A phone that cannot reach the server may wait for minutes without an
+    // error; give up after a while so the app can say so (and retry).
+    final http.Response r = await call.timeout(requestTimeout);
     if (r.statusCode >= 400) {
       // A 401 on a logged-in call means the session ended. (A 401 from the
       // login call itself just means a wrong password, so it is not routed here.)

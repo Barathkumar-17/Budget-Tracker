@@ -88,6 +88,17 @@ String money(num v) {
   return '${v < 0 && paise != 0 ? '−' : ''}₹$body';
 }
 
+/// The most the server accepts for any amount (1,000 crore rupees).
+const maxAmount = 10000000000.0;
+
+/// The problem with an amount typed into a form, or null if it is fine.
+/// [empty] is what to say when it is missing or not allowed (0 or below).
+String? amountProblem(double? a, String empty, {bool zeroOk = false}) {
+  if (a == null || (zeroOk ? a < 0 : a <= 0)) return empty;
+  if (a > maxAmount) return 'Use an amount up to ₹1,000 crore';
+  return null;
+}
+
 String titleCase(String s) => s.isEmpty
     ? s
     : s
@@ -176,6 +187,9 @@ void snack(BuildContext c, String msg,
                 ? k.line2
                 : fg.withValues(alpha: 0.4))),
     duration: Duration(seconds: seconds),
+    // On a phone, float above the bottom navigation pill instead of covering it.
+    width: isWide(c) ? 560 : null,
+    margin: isWide(c) ? null : const EdgeInsets.fromLTRB(16, 0, 16, 92),
     content: Row(children: [
       if (icon != null) ...[Icon(icon, color: fg), const SizedBox(width: 12)],
       Expanded(child: Text(msg, style: TextStyle(color: fg))),
@@ -465,12 +479,14 @@ class Field {
   final String initial;
   final String? helper;
   final bool readOnly;
+  final int? maxLength;
   const Field(this.key, this.label,
       {this.numeric = false,
       this.money = false,
       this.initial = '',
       this.helper,
-      this.readOnly = false});
+      this.readOnly = false,
+      this.maxLength});
 }
 
 /// Key under which [showFormDialog]'s submit callback reports a whole-form error.
@@ -579,6 +595,7 @@ class _FormDialogState extends State<_FormDialog> {
             numeric: fields[i].numeric,
             money: fields[i].money,
             readOnly: fields[i].readOnly,
+            maxLength: fields[i].maxLength,
             helper: fields[i].helper,
             error: _errors[fields[i].key],
             capitalization: fields[i].numeric
