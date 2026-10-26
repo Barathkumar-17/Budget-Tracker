@@ -250,13 +250,13 @@ Six diagrams of the current system. Each has an editable SVG next to the PNG sho
 
 ### Data flow diagram: context
 
-The user is the only external entity; the whole system is one process, with the credentials, inputs and session token going in and the lists, dashboard, alerts and error messages coming out.
+The user is the only external entity and the whole system is one process: account, expense, planning and goal details go in; the session token and account status, the expense list with overspend and low-balance alerts, the budgets and recurring result, and goal progress with the monthly summary come out.
 
 ![DFD context diagram](docs/diagrams/dfd-context.png)
 
 ### Data flow diagram: level 1
 
-Seven processes (authenticate, manage account, expenses, budgets, recurring and goals, and the balance and dashboard calculation) and seven data stores (users, sessions, account, expenses, budgets, recurring, goals), with every store access limited to the signed-in user's rows.
+Six processes (account access, manage expenses, manage budgets, manage and apply recurring, savings goals, dashboard summary) and five data stores (accounts, expenses, budgets, recurring templates, goals). A store drawn more than once is the same store, repeated so each flow stays straight; every request carries the session token and touches only the signed-in user's rows.
 
 ![DFD level 1 diagram](docs/diagrams/dfd-level-1.png)
 
