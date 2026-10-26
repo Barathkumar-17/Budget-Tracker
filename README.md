@@ -25,16 +25,16 @@
 - [Highlights](#highlights)
 - [Try the demo](#try-the-demo)
 - [Take the tour](#take-the-tour)
-- [Quick start](#quick-start)
 - [Design](#design)
 - [Architecture](#architecture)
 - [System design](#system-design)
 - [Data model](#data-model)
-- [Security and accounts](#security-and-accounts)
+- [Frontend structure](#frontend-structure)
 - [API reference](#api-reference)
 - [Business rules](#business-rules)
-- [Frontend structure](#frontend-structure)
+- [Security and accounts](#security-and-accounts)
 - [Testing](#testing)
+- [Quick start](#quick-start)
 - [Deployment](#deployment)
 - [Project layout](#project-layout)
 - [Screens](#screens)
@@ -175,74 +175,6 @@ BASE_URL=http://127.0.0.1:8000/ VIEWPORT_W=1280 VIEWPORT_H=800 python e2e/demo_t
 ```
 
 The tour changes the demo account, so use a fresh database each time. It exits non-zero if any step fails and rewrites `docs/img/tour/`.
-
-## Quick start
-
-Prerequisites: Python 3.10+, Flutter 3.35+ (Dart 3) and Chrome. Docker is optional.
-
-### Fastest: Docker
-
-```bash
-docker compose up --build
-```
-
-Open http://localhost:8000. The container serves the app and the API on one port, creates the `demo` account on start, and keeps data in the `budget-data` volume. API docs are at http://localhost:8000/docs.
-
-### From source
-
-```bash
-# 1. Backend (terminal 1)
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --port 8000
-
-# 2. Demo data (terminal 2): the account demo / demo-password
-python seed_demo.py
-
-# 3. The app (terminal 3). The platform folders are generated, not committed.
-cd app
-flutter create . --project-name budget_tracker --platforms=web
-python tool/patch_web.py          # the app's own title, colours and icons
-flutter pub get
-flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000 --dart-define=SHOW_DEMO=true
-```
-
-`--dart-define=SHOW_DEMO=true` adds the **Use demo account** button to the login screen. The default `API_URL` is `http://10.0.2.2:8000`, which is how an Android emulator reaches the host machine.
-
-<details>
-<summary><b>Android and other builds</b></summary>
-
-`flutter create` only grants the `INTERNET` permission to *debug* builds, so a release APK cannot reach the API. After generating the platform folders:
-
-```bash
-cd app
-flutter create . --project-name budget_tracker --platforms=web,android,windows
-python tool/patch_android.py --cleartext      # network access, app name and icon; --cleartext only for a plain http:// API; safe to repeat
-flutter build apk --release --dart-define=API_URL=http://10.0.2.2:8000
-# -> build/app/outputs/flutter-apk/app-release.apk
-
-flutter build web --release --dart-define=API_URL=http://127.0.0.1:8000       # build/web
-flutter build windows --release --dart-define=API_URL=http://127.0.0.1:8000   # Windows desktop
-```
-
-On a physical device use your computer's LAN IP as `API_URL` and start the backend with `--host 0.0.0.0`.
-
-</details>
-
-<details>
-<summary><b>One server without Docker</b></summary>
-
-Build the web app for a single origin and let the backend serve it:
-
-```bash
-cd app && flutter build web --release --dart-define=API_URL=same-origin --dart-define=SHOW_DEMO=true
-cp -r build/web ../backend/web          # Windows: xcopy /E /I build\web ..\backend\web
-cd ../backend && uvicorn main:app --port 8000
-```
-
-The backend serves `backend/web` at `/` whenever it exists (override the folder with `WEB_DIR`).
-
-</details>
 
 ## Design
 
@@ -439,39 +371,110 @@ erDiagram
 | Derived values | The balance, a goal's `progress` and the dashboard figures are computed on read; they are not stored |
 | Compatibility | If an existing database file already holds an `expenses`, `budgets`, `recurring`, `goals` or `account` table without a `user_id` column, that table is renamed to `legacy_<name>` (data kept, never dropped, never read by the API) and the current table is created. This is covered by a backend test |
 
-## Security and accounts
+## Frontend structure
 
-| Topic | Implementation |
+The app is a single Flutter code base in `app/lib` (13 files, no sub-folders). Platform folders (`android/`, `web/`, `windows/`) are generated with `flutter create` and are not part of the repository.
+
+| File | Responsibility |
 | --- | --- |
-| Password hashing | `hashlib.scrypt` with `n=2**14`, `r=8`, `p=1` and a fresh 16-byte random salt (`secrets.token_bytes(16)`) per user. Stored as `scrypt$<salt hex>$<digest hex>`; the plain password is never stored or logged. The cost parameters are fixed in code, not stored with the hash |
-| Password check | Recomputes the digest with the stored salt and compares with `hmac.compare_digest` (constant time) |
-| No username oracle | Login runs the same scrypt computation against a dummy hash when the username does not exist, and a wrong password and an unknown username return the identical `401 {"detail": "Wrong username or password"}` |
-| Session tokens | `secrets.token_urlsafe(32)` (256 bits of randomness). Only the SHA-256 hex digest is stored in `sessions.token_hash`, so a leaked database does not reveal usable tokens |
-| Session lifetime | 30 days (`SESSION_DAYS`), measured from the token's creation (fixed, not sliding). A request is authenticated only if the row exists and `created >= now - 30 days`. Expired rows are ignored but not deleted |
-| Logout | `POST /auth/logout` deletes the presented token's row. Other sessions of the same user stay valid |
-| Authorization header | `Authorization: Bearer <token>`. A missing header, a malformed header, an unknown token and an expired token all return `401 {"detail": "Please log in again"}` with `WWW-Authenticate: Bearer` |
-| Which endpoints need it | Everything except `POST /auth/register`, `POST /auth/login`, `GET/HEAD /` and the docs/static files. Every data endpoint is covered by a parametrised test that checks 401 without and with a bad token |
-| Per-user isolation | Reads add `WHERE user_id=?`. Updates and deletes use `WHERE id=? AND user_id=?`. If no row matches, the API answers `404` (not 403), so another user's record ids are indistinguishable from ids that do not exist |
-| Usernames | Trimmed, 3 to 30 characters, only `A-Za-z0-9_.-`, unique case-insensitively. Login matches case-insensitively and returns the name with its stored casing |
-| Passwords | Registration: 8 to 128 characters. Login: 1 to 128 characters |
-| Money fields | `amount`, `target` and contribution `amount` must be greater than 0; `cap`, `opening_balance` and `low_balance_threshold` must be 0 or more; at most 2 decimal places everywhere |
-| Text fields | `category` and goal `name` are trimmed and must not be blank. `day_of_month` must be 1 to 28. `month` must match the month pattern. SQL always uses bound parameters |
-| CORS | `CORSMiddleware` with `allow_origins=["*"]`, all methods, all headers. Credentials (cookies) are not allowed and not used: authentication is a bearer header, so there is no ambient browser credential for another site to ride on |
-| Token storage in the app | The token is kept with `shared_preferences` (browser local storage on web, app storage on Android) so a reload does not log the user out. If storage is unavailable, the session lasts until the tab closes |
+| `main.dart` | Entry point and `BudgetApp` (theme, background, `AuthScope`). A gate chooses the screen from the auth status: spinner or "Waking up the server" while restoring, error panel with Retry, the public area when logged out, or the app shell when logged in. Contains the `Shell`: five sections, the top pill nav on wide windows, the phone top bar and floating bottom pill, and system Back handling |
+| `api.dart` | `baseUrl` from `API_URL`; the static `Api` client with one method per endpoint; `ApiException` (message and HTTP status); turns FastAPI error bodies (including the 422 list) into one readable message; sends the bearer token; calls `onUnauthorized` on any 401 from an authenticated call |
+| `auth.dart` | `AuthState` (`loading`, `loggedOut`, `loggedIn`, `unreachable`): restore a saved session at start-up (with the wake-up retry), log in, register, log out, handle an ended session; persists the token; `AuthScope` |
+| `auth_screen.dart` | Log in / Create account card with inline validation that mirrors the server rules, show-password toggle, autofill hints, and the optional "Use demo account" button |
+| `landing.dart` | `PublicArea` (landing, login and register pages) and the landing page: nav, hero, feature cards, how-it-works, closing call to action, footer |
+| `common.dart` | Formatting helpers (`money`, `monthLabel`, `dayLabel`, `titleCase`, keys), `AppState`/`AppScope`, `snack` and `confirm`, `DialogShell`, `showFormDialog`, `WakePolicy`, `isServerAsleep`, the generic `Loader`, `WakingPanel`, `ErrorState` |
+| `theme.dart` | Design tokens (`Tk` theme extension), type styles, `buildTheme()`, category colours |
+| `ui.dart` | Reusable components (see below) and the layout breakpoint |
+| `dashboard.dart` | Overview: verdict sentence, low-balance banner, stat strip, budget bars, "budget used" ring, daily chart, recent expenses, goals preview; balance-settings dialog |
+| `expenses.dart` | Add/edit expense dialog (category suggestions, date picker), expense table with category tabs, optimistic Remove with Undo |
+| `budgets.dart` | Budget list with status tags and bars; add/change dialog (category is fixed when changing) |
+| `recurring.dart` | Template list, add dialog, "Apply to <month>" action, Remove with Undo |
+| `goals.dart` | Goal cards with progress rings, add goal, add money, confirmed delete |
 
-### What is deliberately not done
+### State management
 
-| Not implemented | Consequence |
+There is no state-management package. Two `ChangeNotifier`s are exposed through `InheritedNotifier` scopes.
+
+| Object | Scope | Holds |
+| --- | --- | --- |
+| `AuthState` | whole app (`AuthScope`) | Auth status, username, a notice such as "Your session ended. Please log in again.", a `waking` flag. Sets `Api.token` and `Api.onUnauthorized` |
+| `AppState` | one logged-in session (`AppScope`) | Viewed month, open section index, and a `tick` counter. Any create, update or delete calls `changed()`, which bumps `tick`, and visible screens reload |
+| `Loader<T>` | per screen | Runs a `load` future. Reloads when `loadKey` changes (the `tick`), and drops old data when `resetKey` changes (the month). While reloading it keeps the previous data on screen with a thin progress line; a failed refresh keeps the data and shows "Could not refresh. Showing the last data you loaded." |
+| `WakePolicy` | global | Retry delays (see below), replaceable in tests |
+
+`AppScope.of(context)` subscribes a widget; `AppScope.read(context)` reads without subscribing (used in callbacks). The logged-in subtree is created with `ValueKey(username)`, so a different account never inherits month, section or cached data from the previous one. Pull-to-refresh is available on every list screen.
+
+### Behaviour while a free-tier server sleeps
+
+Free hosting stops an idle service, and the first request can take up to a minute. The app treats "the server is not answering yet" (a network error, a timeout, or HTTP 502, 503 or 504) differently from a real error:
+
+- At start-up with a saved token, and in every `Loader`, the call is retried after 2, 4, 6, 8, 10 and 12 seconds (about 42 seconds of waiting) and a "Waking up the server..." panel explains the delay.
+- If the retries run out, a "Could not reach the server" panel with a Retry button is shown. Other errors (404, 500 and so on) are not retried.
+- Log in and register are not retried; a network failure shows "Could not reach the server. Check your connection and try again."
+- A 401 on any authenticated call (expired or revoked token) clears the token and returns to the login screen with the notice "Your session ended. Please log in again."
+
+### Navigation
+
+| Window width | Layout |
 | --- | --- |
-| Rate limiting or lockout | Nothing slows repeated login or registration attempts. Put a rate-limiting proxy in front for anything public |
-| Email, password reset, account recovery | Accounts have no email address. A forgotten password cannot be recovered |
-| Change password, delete account | There are no endpoints for either |
-| Session revocation of all devices | Logout only ends the current token |
-| TLS | The app does not terminate HTTPS. Render provides it; behind another host, add it at the proxy |
-| Upper limits on amounts and text length | Amounts above roughly 9.2e16 rupees overflow SQLite's 64-bit integer and the request fails with a 500. `note`, `category` and goal `name` have no maximum length |
-| Token in local storage | Like any browser app that keeps a bearer token in local storage, a script injection bug would expose it. The app renders no user-supplied HTML |
-| Pinned dependencies | `requirements.txt` lists unpinned packages (and test packages are installed into the runtime image too) |
-| Purging expired sessions | Old `sessions` rows accumulate; they are rejected but never removed |
+| 760 logical pixels and wider (`kWideBreakpoint`) | A top bar: logo on the left, a floating glass pill with the five sections in the centre, avatar, user name (shown from 1060 px) and a log-out button on the right. Content is centred, at most 1200 px wide |
+| Narrower | A slim top bar (logo, avatar, log out) and a floating bottom pill with icon-over-label tabs for the five sections |
+
+Sections are Dashboard, Expenses, Budgets, Recurring and Goals. Switching sections cross-fades in 180 ms (no animation when the system asks for reduced motion). System Back from any other section returns to the Dashboard first. The month switcher (previous/next) is shared by Dashboard, Expenses, Budgets and Recurring.
+
+### Design system
+
+The app is dark only. Tokens live in `Tk` (a `ThemeExtension`, read with `context.tk`) in `theme.dart`.
+
+| Group | Tokens |
+| --- | --- |
+| Palette | Midnight `#05060F` (page), steel `#2F343E`, fog `#9DA7BA`, mist `#C7D3EA`, frost `#D1E4FA`, ice `#D8ECF8`, ice deep `#98C0EF`, violet `#663AF3` (the one accent, primary buttons), blueprint `#B6D9FC` (links), ember `#E46D4C`, signal `#027DEA`, teal `#269684` |
+| Text steps | `ink` ice, `ink2` frost, `ink3` mist, `ink4` fog (headline down to helper text) |
+| Surfaces | Cards are a barely visible frost tint (`rgba(186, 215, 247, 0.03)` to `0.055`) over the canvas; dialogs and the sign-in card use `deep` (near-opaque midnight). Hairline edges are `rgba(186, 215, 247, 0.12)` and `0.24` (focus and emphasis) |
+| Status | Within budget `#3FBFA8`; over budget and low balance `#F08A6D` (both warning and error use the same ember tone, backed by words and icons) |
+| Fonts | `UntitledSans` for body and interface (Inter 400/500/600/700), `Aeonik` for display headings (Space Grotesk 400/500), `DotDigital` for tracked all-caps labels (JetBrains Mono 400). Tabular figures are on for every style so amounts align |
+| Type scale | 48 and 44 (hero), 28 (page title), 24, 18 (panel heading), 16 and 14 (body), 12 (labels, tags) |
+| Radii | 16 for panels, dialogs and snackbars; 12 for alerts and menus; 6 for inputs, tags and the squared sign-in button; fully rounded pills for buttons and navigation |
+| Background | `Atmosphere`: midnight canvas, a faint 80 px blueprint grid fading toward the edges, and a spotlight beam from the top centre |
+| Category colours | A 9-step ramp of cool blues and teal. Known names (food, transport, rent, fun and so on) map to fixed colours; other names are assigned by a stable hash, case-insensitively |
+
+Components in `ui.dart`:
+
+| Component | Purpose |
+| --- | --- |
+| `Panel`, `PanelTitle` | Glass card with a hairline edge and a bright top edge; `deep` variant for dialogs |
+| `PageHead`, `Eyebrow` | Page title block with eyebrow label, one-line description and actions; the eyebrow drops its flanking lines when large text leaves no room |
+| `StatStrip`, `Stat` | One panel divided into figures (wraps to two per row on narrow widths) |
+| `Btn` (primary, ghost, hl, danger), `IconBtn`, `IconTile` | Buttons with busy state and optional spoken label override; icon buttons always carry a tooltip |
+| `LabeledField` | Label above a text field with error and helper text, numeric filter (`0-9` and `.`), `₹` prefix, autofill hints |
+| `Tag`, `CategoryTag` | Small status and category labels |
+| `Ring`, `BarRow`, `DailyChart` | Percentage ring, labelled progress bar, per-day spending columns with a text summary |
+| `SegTabs` | Pill segmented control (category filter, login/register switch) |
+| `Alert`, `Banner2`, `EmptyPanel` | Inline message strip, full-width low-balance banner, empty state with a first step |
+| `MonthSwitcher`, `Avatar`, `Logo`, `GradientText` | Month navigation, initial avatar, wordmark, gradient headline text |
+
+### Accessibility
+
+| Measure | Where |
+| --- | --- |
+| Screen-reader names | Every control is reachable by name. Repeated buttons carry specific labels such as `Remove Food ₹150` or `Add money to Laptop`; icon buttons use their tooltip as label |
+| Structure | Page, panel and dialog titles are marked as headers; navigation is a labelled region (`Main navigation`) with the selected item flagged |
+| Live regions | Alerts, the low-balance banner and the month label announce changes |
+| Not colour alone | Over-budget, low-balance and goal-reached states also use text and icons ("Over budget", "Close to limit", "Goal reached") |
+| Decorative elements | Background, logo mark, avatar, rings, bars and icon tiles are excluded from the semantics tree; the daily chart exposes one text summary ("Highest day: ...") |
+| Reduced motion | Ring, bar and chart animations and the section cross-fade are skipped when the system disables animations |
+| Large text | Layouts reflow for large system text; automated tests run the screens at 2x text scale and fail on overflow |
+| Forms | Inline error text per field, numeric keyboard and input filtering, autofill hints for username and password, password show/hide, default focus on the first field, Enter submits the last field |
+| Target size | Buttons are at least 44 px high (34 px for the compact variant); icon buttons are 36 to 44 px |
+
+### Build-time defines
+
+| Define | Default | Effect |
+| --- | --- | --- |
+| `API_URL` | see [Architecture](#architecture) | Server address |
+| `SHOW_DEMO` | `false` | Shows a "Use demo account" button on the login screen that signs in as `demo` / `demo-password` |
+
+For Android release builds, `python app/tool/patch_android.py` (run from `app/` after `flutter create`) adds the `INTERNET` permission to the generated manifest, and `--cleartext` additionally allows plain `http://` APIs. It can be run repeatedly.
 
 ## API reference
 
@@ -596,110 +599,39 @@ curl -s "http://localhost:8000/dashboard?month=2026-10" \
 | Validation | Amounts, targets and contributions must be greater than 0; caps and balances 0 or more; at most 2 decimal places; blank category or goal names are rejected after trimming; months must be `YYYY-MM` with a month from 01 to 12; day of month 1 to 28. Violations return 422 and nothing is written |
 | Display | The app shows amounts as rupees with Indian digit grouping and drops the decimals when there are no paise (`₹1,50,000`, `₹4,226.50`). It marks a bar amber from 85% of the cap and red above 100% |
 
-## Frontend structure
+## Security and accounts
 
-The app is a single Flutter code base in `app/lib` (13 files, no sub-folders). Platform folders (`android/`, `web/`, `windows/`) are generated with `flutter create` and are not part of the repository.
-
-| File | Responsibility |
+| Topic | Implementation |
 | --- | --- |
-| `main.dart` | Entry point and `BudgetApp` (theme, background, `AuthScope`). A gate chooses the screen from the auth status: spinner or "Waking up the server" while restoring, error panel with Retry, the public area when logged out, or the app shell when logged in. Contains the `Shell`: five sections, the top pill nav on wide windows, the phone top bar and floating bottom pill, and system Back handling |
-| `api.dart` | `baseUrl` from `API_URL`; the static `Api` client with one method per endpoint; `ApiException` (message and HTTP status); turns FastAPI error bodies (including the 422 list) into one readable message; sends the bearer token; calls `onUnauthorized` on any 401 from an authenticated call |
-| `auth.dart` | `AuthState` (`loading`, `loggedOut`, `loggedIn`, `unreachable`): restore a saved session at start-up (with the wake-up retry), log in, register, log out, handle an ended session; persists the token; `AuthScope` |
-| `auth_screen.dart` | Log in / Create account card with inline validation that mirrors the server rules, show-password toggle, autofill hints, and the optional "Use demo account" button |
-| `landing.dart` | `PublicArea` (landing, login and register pages) and the landing page: nav, hero, feature cards, how-it-works, closing call to action, footer |
-| `common.dart` | Formatting helpers (`money`, `monthLabel`, `dayLabel`, `titleCase`, keys), `AppState`/`AppScope`, `snack` and `confirm`, `DialogShell`, `showFormDialog`, `WakePolicy`, `isServerAsleep`, the generic `Loader`, `WakingPanel`, `ErrorState` |
-| `theme.dart` | Design tokens (`Tk` theme extension), type styles, `buildTheme()`, category colours |
-| `ui.dart` | Reusable components (see below) and the layout breakpoint |
-| `dashboard.dart` | Overview: verdict sentence, low-balance banner, stat strip, budget bars, "budget used" ring, daily chart, recent expenses, goals preview; balance-settings dialog |
-| `expenses.dart` | Add/edit expense dialog (category suggestions, date picker), expense table with category tabs, optimistic Remove with Undo |
-| `budgets.dart` | Budget list with status tags and bars; add/change dialog (category is fixed when changing) |
-| `recurring.dart` | Template list, add dialog, "Apply to <month>" action, Remove with Undo |
-| `goals.dart` | Goal cards with progress rings, add goal, add money, confirmed delete |
+| Password hashing | `hashlib.scrypt` with `n=2**14`, `r=8`, `p=1` and a fresh 16-byte random salt (`secrets.token_bytes(16)`) per user. Stored as `scrypt$<salt hex>$<digest hex>`; the plain password is never stored or logged. The cost parameters are fixed in code, not stored with the hash |
+| Password check | Recomputes the digest with the stored salt and compares with `hmac.compare_digest` (constant time) |
+| No username oracle | Login runs the same scrypt computation against a dummy hash when the username does not exist, and a wrong password and an unknown username return the identical `401 {"detail": "Wrong username or password"}` |
+| Session tokens | `secrets.token_urlsafe(32)` (256 bits of randomness). Only the SHA-256 hex digest is stored in `sessions.token_hash`, so a leaked database does not reveal usable tokens |
+| Session lifetime | 30 days (`SESSION_DAYS`), measured from the token's creation (fixed, not sliding). A request is authenticated only if the row exists and `created >= now - 30 days`. Expired rows are ignored but not deleted |
+| Logout | `POST /auth/logout` deletes the presented token's row. Other sessions of the same user stay valid |
+| Authorization header | `Authorization: Bearer <token>`. A missing header, a malformed header, an unknown token and an expired token all return `401 {"detail": "Please log in again"}` with `WWW-Authenticate: Bearer` |
+| Which endpoints need it | Everything except `POST /auth/register`, `POST /auth/login`, `GET/HEAD /` and the docs/static files. Every data endpoint is covered by a parametrised test that checks 401 without and with a bad token |
+| Per-user isolation | Reads add `WHERE user_id=?`. Updates and deletes use `WHERE id=? AND user_id=?`. If no row matches, the API answers `404` (not 403), so another user's record ids are indistinguishable from ids that do not exist |
+| Usernames | Trimmed, 3 to 30 characters, only `A-Za-z0-9_.-`, unique case-insensitively. Login matches case-insensitively and returns the name with its stored casing |
+| Passwords | Registration: 8 to 128 characters. Login: 1 to 128 characters |
+| Money fields | `amount`, `target` and contribution `amount` must be greater than 0; `cap`, `opening_balance` and `low_balance_threshold` must be 0 or more; at most 2 decimal places everywhere |
+| Text fields | `category` and goal `name` are trimmed and must not be blank. `day_of_month` must be 1 to 28. `month` must match the month pattern. SQL always uses bound parameters |
+| CORS | `CORSMiddleware` with `allow_origins=["*"]`, all methods, all headers. Credentials (cookies) are not allowed and not used: authentication is a bearer header, so there is no ambient browser credential for another site to ride on |
+| Token storage in the app | The token is kept with `shared_preferences` (browser local storage on web, app storage on Android) so a reload does not log the user out. If storage is unavailable, the session lasts until the tab closes |
 
-### State management
+### What is deliberately not done
 
-There is no state-management package. Two `ChangeNotifier`s are exposed through `InheritedNotifier` scopes.
-
-| Object | Scope | Holds |
-| --- | --- | --- |
-| `AuthState` | whole app (`AuthScope`) | Auth status, username, a notice such as "Your session ended. Please log in again.", a `waking` flag. Sets `Api.token` and `Api.onUnauthorized` |
-| `AppState` | one logged-in session (`AppScope`) | Viewed month, open section index, and a `tick` counter. Any create, update or delete calls `changed()`, which bumps `tick`, and visible screens reload |
-| `Loader<T>` | per screen | Runs a `load` future. Reloads when `loadKey` changes (the `tick`), and drops old data when `resetKey` changes (the month). While reloading it keeps the previous data on screen with a thin progress line; a failed refresh keeps the data and shows "Could not refresh. Showing the last data you loaded." |
-| `WakePolicy` | global | Retry delays (see below), replaceable in tests |
-
-`AppScope.of(context)` subscribes a widget; `AppScope.read(context)` reads without subscribing (used in callbacks). The logged-in subtree is created with `ValueKey(username)`, so a different account never inherits month, section or cached data from the previous one. Pull-to-refresh is available on every list screen.
-
-### Behaviour while a free-tier server sleeps
-
-Free hosting stops an idle service, and the first request can take up to a minute. The app treats "the server is not answering yet" (a network error, a timeout, or HTTP 502, 503 or 504) differently from a real error:
-
-- At start-up with a saved token, and in every `Loader`, the call is retried after 2, 4, 6, 8, 10 and 12 seconds (about 42 seconds of waiting) and a "Waking up the server..." panel explains the delay.
-- If the retries run out, a "Could not reach the server" panel with a Retry button is shown. Other errors (404, 500 and so on) are not retried.
-- Log in and register are not retried; a network failure shows "Could not reach the server. Check your connection and try again."
-- A 401 on any authenticated call (expired or revoked token) clears the token and returns to the login screen with the notice "Your session ended. Please log in again."
-
-### Navigation
-
-| Window width | Layout |
+| Not implemented | Consequence |
 | --- | --- |
-| 760 logical pixels and wider (`kWideBreakpoint`) | A top bar: logo on the left, a floating glass pill with the five sections in the centre, avatar, user name (shown from 1060 px) and a log-out button on the right. Content is centred, at most 1200 px wide |
-| Narrower | A slim top bar (logo, avatar, log out) and a floating bottom pill with icon-over-label tabs for the five sections |
-
-Sections are Dashboard, Expenses, Budgets, Recurring and Goals. Switching sections cross-fades in 180 ms (no animation when the system asks for reduced motion). System Back from any other section returns to the Dashboard first. The month switcher (previous/next) is shared by Dashboard, Expenses, Budgets and Recurring.
-
-### Design system
-
-The app is dark only. Tokens live in `Tk` (a `ThemeExtension`, read with `context.tk`) in `theme.dart`.
-
-| Group | Tokens |
-| --- | --- |
-| Palette | Midnight `#05060F` (page), steel `#2F343E`, fog `#9DA7BA`, mist `#C7D3EA`, frost `#D1E4FA`, ice `#D8ECF8`, ice deep `#98C0EF`, violet `#663AF3` (the one accent, primary buttons), blueprint `#B6D9FC` (links), ember `#E46D4C`, signal `#027DEA`, teal `#269684` |
-| Text steps | `ink` ice, `ink2` frost, `ink3` mist, `ink4` fog (headline down to helper text) |
-| Surfaces | Cards are a barely visible frost tint (`rgba(186, 215, 247, 0.03)` to `0.055`) over the canvas; dialogs and the sign-in card use `deep` (near-opaque midnight). Hairline edges are `rgba(186, 215, 247, 0.12)` and `0.24` (focus and emphasis) |
-| Status | Within budget `#3FBFA8`; over budget and low balance `#F08A6D` (both warning and error use the same ember tone, backed by words and icons) |
-| Fonts | `UntitledSans` for body and interface (Inter 400/500/600/700), `Aeonik` for display headings (Space Grotesk 400/500), `DotDigital` for tracked all-caps labels (JetBrains Mono 400). Tabular figures are on for every style so amounts align |
-| Type scale | 48 and 44 (hero), 28 (page title), 24, 18 (panel heading), 16 and 14 (body), 12 (labels, tags) |
-| Radii | 16 for panels, dialogs and snackbars; 12 for alerts and menus; 6 for inputs, tags and the squared sign-in button; fully rounded pills for buttons and navigation |
-| Background | `Atmosphere`: midnight canvas, a faint 80 px blueprint grid fading toward the edges, and a spotlight beam from the top centre |
-| Category colours | A 9-step ramp of cool blues and teal. Known names (food, transport, rent, fun and so on) map to fixed colours; other names are assigned by a stable hash, case-insensitively |
-
-Components in `ui.dart`:
-
-| Component | Purpose |
-| --- | --- |
-| `Panel`, `PanelTitle` | Glass card with a hairline edge and a bright top edge; `deep` variant for dialogs |
-| `PageHead`, `Eyebrow` | Page title block with eyebrow label, one-line description and actions; the eyebrow drops its flanking lines when large text leaves no room |
-| `StatStrip`, `Stat` | One panel divided into figures (wraps to two per row on narrow widths) |
-| `Btn` (primary, ghost, hl, danger), `IconBtn`, `IconTile` | Buttons with busy state and optional spoken label override; icon buttons always carry a tooltip |
-| `LabeledField` | Label above a text field with error and helper text, numeric filter (`0-9` and `.`), `₹` prefix, autofill hints |
-| `Tag`, `CategoryTag` | Small status and category labels |
-| `Ring`, `BarRow`, `DailyChart` | Percentage ring, labelled progress bar, per-day spending columns with a text summary |
-| `SegTabs` | Pill segmented control (category filter, login/register switch) |
-| `Alert`, `Banner2`, `EmptyPanel` | Inline message strip, full-width low-balance banner, empty state with a first step |
-| `MonthSwitcher`, `Avatar`, `Logo`, `GradientText` | Month navigation, initial avatar, wordmark, gradient headline text |
-
-### Accessibility
-
-| Measure | Where |
-| --- | --- |
-| Screen-reader names | Every control is reachable by name. Repeated buttons carry specific labels such as `Remove Food ₹150` or `Add money to Laptop`; icon buttons use their tooltip as label |
-| Structure | Page, panel and dialog titles are marked as headers; navigation is a labelled region (`Main navigation`) with the selected item flagged |
-| Live regions | Alerts, the low-balance banner and the month label announce changes |
-| Not colour alone | Over-budget, low-balance and goal-reached states also use text and icons ("Over budget", "Close to limit", "Goal reached") |
-| Decorative elements | Background, logo mark, avatar, rings, bars and icon tiles are excluded from the semantics tree; the daily chart exposes one text summary ("Highest day: ...") |
-| Reduced motion | Ring, bar and chart animations and the section cross-fade are skipped when the system disables animations |
-| Large text | Layouts reflow for large system text; automated tests run the screens at 2x text scale and fail on overflow |
-| Forms | Inline error text per field, numeric keyboard and input filtering, autofill hints for username and password, password show/hide, default focus on the first field, Enter submits the last field |
-| Target size | Buttons are at least 44 px high (34 px for the compact variant); icon buttons are 36 to 44 px |
-
-### Build-time defines
-
-| Define | Default | Effect |
-| --- | --- | --- |
-| `API_URL` | see [Architecture](#architecture) | Server address |
-| `SHOW_DEMO` | `false` | Shows a "Use demo account" button on the login screen that signs in as `demo` / `demo-password` |
-
-For Android release builds, `python app/tool/patch_android.py` (run from `app/` after `flutter create`) adds the `INTERNET` permission to the generated manifest, and `--cleartext` additionally allows plain `http://` APIs. It can be run repeatedly.
+| Rate limiting or lockout | Nothing slows repeated login or registration attempts. Put a rate-limiting proxy in front for anything public |
+| Email, password reset, account recovery | Accounts have no email address. A forgotten password cannot be recovered |
+| Change password, delete account | There are no endpoints for either |
+| Session revocation of all devices | Logout only ends the current token |
+| TLS | The app does not terminate HTTPS. Render provides it; behind another host, add it at the proxy |
+| Upper limits on amounts and text length | Amounts above roughly 9.2e16 rupees overflow SQLite's 64-bit integer and the request fails with a 500. `note`, `category` and goal `name` have no maximum length |
+| Token in local storage | Like any browser app that keeps a bearer token in local storage, a script injection bug would expose it. The app renders no user-supplied HTML |
+| Pinned dependencies | `requirements.txt` lists unpinned packages (and test packages are installed into the runtime image too) |
+| Purging expired sessions | Old `sessions` rows accumulate; they are rejected but never removed |
 
 ## Testing
 
@@ -756,6 +688,74 @@ Walkthrough settings (environment variables, defined in `e2e/common.py`):
 | `COLOR_SCHEME` | `dark` | Browser colour-scheme preference (the app itself is dark only) |
 
 The walkthrough exits non-zero if any step fails, and registers fresh users on each run. Flutter draws to a canvas, so the script turns on Flutter's accessibility layer and finds every control by its accessible name rather than by coordinates. `e2e/demo_tour.py` and `e2e/screenshots.py` use the same helpers to capture the README screenshots of the demo account (run `python backend/seed_demo.py` first; settings `BASE_URL`, `SHOTS`, `DEMO_USER`, `DEMO_PASSWORD`).
+
+## Quick start
+
+Prerequisites: Python 3.10+, Flutter 3.35+ (Dart 3) and Chrome. Docker is optional.
+
+### Fastest: Docker
+
+```bash
+docker compose up --build
+```
+
+Open http://localhost:8000. The container serves the app and the API on one port, creates the `demo` account on start, and keeps data in the `budget-data` volume. API docs are at http://localhost:8000/docs.
+
+### From source
+
+```bash
+# 1. Backend (terminal 1)
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --port 8000
+
+# 2. Demo data (terminal 2): the account demo / demo-password
+python seed_demo.py
+
+# 3. The app (terminal 3). The platform folders are generated, not committed.
+cd app
+flutter create . --project-name budget_tracker --platforms=web
+python tool/patch_web.py          # the app's own title, colours and icons
+flutter pub get
+flutter run -d chrome --dart-define=API_URL=http://127.0.0.1:8000 --dart-define=SHOW_DEMO=true
+```
+
+`--dart-define=SHOW_DEMO=true` adds the **Use demo account** button to the login screen. The default `API_URL` is `http://10.0.2.2:8000`, which is how an Android emulator reaches the host machine.
+
+<details>
+<summary><b>Android and other builds</b></summary>
+
+`flutter create` only grants the `INTERNET` permission to *debug* builds, so a release APK cannot reach the API. After generating the platform folders:
+
+```bash
+cd app
+flutter create . --project-name budget_tracker --platforms=web,android,windows
+python tool/patch_android.py --cleartext      # network access, app name and icon; --cleartext only for a plain http:// API; safe to repeat
+flutter build apk --release --dart-define=API_URL=http://10.0.2.2:8000
+# -> build/app/outputs/flutter-apk/app-release.apk
+
+flutter build web --release --dart-define=API_URL=http://127.0.0.1:8000       # build/web
+flutter build windows --release --dart-define=API_URL=http://127.0.0.1:8000   # Windows desktop
+```
+
+On a physical device use your computer's LAN IP as `API_URL` and start the backend with `--host 0.0.0.0`.
+
+</details>
+
+<details>
+<summary><b>One server without Docker</b></summary>
+
+Build the web app for a single origin and let the backend serve it:
+
+```bash
+cd app && flutter build web --release --dart-define=API_URL=same-origin --dart-define=SHOW_DEMO=true
+cp -r build/web ../backend/web          # Windows: xcopy /E /I build\web ..\backend\web
+cd ../backend && uvicorn main:app --port 8000
+```
+
+The backend serves `backend/web` at `/` whenever it exists (override the folder with `WEB_DIR`).
+
+</details>
 
 ## Deployment
 
