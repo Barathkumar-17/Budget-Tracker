@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="780" viewBox="0 0 1600 780">
+<title>DFD context diagram</title>
+<rect x="0" y="0" width="1600" height="780" fill="#FFFFFF"/>
+<text x="30" y="48" font-family="Helvetica, Arial, sans-serif" font-size="28" text-anchor="start" fill="#222222" font-weight="bold">DFD context diagram</text>
+<rect x="60" y="120" width="240" height="600" rx="0" fill="#EEEEEE" stroke="#333333" stroke-width="2"/>
+<text x="180" y="417" font-family="Helvetica, Arial, sans-serif" font-size="20" text-anchor="middle" fill="#222222" font-weight="bold">User</text>
+<text x="180" y="433.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="180" dy="0">registered person</tspan><tspan x="180" dy="17.9">(web browser or Android)</tspan></text>
+<rect x="1260" y="120" width="280" height="600" rx="14" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<path d="M1260,150 L1540,150" fill="none" stroke="#333333" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="1400" y="142" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">0</text>
+<text x="1400" y="408.2" font-family="Helvetica, Arial, sans-serif" font-size="20" text-anchor="middle" fill="#222222" font-weight="bold">Budget Tracker</text>
+<text x="1400" y="427.8" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="1400" dy="0">register, log in, manage</tspan><tspan x="1400" dy="17.9">account, expenses, budgets,</tspan><tspan x="1400" dy="17.9">recurring expenses, goals,</tspan><tspan x="1400" dy="17.9">view the dashboard</tspan></text>
+<path d="M300,190 L1249,190" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1260,190 1247,195.5 1247,184.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="181" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Registration, login and log-out requests (username, password)</text>
+<path d="M300,250 L1249,250" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1260,250 1247,255.5 1247,244.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="241" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Expense, budget, recurring-template and goal inputs</text>
+<path d="M300,310 L1249,310" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1260,310 1247,315.5 1247,304.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="301" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Account settings (opening balance, warning threshold) and month selection</text>
+<path d="M300,370 L1249,370" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1260,370 1247,375.5 1247,364.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="361" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Session token (Authorization: Bearer, sent with every request)</text>
+<path d="M1260,460 L311,460" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="300,460 313,454.5 313,465.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="451" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Session token (issued at registration and login)</text>
+<path d="M1260,520 L311,520" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="300,520 313,514.5 313,525.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="511" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Lists: expenses, budgets, recurring templates, goals</text>
+<path d="M1260,580 L311,580" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="300,580 313,574.5 313,585.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="571" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Dashboard and balance (spent per category, trend, low-balance flag)</text>
+<path d="M1260,640 L311,640" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="300,640 313,634.5 313,645.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="631" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Overspend alerts and low-balance warnings</text>
+<path d="M1260,700 L311,700" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="300,700 313,694.5 313,705.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="780" y="691" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Error messages (401 log in again, 404, 409, 422)</text>
+</svg>

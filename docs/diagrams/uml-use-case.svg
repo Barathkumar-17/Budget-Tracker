@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1340" viewBox="0 0 1600 1340">
+<title>UML use case diagram</title>
+<rect x="0" y="0" width="1600" height="1340" fill="#FFFFFF"/>
+<text x="30" y="48" font-family="Helvetica, Arial, sans-serif" font-size="28" text-anchor="start" fill="#222222" font-weight="bold">UML use case diagram</text>
+<rect x="380" y="80" width="1180" height="1220" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="2"/>
+<text x="400" y="112" font-family="Helvetica, Arial, sans-serif" font-size="20" text-anchor="start" fill="#222222" font-weight="bold">Budget Tracker</text>
+<circle cx="140" cy="604" r="14" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<path d="M140,618 L140,668" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M112,636 L168,636" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M140,668 L116,708" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M140,668 L164,708" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="140" y="736" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">User</text>
+<text x="140" y="755" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">(registered user)</text>
+<path d="M168,636 L570,190" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,266" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,342" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,418" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,494" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,570" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,646" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,722" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,798" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,874" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,950" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,1026" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,1102" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,1178" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M168,636 L570,1254" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<ellipse cx="800" cy="190" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="195.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Register</text>
+<ellipse cx="800" cy="266" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="271.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Log in</text>
+<ellipse cx="800" cy="342" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="347.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Log out</text>
+<ellipse cx="800" cy="418" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="413.4" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222"><tspan x="800" dy="0">Set opening balance and</tspan><tspan x="800" dy="20.5">warning threshold</tspan></text>
+<ellipse cx="800" cy="494" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="499.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Add expense</text>
+<ellipse cx="800" cy="570" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="575.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Edit expense</text>
+<ellipse cx="800" cy="646" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="651.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Delete expense (with Undo)</text>
+<ellipse cx="800" cy="722" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="727.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">View and filter expenses</text>
+<ellipse cx="800" cy="798" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="803.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Set monthly category budgets</text>
+<ellipse cx="800" cy="874" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="879.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Manage recurring templates</text>
+<ellipse cx="800" cy="950" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="945.4" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222"><tspan x="800" dy="0">Apply recurring templates</tspan><tspan x="800" dy="20.5">to a month</tspan></text>
+<ellipse cx="800" cy="1026" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="1031.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Create savings goal</text>
+<ellipse cx="800" cy="1102" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="1107.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Contribute to goal</text>
+<ellipse cx="800" cy="1178" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="1183.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">Delete goal</text>
+<ellipse cx="800" cy="1254" rx="230" ry="30" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="800" y="1259.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222">View dashboard and change month</text>
+<ellipse cx="1340" cy="532" rx="185" ry="32" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="1340" y="527.6" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222"><tspan x="1340" dy="0">Check overspend and</tspan><tspan x="1340" dy="19.2">low balance</tspan></text>
+<path d="M1030,494 L1037.9,495 M1042.9,495.6 L1050.8,496.6 M1055.8,497.2 L1063.7,498.1 M1068.7,498.7 L1076.7,499.7 M1081.6,500.3 L1089.6,501.3 M1094.5,501.9 L1102.5,502.9 M1107.4,503.5 L1115.4,504.5 M1120.3,505.1 L1128.3,506 M1133.2,506.7 L1141.2,507.6 M1146.1,508.2 L1154.1,509.2 M1159,509.8 L1167,510.8 M1171.9,511.4 L1179.9,512.4 M1184.8,513 L1189.1,513.5" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="1175.5,517.4 1189.1,513.5 1176.8,506.5" fill="none" stroke="#333333" stroke-width="1.5"/>
+<rect x="1073" y="471" width="83.1" height="21.5" fill="#FFFFFF"/>
+<text x="1114.5" y="486.6" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+<path d="M1030,570 L1037.9,569 M1042.9,568.4 L1050.8,567.4 M1055.8,566.8 L1063.7,565.9 M1068.7,565.3 L1076.7,564.3 M1081.6,563.7 L1089.6,562.7 M1094.5,562.1 L1102.5,561.1 M1107.4,560.5 L1115.4,559.5 M1120.3,558.9 L1128.3,558 M1133.2,557.3 L1141.2,556.4 M1146.1,555.8 L1154.1,554.8 M1159,554.2 L1167,553.2 M1171.9,552.6 L1179.9,551.6 M1184.8,551 L1189.1,550.5" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="1176.8,557.5 1189.1,550.5 1175.5,546.6" fill="none" stroke="#333333" stroke-width="1.5"/>
+<rect x="1073" y="573.5" width="83.1" height="21.5" fill="#FFFFFF"/>
+<text x="1114.5" y="589.2" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222" font-style="italic">&lt;&lt;include&gt;&gt;</text>
+<path d="M1090,620 L1514,620 L1530,636 L1530,712 L1090,712 Z" fill="#FFFBE0" stroke="#333333" stroke-width="1.4"/>
+<path d="M1514,620 L1514,636 L1530,636" fill="none" stroke="#333333" stroke-width="1.4"/>
+<text x="1102" y="644" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="start" fill="#222222"><tspan x="1102" dy="0">All use cases except Register and Log in</tspan><tspan x="1102" dy="20.5">require a logged-in session.</tspan><tspan x="1102" dy="20.5">Each user sees only their own data.</tspan></text>
+</svg>

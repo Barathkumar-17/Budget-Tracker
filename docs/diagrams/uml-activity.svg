@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1860" viewBox="0 0 1600 1860">
+<title>UML activity diagram</title>
+<rect x="0" y="0" width="1600" height="1860" fill="#FFFFFF"/>
+<text x="30" y="48" font-family="Helvetica, Arial, sans-serif" font-size="28" text-anchor="start" fill="#222222" font-weight="bold">UML activity diagram: apply recurring templates to a month</text>
+<rect x="20" y="70" width="1560" height="1760" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.8"/>
+<path d="M720,70 L720,1830" fill="none" stroke="#333333" stroke-width="1.8" stroke-linejoin="round"/>
+<rect x="20" y="70" width="700" height="36" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.8"/>
+<rect x="720" y="70" width="860" height="36" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.8"/>
+<text x="370" y="93.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">Flutter app (Recurring screen, Api client)</text>
+<text x="1150" y="93.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">FastAPI server and SQLite</text>
+<circle cx="380" cy="150" r="12" fill="#222222" stroke="#222222" stroke-width="1.6"/>
+<path d="M380,162 L380,181" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="380,192 374.5,179 385.5,179" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="230" y="195" width="300" height="60" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="380" y="220.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="380" dy="0">User clicks Apply for the</tspan><tspan x="380" dy="18.6">selected month</tspan></text>
+<path d="M380,255 L380,274" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="380,285 374.5,272 385.5,272" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="230" y="285" width="300" height="80" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="380" y="311.5" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="380" dy="0">Send POST /recurring/apply</tspan><tspan x="380" dy="18.6">?month=YYYY-MM with header</tspan><tspan x="380" dy="18.6">Authorization: Bearer token</tspan></text>
+<path d="M530,325 L1250,325 L1250,364" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1250,375 1244.5,362 1255.5,362" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="1080,430 1250,375 1420,430 1250,485" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<text x="1250" y="425.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="1250" dy="0">token valid?</tspan><tspan x="1250" dy="18.6">(session found, &lt; 30 days)</tspan></text>
+<path d="M1080,430 L1011,430" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1000,430 1013,424.5 1013,435.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="1025.3" y="405.2" width="29.4" height="21.5" fill="#FFFFFF"/>
+<text x="1040" y="420.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[no]</text>
+<rect x="750" y="398" width="250" height="64" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="875" y="425.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="875" dy="0">Reject: 401</tspan><tspan x="875" dy="18.6">Please log in again</tspan></text>
+<path d="M750,430 L541,430" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="530,430 543,424.5 543,435.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="230" y="388" width="300" height="84" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="380" y="416.5" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="380" dy="0">Clear the stored token;</tspan><tspan x="380" dy="18.6">show login with "Your session</tspan><tspan x="380" dy="18.6">ended. Please log in again."</tspan></text>
+<path d="M380,472 L380,499" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="380,510 374.5,497 385.5,497" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<circle cx="380" cy="525" r="15" fill="#FFFFFF" stroke="#333333" stroke-width="1.8"/>
+<circle cx="380" cy="525" r="9" fill="#222222" stroke="#222222" stroke-width="1.6"/>
+<path d="M1250,485 L1250,534" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1250,545 1244.5,532 1255.5,532" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="1260.2" y="504.2" width="35.6" height="21.5" fill="#FFFFFF"/>
+<text x="1278" y="519.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[yes]</text>
+<polygon points="1080,600 1250,545 1420,600 1250,655" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<text x="1250" y="595.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="1250" dy="0">month valid?</tspan><tspan x="1250" dy="18.6">(YYYY-MM, year &gt;= 0001)</tspan></text>
+<path d="M1080,600 L1011,600" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1000,600 1013,594.5 1013,605.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="1025.3" y="575.2" width="29.4" height="21.5" fill="#FFFFFF"/>
+<text x="1040" y="590.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[no]</text>
+<rect x="750" y="568" width="250" height="64" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="875" y="595.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="875" dy="0">Reject: 422</tspan><tspan x="875" dy="18.6">validation error</tspan></text>
+<path d="M750,600 L541,600" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="530,600 543,594.5 543,605.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="230" y="568" width="300" height="64" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="380" y="605.1" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">Show the error message</text>
+<path d="M380,632 L380,659" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="380,670 374.5,657 385.5,657" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<circle cx="380" cy="685" r="15" fill="#FFFFFF" stroke="#333333" stroke-width="1.8"/>
+<circle cx="380" cy="685" r="9" fill="#222222" stroke="#222222" stroke-width="1.6"/>
+<path d="M1250,655 L1250,684" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1250,695 1244.5,682 1255.5,682" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="1260.2" y="664.2" width="35.6" height="21.5" fill="#FFFFFF"/>
+<text x="1278" y="679.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[yes]</text>
+<rect x="1090" y="695" width="320" height="80" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="1250" y="721.5" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="1250" dy="0">created = 0</tspan><tspan x="1250" dy="18.6">load this user's templates</tspan><tspan x="1250" dy="18.6">(WHERE user_id = ?)</tspan></text>
+<path d="M1250,775 L1250,799" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1250,810 1244.5,797 1255.5,797" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="1120,855 1250,810 1380,855 1250,900" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<text x="1250" y="860.1" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">more templates?</text>
+<path d="M1250,900 L1250,944" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1250,955 1244.5,942 1255.5,942" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="1260.2" y="917.2" width="35.6" height="21.5" fill="#FFFFFF"/>
+<text x="1278" y="932.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[yes]</text>
+<polygon points="1080,1010 1250,955 1420,1010 1250,1065" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<text x="1250" y="1005.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="1250" dy="0">expense from this template</tspan><tspan x="1250" dy="18.6">already in this month?</tspan></text>
+<path d="M1420,1010 L1495,1010" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1506,1010 1493,1015.5 1493,1004.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="1428.9" y="983.2" width="68.2" height="21.5" fill="#FFFFFF"/>
+<text x="1463" y="998.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[yes: skip]</text>
+<polygon points="1506,1010 1520,996 1534,1010 1520,1024" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<path d="M1520,996 L1520,855 L1391,855" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1380,855 1393,849.5 1393,860.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M1250,1065 L1250,1104" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1250,1115 1244.5,1102 1255.5,1102" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="1259.3" y="1079.2" width="29.4" height="21.5" fill="#FFFFFF"/>
+<text x="1274" y="1094.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[no]</text>
+<rect x="1085" y="1115" width="330" height="90" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="1250" y="1146.5" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="1250" dy="0">INSERT OR IGNORE expense</tspan><tspan x="1250" dy="18.6">(date = month-day, recurring_id</tspan><tspan x="1250" dy="18.6">set, amount, category, note)</tspan></text>
+<path d="M1250,1205 L1250,1239" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1250,1250 1244.5,1237 1255.5,1237" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="1085" y="1250" width="330" height="80" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="1250" y="1276.5" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="1250" dy="0">created += rowcount</tspan><tspan x="1250" dy="18.6">(1 inserted, 0 ignored by</tspan><tspan x="1250" dy="18.6">UNIQUE (recurring_id, date))</tspan></text>
+<path d="M1415,1290 L1520,1290 L1520,1035" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1520,1024 1525.5,1037 1514.5,1037" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M1120,855 L880,855 L880,1394" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="880,1405 874.5,1392 885.5,1392" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="967.4" y="844.2" width="65.1" height="21.5" fill="#FFFFFF"/>
+<text x="1000" y="859.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[no more]</text>
+<rect x="740" y="1405" width="280" height="70" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="880" y="1435.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="880" dy="0">Commit; return 200</tspan><tspan x="880" dy="18.6">{month, created}</tspan></text>
+<path d="M740,1440 L380,1440 L380,1494" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="380,1505 374.5,1492 385.5,1492" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="565.6" y="1415.2" width="108.7" height="21.5" fill="#FFFFFF"/>
+<text x="620" y="1430.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">{month, created}</text>
+<polygon points="255,1560 380,1505 505,1560 380,1615" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<text x="380" y="1565.1" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">created = 0?</text>
+<path d="M255,1560 L180,1560 L180,1629" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="180,1640 174.5,1627 185.5,1627" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="197.2" y="1535.2" width="35.6" height="21.5" fill="#FFFFFF"/>
+<text x="215" y="1550.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[yes]</text>
+<path d="M505,1560 L560,1560 L560,1629" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="560,1640 554.5,1627 565.5,1627" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="520.3" y="1535.2" width="29.4" height="21.5" fill="#FFFFFF"/>
+<text x="535" y="1550.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">[no]</text>
+<rect x="40" y="1640" width="280" height="70" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="180" y="1670.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="180" dy="0">Show "Nothing to add:</tspan><tspan x="180" dy="18.6">&lt;Month&gt; is already up to date."</tspan></text>
+<rect x="420" y="1640" width="280" height="70" rx="18" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<text x="560" y="1670.8" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="560" dy="0">Reload the data; show</tspan><tspan x="560" dy="18.6">"Added N expense(s) to &lt;Month&gt;"</tspan></text>
+<path d="M180,1710 L180,1790 L355,1790" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="366,1790 353,1795.5 353,1784.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M560,1710 L560,1790 L405,1790" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="394,1790 407,1784.5 407,1795.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<circle cx="380" cy="1790" r="15" fill="#FFFFFF" stroke="#333333" stroke-width="1.8"/>
+<circle cx="380" cy="1790" r="9" fill="#222222" stroke="#222222" stroke-width="1.6"/>
+</svg>

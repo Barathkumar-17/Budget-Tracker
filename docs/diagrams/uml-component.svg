@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="910" viewBox="0 0 1600 910">
+<title>UML component diagram</title>
+<rect x="0" y="0" width="1600" height="910" fill="#FFFFFF"/>
+<text x="30" y="48" font-family="Helvetica, Arial, sans-serif" font-size="28" text-anchor="start" fill="#222222" font-weight="bold">UML component diagram</text>
+<rect x="40" y="100" width="580" height="660" rx="0" fill="#F5F9FE" stroke="#333333" stroke-width="2"/>
+<rect x="586" y="110" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="580" y="113" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="580" y="119" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="330" y="131.4" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222"><tspan x="330" dy="0">&lt;&lt;component&gt;&gt;</tspan><tspan x="330" dy="20.5">Flutter app</tspan></text>
+<rect x="70" y="200" width="260" height="108" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="300" y="208" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="294" y="211" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="294" y="217" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="80" y="220" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="200" y="249.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">Screens</text>
+<text x="200" y="273.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="200" dy="0">Dashboard, Expenses, Budgets,</tspan><tspan x="200" dy="17.3">Recurring, Goals, login</tspan></text>
+<rect x="70" y="380" width="260" height="108" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="300" y="388" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="294" y="391" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="294" y="397" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="80" y="400" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="200" y="429.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">AuthState / AppState</text>
+<text x="200" y="453.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="200" dy="0">login status, username;</tspan><tspan x="200" dy="17.3">month, reload counter</tspan></text>
+<rect x="70" y="560" width="260" height="100" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="300" y="568" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="294" y="571" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="294" y="577" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="80" y="580" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="200" y="609.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">Token storage</text>
+<text x="200" y="633.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="200" dy="0">shared_preferences,</tspan><tspan x="200" dy="17.3">key session_token</tspan></text>
+<rect x="380" y="380" width="210" height="108" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="560" y="388" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="554" y="391" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="554" y="397" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="390" y="400" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="485" y="429.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">Api client</text>
+<text x="485" y="453.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="485" dy="0">baseUrl from API_URL;</tspan><tspan x="485" dy="17.3">Bearer token; 401 hook</tspan></text>
+<path d="M200,308 L200,316 M200,321 L200,329 M200,334 L200,342 M200,347 L200,355 M200,360 L200,368 M200,373 L200,380" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="194.5,367 200,380 205.5,367" fill="none" stroke="#333333" stroke-width="1.5"/>
+<path d="M200,488 L200,496 M200,501 L200,509 M200,514 L200,522 M200,527 L200,535 M200,540 L200,548 M200,553 L200,560" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="194.5,547 200,560 205.5,547" fill="none" stroke="#333333" stroke-width="1.5"/>
+<path d="M330,434 L338,434 M343,434 L351,434 M356,434 L364,434 M369,434 L377,434" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="367,439.5 380,434 367,428.5" fill="none" stroke="#333333" stroke-width="1.5"/>
+<path d="M330,254 L338,254 M343,254 L351,254 M356,254 L364,254 M369,254 L377,254 M382,254 L390,254 M395,254 L403,254 M408,254 L416,254 M421,254 L429,254 M434,254 L442,254 M447,254 L455,254 M460,254 L468,254 M473,254 L481,254 M485,254 L485,262 M485,267 L485,275 M485,280 L485,288 M485,293 L485,301 M485,306 L485,314 M485,319 L485,327 M485,332 L485,340 M485,345 L485,353 M485,358 L485,366 M485,371 L485,379" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="479.5,367 485,380 490.5,367" fill="none" stroke="#333333" stroke-width="1.5"/>
+<rect x="880" y="100" width="450" height="660" rx="0" fill="#F5F9FE" stroke="#333333" stroke-width="2"/>
+<rect x="1296" y="110" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1290" y="113" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1290" y="119" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="1105" y="131.4" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222"><tspan x="1105" dy="0">&lt;&lt;component&gt;&gt;</tspan><tspan x="1105" dy="20.5">FastAPI application (one process)</tspan></text>
+<rect x="905" y="200" width="170" height="330" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="1045" y="208" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1039" y="211" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1039" y="217" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="915" y="220" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="990" y="249.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">Route handlers</text>
+<text x="990" y="272.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="990" dy="0"></tspan><tspan x="990" dy="17.3">/auth/register, login,</tspan><tspan x="990" dy="17.3">logout, me</tspan><tspan x="990" dy="17.3">/account</tspan><tspan x="990" dy="17.3">/expenses</tspan><tspan x="990" dy="17.3">/budgets</tspan><tspan x="990" dy="17.3">/recurring</tspan><tspan x="990" dy="17.3">/goals</tspan><tspan x="990" dy="17.3">/dashboard</tspan></text>
+<rect x="1125" y="200" width="180" height="100" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="1275" y="208" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1269" y="211" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1269" y="217" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="1135" y="220" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="1215" y="249.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">Auth and session</text>
+<text x="1215" y="273.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="1215" dy="0">scrypt password hash;</tspan><tspan x="1215" dy="17.3">SHA-256 token lookup</tspan></text>
+<rect x="1125" y="340" width="180" height="100" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="1275" y="348" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1269" y="351" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1269" y="357" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="1135" y="360" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="1215" y="389.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">Validation</text>
+<text x="1215" y="413.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="1215" dy="0">Pydantic models;</tspan><tspan x="1215" dy="17.3">422 on bad input</tspan></text>
+<rect x="1125" y="480" width="180" height="100" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="1275" y="488" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1269" y="491" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1269" y="497" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="1135" y="500" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="1215" y="529.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">Rules</text>
+<text x="1215" y="553.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="1215" dy="0">balance, low-balance,</tspan><tspan x="1215" dy="17.3">overspend, recurring</tspan></text>
+<rect x="905" y="610" width="170" height="100" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.5"/>
+<rect x="1045" y="618" width="22" height="14" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1039" y="621" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<rect x="1039" y="627" width="10" height="4" rx="0" fill="#FFFFFF" stroke="#333333" stroke-width="1.3"/>
+<text x="915" y="630" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#222222" font-style="italic">&lt;&lt;component&gt;&gt;</text>
+<text x="990" y="659.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">Static file mount</text>
+<text x="990" y="683.1" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="990" dy="0">serves the web build</tspan><tspan x="990" dy="17.3">at /</tspan></text>
+<path d="M1075,250 L1083,250 M1088,250 L1096,250 M1101,250 L1109,250 M1114,250 L1122,250" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="1112,255.5 1125,250 1112,244.5" fill="none" stroke="#333333" stroke-width="1.5"/>
+<path d="M1075,390 L1083,390 M1088,390 L1096,390 M1101,390 L1109,390 M1114,390 L1122,390" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="1112,395.5 1125,390 1112,384.5" fill="none" stroke="#333333" stroke-width="1.5"/>
+<path d="M1075,530 L1083,530 M1088,530 L1096,530 M1101,530 L1109,530 M1114,530 L1122,530" fill="none" stroke="#333333" stroke-width="1.5" stroke-linejoin="round"/>
+<polyline points="1112,535.5 1125,530 1112,524.5" fill="none" stroke="#333333" stroke-width="1.5"/>
+<path d="M590,434 L836,434" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M852,418 A16,16 0 0 0 852,450" fill="none" stroke="#333333" stroke-width="1.6"/>
+<circle cx="852" cy="434" r="9" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<path d="M861,434 L880,434" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="723" y="420" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">REST API: HTTP + JSON</text>
+<text x="723" y="460" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">Authorization: Bearer token</text>
+<path d="M620,650 L836,650" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M852,634 A16,16 0 0 0 852,666" fill="none" stroke="#333333" stroke-width="1.6"/>
+<circle cx="852" cy="650" r="9" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<path d="M861,650 L880,650" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="738" y="636" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">web build (GET /)</text>
+<text x="738" y="676" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">same origin</text>
+<path d="M1440,270 A75.0,18 0 0 1 1590,270 L1590,600 A75.0,18 0 0 1 1440,600 Z" fill="#EEEEEE" stroke="#333333" stroke-width="1.8"/>
+<path d="M1440,270 A75.0,18 0 0 0 1590,270" fill="#F7F7F7" stroke="#333333" stroke-width="1.8"/>
+<path d="M1440,270 A75.0,18 0 0 1 1590,270" fill="none" stroke="#333333" stroke-width="1.8"/>
+<text x="1515" y="318.5" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222"><tspan x="1515" dy="0">&lt;&lt;database&gt;&gt;</tspan><tspan x="1515" dy="18.6">SQLite file</tspan><tspan x="1515" dy="18.6">budget.db</tspan></text>
+<text x="1515" y="416.2" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="1515" dy="0">7 tables</tspan><tspan x="1515" dy="18.2">users</tspan><tspan x="1515" dy="18.2">sessions</tspan><tspan x="1515" dy="18.2">account</tspan><tspan x="1515" dy="18.2">expenses</tspan><tspan x="1515" dy="18.2">budgets</tspan><tspan x="1515" dy="18.2">recurring</tspan><tspan x="1515" dy="18.2">goals</tspan></text>
+<path d="M1330,434 L1393,434" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M1409,418 A16,16 0 0 0 1409,450" fill="none" stroke="#333333" stroke-width="1.6"/>
+<circle cx="1409" cy="434" r="9" fill="#FFFFFF" stroke="#333333" stroke-width="1.6"/>
+<path d="M1418,434 L1440,434" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="1362" y="420" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">sqlite3</text>
+<text x="1362" y="460" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="middle" fill="#222222">SQL</text>
+<path d="M40,790 L814,790 L830,806 L830,882 L40,882 Z" fill="#FFFBE0" stroke="#333333" stroke-width="1.4"/>
+<path d="M814,790 L814,806 L830,806" fill="none" stroke="#333333" stroke-width="1.4"/>
+<text x="52" y="814" font-family="Helvetica, Arial, sans-serif" font-size="14.5" text-anchor="start" fill="#222222"><tspan x="52" dy="0">Hosted build: API_URL=same-origin, so baseUrl is empty and the browser loads the web app and</tspan><tspan x="52" dy="18.6">calls the API on the same server (one origin).</tspan><tspan x="52" dy="18.6">Android build: baseUrl = API_URL (default http://10.0.2.2:8000, the emulator's view of the host).</tspan></text>
+</svg>

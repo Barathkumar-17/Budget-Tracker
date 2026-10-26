@@ -1,0 +1,217 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1650" viewBox="0 0 1600 1650">
+<title>DFD level 1 diagram</title>
+<rect x="0" y="0" width="1600" height="1650" fill="#FFFFFF"/>
+<text x="30" y="48" font-family="Helvetica, Arial, sans-serif" font-size="28" text-anchor="start" fill="#222222" font-weight="bold">DFD level 1 diagram</text>
+<rect x="30" y="150" width="110" height="1380" rx="0" fill="#EEEEEE" stroke="#333333" stroke-width="2"/>
+<text x="85" y="847" font-family="Helvetica, Arial, sans-serif" font-size="20" text-anchor="middle" fill="#222222" font-weight="bold">User</text>
+<text x="85" y="871.2" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222"><tspan x="85" dy="0">registered</tspan><tspan x="85" dy="16.6">person</tspan></text>
+<rect x="450" y="170" width="240" height="120" rx="14" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<path d="M450,200 L690,200" fill="none" stroke="#333333" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="570" y="192" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">1</text>
+<text x="570" y="235" font-family="Helvetica, Arial, sans-serif" font-size="17" text-anchor="middle" fill="#222222" font-weight="bold">Authenticate</text>
+<text x="570" y="253.8" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="570" dy="0">register, log in, log out,</tspan><tspan x="570" dy="17.9">verify session token</tspan></text>
+<path d="M140,197 L439,197" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="450,197 437,202.5 437,191.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M450,263 L151,263" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="140,263 153,257.5 153,268.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="295" y="172.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">registration / login credentials;</tspan><tspan x="295" dy="17.9">log-out request</tspan></text>
+<text x="295" y="238.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">session token (login, register);</tspan><tspan x="295" dy="17.9">401 wrong password, 409 name taken</tspan></text>
+<rect x="450" y="400" width="240" height="120" rx="14" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<path d="M450,430 L690,430" fill="none" stroke="#333333" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="570" y="422" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">3</text>
+<text x="570" y="474" font-family="Helvetica, Arial, sans-serif" font-size="17" text-anchor="middle" fill="#222222" font-weight="bold">Manage expenses</text>
+<text x="570" y="492.8" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">add, edit, delete, list</text>
+<path d="M140,427 L439,427" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="450,427 437,432.5 437,421.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M450,493 L151,493" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="140,493 153,487.5 153,498.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="295" y="402.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">expense (amount, date, category, note);</tspan><tspan x="295" dy="17.9">edit, delete, month and category filter</tspan></text>
+<text x="295" y="468.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">expense, expense list;</tspan><tspan x="295" dy="17.9">overspend alert, low-balance flag</tspan></text>
+<rect x="450" y="660" width="240" height="120" rx="14" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<path d="M450,690 L690,690" fill="none" stroke="#333333" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="570" y="682" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">5</text>
+<text x="570" y="734" font-family="Helvetica, Arial, sans-serif" font-size="17" text-anchor="middle" fill="#222222" font-weight="bold">Manage recurring</text>
+<text x="570" y="752.8" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">templates, apply to a month</text>
+<path d="M140,687 L439,687" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="450,687 437,692.5 437,681.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M450,753 L151,753" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="140,753 153,747.5 153,758.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="295" y="662.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">template (amount, category, note,</tspan><tspan x="295" dy="17.9">day 1-28); delete; month to apply</tspan></text>
+<text x="295" y="728.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">template list;</tspan><tspan x="295" dy="17.9">number of expenses created</tspan></text>
+<rect x="450" y="900" width="240" height="120" rx="14" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<path d="M450,930 L690,930" fill="none" stroke="#333333" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="570" y="922" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">2</text>
+<text x="570" y="974" font-family="Helvetica, Arial, sans-serif" font-size="17" text-anchor="middle" fill="#222222" font-weight="bold">Manage account</text>
+<text x="570" y="992.8" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">opening balance, threshold</text>
+<path d="M140,927 L439,927" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="450,927 437,932.5 437,921.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M450,993 L151,993" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="140,993 153,987.5 153,998.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="295" y="902.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">opening balance,</tspan><tspan x="295" dy="17.9">warning threshold</tspan></text>
+<text x="295" y="968.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">account settings, balance,</tspan><tspan x="295" dy="17.9">low-balance flag</tspan></text>
+<rect x="450" y="1120" width="240" height="120" rx="14" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<path d="M450,1150 L690,1150" fill="none" stroke="#333333" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="570" y="1142" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">4</text>
+<text x="570" y="1194" font-family="Helvetica, Arial, sans-serif" font-size="17" text-anchor="middle" fill="#222222" font-weight="bold">Manage budgets</text>
+<text x="570" y="1212.8" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">monthly category caps</text>
+<path d="M140,1147 L439,1147" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="450,1147 437,1152.5 437,1141.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M450,1213 L151,1213" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="140,1213 153,1207.5 153,1218.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="295" y="1140" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">category cap for a month</text>
+<text x="295" y="1206" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">budgets of the month</text>
+<rect x="450" y="1340" width="240" height="120" rx="14" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<path d="M450,1370 L690,1370" fill="none" stroke="#333333" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="570" y="1362" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">6</text>
+<text x="570" y="1414" font-family="Helvetica, Arial, sans-serif" font-size="17" text-anchor="middle" fill="#222222" font-weight="bold">Manage goals</text>
+<text x="570" y="1432.8" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">create, contribute, delete</text>
+<path d="M140,1367 L439,1367" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="450,1367 437,1372.5 437,1361.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<path d="M450,1433 L151,1433" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="140,1433 153,1427.5 153,1438.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="295" y="1342.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">goal (name, target, deadline);</tspan><tspan x="295" dy="17.9">contribution; delete goal</tspan></text>
+<text x="295" y="1408.1" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="295" dy="0">goal list with progress;</tspan><tspan x="295" dy="17.9">balance after a contribution</tspan></text>
+<rect x="1330" y="360" width="230" height="1140" rx="14" fill="#FFF6CC" stroke="#333333" stroke-width="1.6"/>
+<path d="M1330,390 L1560,390" fill="none" stroke="#333333" stroke-width="1.4" stroke-linejoin="round"/>
+<text x="1445" y="382" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">7</text>
+<text x="1445" y="425.1" font-family="Helvetica, Arial, sans-serif" font-size="17" text-anchor="middle" fill="#222222" font-weight="bold"><tspan x="1445" dy="0">Check balance</tspan><tspan x="1445" dy="21.8">and build dashboard</tspan></text>
+<text x="1445" y="501.3" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222"><tspan x="1445" dy="0">balance = opening balance</tspan><tspan x="1445" dy="17.9">- all expenses</tspan><tspan x="1445" dy="17.9">- goal savings</tspan><tspan x="1445" dy="17.9"></tspan><tspan x="1445" dy="17.9">low-balance flag:</tspan><tspan x="1445" dy="17.9">balance &lt; threshold</tspan><tspan x="1445" dy="17.9"></tspan><tspan x="1445" dy="17.9">overspend alert:</tspan><tspan x="1445" dy="17.9">spent &gt; cap (category, month)</tspan><tspan x="1445" dy="17.9"></tspan><tspan x="1445" dy="17.9">per-category spend</tspan><tspan x="1445" dy="17.9">and daily trend</tspan></text>
+<rect x="890" y="172" width="42" height="56" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.6"/>
+<path d="M932,172 L1110,172" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,228 L1110,228" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="932.8" y="173" width="176.4" height="54" fill="#F3F8FD" stroke="none"/>
+<path d="M932,172 L1110,172" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,228 L1110,228" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="911" y="205.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">D1</text>
+<text x="1021" y="196.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">Users</text>
+<text x="1021" y="215.4" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#222222">username, scrypt hash</text>
+<rect x="890" y="240" width="42" height="56" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.6"/>
+<path d="M932,240 L1110,240" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,296 L1110,296" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="932.8" y="241" width="176.4" height="54" fill="#F3F8FD" stroke="none"/>
+<path d="M932,240 L1110,240" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,296 L1110,296" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="911" y="273.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">D2</text>
+<text x="1021" y="264.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">Sessions</text>
+<text x="1021" y="283.4" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#222222">SHA-256 of token only</text>
+<rect x="890" y="562" width="42" height="56" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.6"/>
+<path d="M932,562 L1110,562" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,618 L1110,618" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="932.8" y="563" width="176.4" height="54" fill="#F3F8FD" stroke="none"/>
+<path d="M932,562 L1110,562" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,618 L1110,618" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="911" y="595.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">D4</text>
+<text x="1021" y="586.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">Expenses</text>
+<text x="1021" y="605.4" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#222222">rows carry user_id</text>
+<rect x="890" y="692" width="42" height="56" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.6"/>
+<path d="M932,692 L1110,692" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,748 L1110,748" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="932.8" y="693" width="176.4" height="54" fill="#F3F8FD" stroke="none"/>
+<path d="M932,692 L1110,692" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,748 L1110,748" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="911" y="725.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">D6</text>
+<text x="1021" y="716.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">Recurring</text>
+<text x="1021" y="735.4" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#222222">rows carry user_id</text>
+<rect x="890" y="852" width="42" height="56" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.6"/>
+<path d="M932,852 L1110,852" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,908 L1110,908" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="932.8" y="853" width="176.4" height="54" fill="#F3F8FD" stroke="none"/>
+<path d="M932,852 L1110,852" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,908 L1110,908" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="911" y="885.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">D3</text>
+<text x="1021" y="876.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">Account</text>
+<text x="1021" y="895.4" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#222222">rows carry user_id</text>
+<rect x="890" y="1152" width="42" height="56" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.6"/>
+<path d="M932,1152 L1110,1152" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,1208 L1110,1208" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="932.8" y="1153" width="176.4" height="54" fill="#F3F8FD" stroke="none"/>
+<path d="M932,1152 L1110,1152" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,1208 L1110,1208" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="911" y="1185.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">D5</text>
+<text x="1021" y="1176.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">Budgets</text>
+<text x="1021" y="1195.4" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#222222">rows carry user_id</text>
+<rect x="890" y="1262" width="42" height="56" rx="0" fill="#DDEBFA" stroke="#333333" stroke-width="1.6"/>
+<path d="M932,1262 L1110,1262" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,1318 L1110,1318" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="932.8" y="1263" width="176.4" height="54" fill="#F3F8FD" stroke="none"/>
+<path d="M932,1262 L1110,1262" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M932,1318 L1110,1318" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="911" y="1295.2" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="middle" fill="#222222" font-weight="bold">D7</text>
+<text x="1021" y="1286.6" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="#222222" font-weight="bold">Goals</text>
+<text x="1021" y="1305.4" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#222222">rows carry user_id</text>
+<path d="M701,200 L879,200" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="890,200 877,205.5 877,194.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,200 703,194.5 703,205.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="790" y="176.4" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222"><tspan x="790" dy="0">username,</tspan><tspan x="790" dy="16.6">scrypt hash</tspan></text>
+<path d="M701,268 L879,268" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="890,268 877,273.5 877,262.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,268 703,262.5 703,273.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="790" y="244.4" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222"><tspan x="790" dy="0">token hash,</tspan><tspan x="790" dy="16.6">user id, created</tspan></text>
+<path d="M700,494.5 L880,575.5" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="890,580 875.9,579.7 880.4,569.6" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,490 704.1,490.3 699.6,500.4" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="746.9" y="524.9" width="86.2" height="20.2" fill="#FFFFFF"/>
+<text x="790" y="539.5" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222">expense rows</text>
+<path d="M700,685.5 L880,604.5" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="890,600 880.4,610.4 875.9,600.3" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,690 699.6,679.6 704.1,689.7" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="718.4" y="626.8" width="143.3" height="36.5" fill="#FFFFFF"/>
+<text x="790" y="641.4" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222"><tspan x="790" dy="0">expenses made from</tspan><tspan x="790" dy="16.2">templates; month check</tspan></text>
+<path d="M701,720 L879,720" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="890,720 877,725.5 877,714.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,720 703,714.5 703,725.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="790" y="713" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222">templates</text>
+<path d="M700.8,923.1 L879.2,891.9" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="890,890 878.1,897.7 876.2,886.8" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,925 701.9,917.3 703.8,928.2" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="737.5" y="886.8" width="105" height="36.5" fill="#FFFFFF"/>
+<text x="790" y="901.4" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222"><tspan x="790" dy="0">opening balance,</tspan><tspan x="790" dy="16.2">threshold</tspan></text>
+<path d="M701,1180 L879,1180" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="890,1180 877,1185.5 877,1174.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,1180 703,1174.5 703,1185.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="790" y="1173" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222">category caps</text>
+<path d="M700.5,1356.8 L879.5,1303.2" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="890,1300 879.1,1309 876,1298.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,1360 700.9,1351 704,1361.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="750.5" y="1316.8" width="79" height="36.5" fill="#FFFFFF"/>
+<text x="790" y="1331.4" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222"><tspan x="790" dy="0">goals, saved</tspan><tspan x="790" dy="16.2">amounts</tspan></text>
+<path d="M701,440 L1319,440" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1330,440 1317,445.5 1317,434.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,440 703,434.5 703,445.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="867.5" y="417.1" width="264.9" height="37.8" fill="#FFFFFF"/>
+<text x="1000" y="432.3" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="1000" dy="0">category and month of the saved expense /</tspan><tspan x="1000" dy="16.9">overspend alert, balance, low-balance flag</tspan></text>
+<path d="M701,985 L1319,985" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1330,985 1317,990.5 1317,979.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,985 703,979.5 703,990.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="920.8" y="962.1" width="158.3" height="37.8" fill="#FFFFFF"/>
+<text x="1000" y="977.3" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="1000" dy="0">balance request /</tspan><tspan x="1000" dy="16.9">balance, low-balance flag</tspan></text>
+<path d="M701,1425 L1319,1425" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1330,1425 1317,1430.5 1317,1419.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<polygon points="690,1425 703,1419.5 703,1430.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="920.8" y="1402.1" width="158.3" height="37.8" fill="#FFFFFF"/>
+<text x="1000" y="1417.3" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="middle" fill="#222222"><tspan x="1000" dy="0">goal savings changed /</tspan><tspan x="1000" dy="16.9">balance, low-balance flag</tspan></text>
+<path d="M1110,590 L1319,590" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1330,590 1317,595.5 1317,584.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="1220" y="566.4" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222"><tspan x="1220" dy="0">spent per category,</tspan><tspan x="1220" dy="16.6">per day, total</tspan></text>
+<path d="M1110,880 L1319,880" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1330,880 1317,885.5 1317,874.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="1220" y="856.4" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222"><tspan x="1220" dy="0">opening balance,</tspan><tspan x="1220" dy="16.6">threshold</tspan></text>
+<path d="M1110,1180 L1319,1180" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1330,1180 1317,1185.5 1317,1174.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="1220" y="1173" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222">category caps</text>
+<path d="M1110,1290 L1319,1290" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1330,1290 1317,1295.5 1317,1284.5" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<text x="1220" y="1283" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#222222">goal savings</text>
+<path d="M85,150 L85,105 L1445,105 L1445,349" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="1445,360 1439.5,347 1450.5,347" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="673.3" y="94.2" width="183.4" height="21.5" fill="#FFFFFF"/>
+<text x="765" y="109.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">month selection (dashboard)</text>
+<path d="M1445,1500 L1445,1595 L85,1595 L85,1541" fill="none" stroke="#333333" stroke-width="1.6" stroke-linejoin="round"/>
+<polygon points="85,1530 90.5,1543 79.5,1543" fill="#333333" stroke="#333333" stroke-width="1" stroke-linejoin="miter"/>
+<rect x="522.3" y="1584.2" width="485.3" height="21.5" fill="#FFFFFF"/>
+<text x="765" y="1599.9" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" fill="#222222">dashboard: spent vs caps per category, daily trend, balance, low-balance flag</text>
+<path d="M1135,135 L1409,135 L1425,151 L1425,327 L1135,327 Z" fill="#FFFBE0" stroke="#333333" stroke-width="1.4"/>
+<path d="M1409,135 L1409,151 L1425,151" fill="none" stroke="#333333" stroke-width="1.4"/>
+<text x="1147" y="159" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="start" fill="#222222"><tspan x="1147" dy="0">Every request is verified by 1 first:</tspan><tspan x="1147" dy="17.9">SHA-256(token) is looked up in D2</tspan><tspan x="1147" dy="17.9">and must be under 30 days old,</tspan><tspan x="1147" dy="17.9">else 401. Processes 2-7 then touch</tspan><tspan x="1147" dy="17.9">only rows of that user: every query</tspan><tspan x="1147" dy="17.9">filters on user_id, so another user's</tspan><tspan x="1147" dy="17.9">id gives 404. Registering also</tspan><tspan x="1147" dy="17.9">creates the account row (D3).</tspan></text>
+<text x="450" y="1540" font-family="Helvetica, Arial, sans-serif" font-size="13.5" text-anchor="start" fill="#222222">Double-headed arrow: the process both reads and writes the store.</text>
+</svg>
