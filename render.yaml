@@ -11,3 +11,8 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /
+    envVars:
+      # Optional: with a password set here, the container also creates a review
+      # account (user `review`) seeded with a known October 2026 on every start.
+      - key: REVIEW_PASSWORD
+        sync: false   # set the value in the Render dashboard, never in this file

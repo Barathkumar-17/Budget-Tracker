@@ -22,7 +22,7 @@ FROM python:3.12-slim
 WORKDIR /srv
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY backend/main.py backend/seed_demo.py backend/start.sh ./
+COPY backend/main.py backend/seed_demo.py backend/seed_review.py backend/start.sh ./
 COPY --from=web /src/app/build/web ./web
 
 # SQLite lives in /data (a volume locally; ephemeral on free hosting tiers).
