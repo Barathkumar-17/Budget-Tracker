@@ -28,6 +28,7 @@
 - [Quick start](#quick-start)
 - [Design](#design)
 - [Architecture](#architecture)
+- [System design](#system-design)
 - [Data model](#data-model)
 - [Security and accounts](#security-and-accounts)
 - [API reference](#api-reference)
@@ -310,6 +311,46 @@ The API routes are registered first and the static mount last, so every API path
 | Browser tests | Playwright (Chromium) | installed separately with `pip install playwright` | Drives the real compiled app |
 | Packaging | Docker (multi-stage), Docker Compose | `ghcr.io/cirruslabs/flutter:3.35.7`, `python:3.12-slim` | One image with app and API |
 | Hosting | Render (Docker web service, free plan) | | Auto-deploys from `main` |
+
+## System design
+
+Six diagrams of the current system. Each has an editable SVG next to the PNG shown here, in [`docs/diagrams/`](docs/diagrams/).
+
+### Data flow diagram: context
+
+The user is the only external entity; the whole system is one process, with the credentials, inputs and session token going in and the lists, dashboard, alerts and error messages coming out.
+
+![DFD context diagram](docs/diagrams/dfd-context.png)
+
+### Data flow diagram: level 1
+
+Seven processes (authenticate, manage account, expenses, budgets, recurring and goals, and the balance and dashboard calculation) and seven data stores (users, sessions, account, expenses, budgets, recurring, goals), with every store access limited to the signed-in user's rows.
+
+![DFD level 1 diagram](docs/diagrams/dfd-level-1.png)
+
+### UML use case diagram
+
+What a registered user can do: register, log in and out, set the balance and warning threshold, add, edit, delete and filter expenses, set budgets, manage and apply recurring templates, manage goals and view the dashboard.
+
+![UML use case diagram](docs/diagrams/uml-use-case.png)
+
+### UML component diagram
+
+The Flutter app (screens, session state, token storage, API client) talks to the FastAPI application over HTTP and JSON with a bearer token; FastAPI reads and writes the SQLite file and also serves the compiled web app from the same origin.
+
+![UML component diagram](docs/diagrams/uml-component.png)
+
+### UML sequence diagram: edit an expense
+
+An edit from the dialog to the database: the bearer token is hashed and looked up in the sessions table, the update is limited to the user's own row, and the response carries the overspend alert and balance flags. The 401 and 404 outcomes are shown.
+
+![UML sequence diagram: edit an expense](docs/diagrams/uml-sequence.png)
+
+### UML activity diagram: apply recurring templates
+
+What happens when a user applies recurring templates to a month: the token and month are validated, each of the user's templates is skipped if it already has an expense that month, otherwise an expense is inserted, and the app reports how many were created.
+
+![UML activity diagram: apply recurring templates](docs/diagrams/uml-activity.png)
 
 ## Data model
 
