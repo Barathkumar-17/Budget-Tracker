@@ -199,44 +199,33 @@ class LogoMark extends StatelessWidget {
   final double size;
   const LogoMark({super.key, this.size = 30});
 
+  /// A glass coin with the rupee sign: this is a budget tracker, not a menu.
   @override
   Widget build(BuildContext context) {
+    final k = context.tk;
     return ExcludeSemantics(
-      child: CustomPaint(size: Size(size, size), painter: _LogoPainter()),
+      child: Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Tk.frostA(0.08),
+          border: Border.all(color: k.line2),
+        ),
+        child: GradientText(
+          '₹',
+          style: TextStyle(
+            fontFamily: display,
+            fontFamilyFallback: const [sans],
+            fontWeight: FontWeight.w500,
+            fontSize: size * 0.58,
+            height: 1,
+          ),
+        ),
+      ),
     );
   }
-}
-
-class _LogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size s) {
-    final u = s.width / 30;
-    final tile = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, 30 * u, 30 * u), Radius.circular(15 * u));
-    canvas.drawRRect(tile, Paint()..color = Tk.frostA(0.08));
-    canvas.drawRRect(
-        tile,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
-          ..color = Tk.frostA(0.24));
-    // three rising columns, like a tiny bar chart
-    RRect bar(double l, double h) => RRect.fromRectAndRadius(
-        Rect.fromLTWH(l * u, (21.5 - h) * u, 3.4 * u, h * u),
-        Radius.circular(1.7 * u));
-    final fill = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-        colors: [Tk.ice, Tk.iceDeep],
-      ).createShader(Offset.zero & s);
-    canvas.drawRRect(bar(8.6, 6), fill);
-    canvas.drawRRect(bar(13.3, 9.5), fill);
-    canvas.drawRRect(bar(18, 13), fill);
-  }
-
-  @override
-  bool shouldRepaint(covariant _LogoPainter o) => false;
 }
 
 class Logo extends StatelessWidget {

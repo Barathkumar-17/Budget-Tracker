@@ -8,37 +8,34 @@ The PNGs are committed, so this only needs re-running if the mark changes.
 """
 import pathlib
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 OUT = pathlib.Path(__file__).resolve().parent.parent / "brand"
+FONT = pathlib.Path(__file__).resolve().parent.parent / "assets/fonts/SpaceGrotesk-Medium.ttf"
 MIDNIGHT = (5, 6, 15)
 ICE, ICE_DEEP = (216, 236, 248), (152, 192, 239)
 S = 1024  # drawn large, then scaled down for clean edges
 
 
 def mark(scale):
-    """The mark alone on a transparent square: a glass disc with three rising columns."""
+    """The mark alone on a transparent square: a glass coin with the rupee sign."""
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     r = S * 0.5 * scale
     c = S / 2
     d.ellipse((c - r, c - r, c + r, c + r), fill=(186, 214, 247, 24), outline=(186, 215, 247, 90), width=int(S * 0.012))
-    # three rising columns (the same shape as the in-app logo), each with the
-    # ice -> sky gradient; u converts the logo's 30-unit grid to pixels
-    u = r / 15
-    for x, h in ((8.6, 6), (13.3, 9.5), (18, 13)):
-        x0, x1 = c - r + x * u, c - r + (x + 3.4) * u
-        y1 = c - r + 21.5 * u
-        y0 = y1 - h * u
-        grad = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-        gd = ImageDraw.Draw(grad)
-        for i in range(int(y1 - y0) + 1):
-            t = i / (y1 - y0)  # top is sky blue, bottom is ice
-            col = tuple(int(ICE_DEEP[k] * (1 - t) + ICE[k] * t) for k in range(3)) + (255,)
-            gd.line((x0, y0 + i, x1, y0 + i), fill=col)
-        mask = Image.new("L", (S, S), 0)
-        ImageDraw.Draw(mask).rounded_rectangle((x0, y0, x1, y1), 1.7 * u, fill=255)
-        im.paste(grad, (0, 0), mask)
+    # the rupee sign, filled with the ice -> sky gradient
+    font = ImageFont.truetype(str(FONT), int(r * 1.25))
+    mask = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(mask).text((c, c - r * 0.02), "\u20b9", font=font, fill=255, anchor="mm")
+    grad = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(grad)
+    top, bottom = int(c - r * 0.6), int(c + r * 0.6)
+    for y in range(top, bottom + 1):
+        t = (y - top) / max(1, bottom - top)  # top is sky blue, bottom is ice
+        col = tuple(int(ICE_DEEP[k] * (1 - t) + ICE[k] * t) for k in range(3)) + (255,)
+        gd.line((0, y, S, y), fill=col)
+    im.paste(grad, (0, 0), mask)
     return im
 
 
